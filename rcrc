@@ -1,0 +1,2 @@
+EXCLUDES="install.sh *.md LICENSE bin scripts vscode-extensions"
+DOTFILES_DIRS="$HOME/dotfiles-local $HOME/dotfiles"
