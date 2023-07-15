@@ -4,6 +4,9 @@ Make executable; ```chmod +x ~/dotfiles/bin/save_code_extensions```
 
 Based on; <https://anhari.dev/blog/saving-vscode-settings-in-your-dotfiles>
 
+## Tools
+- https://github.com/thoughtbot/rcm
+
 ## Use the rcup command to pull files from ~/dotfiles to the root
 
 ```
