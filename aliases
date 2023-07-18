@@ -1,6 +1,8 @@
 # Productivity
 alias w="cd ~/Workspaces"
 
+alias greadme="git add -A && git commit -m 'chore: Update README.md' && git push"
+
 # Config
 alias reload="source ~/.zshrc"
 
