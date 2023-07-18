@@ -1,0 +1,10 @@
+# Productivity
+alias w="cd ~/Workspaces"
+
+# Config
+alias reload="source ~/.zshrc"
+
+# Include custom aliases
+if [[ -f ~/.aliases.local ]]; then
+  source ~/.aliases.local
+fi

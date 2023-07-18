@@ -100,9 +100,8 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-alias ginit="git init ."
-alias gadd="git add ."
-alias gc="git commit -m 'Initial Commit'"
-alias nr="git init && git add -A && git commit -m 'Initial commit'"
+# Local config
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-alias i="pnpm install"
+# aliases
+[[ -f ~/.aliases ]] && source ~/.aliases

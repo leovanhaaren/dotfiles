@@ -1,5 +1,10 @@
-[user]
-	name = Leo van Haaren
-	email = 814676+leovanhaaren@users.noreply.github.com
 [init]
 	defaultBranch = main
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+[commit]
+	gpgsign = true
+[include]
+  path = ~/.gitconfig.local
