@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Saving VSCode settings..."
+cp "$HOME"/Library/Application\ Support/Code/User/settings.json "$HOME"/dotfiles/vscode-settings/settings.json

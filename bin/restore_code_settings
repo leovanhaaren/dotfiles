@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Restoring VSCode settings..."
+cp "$HOME"/dotfiles/vscode-settings/settings.json "$HOME"/Library/Application\ Support/Code/User/settings.json

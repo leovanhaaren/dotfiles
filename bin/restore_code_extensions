@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Restoring VSCode extensions..."
+cat "$HOME"/dotfiles/vscode-extensions/extensions.list | xargs -L 1 code --install-extension
