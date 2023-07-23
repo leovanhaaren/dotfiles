@@ -3,5 +3,7 @@
 dotfiles_dir="$HOME"/dotfiles
 if [ "$PWD" = "$dotfiles_dir" ]; then
   bin/save_code_extensions
-  git add vscode-extensions/extensions
+  git add vscode-extensions/extensions.list
+  bin/save_code_settings
+  git add vscode-settings/settings.json
 fi
