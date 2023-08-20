@@ -46,5 +46,11 @@
     "window.zoomLevel": 1,
     "workbench.colorTheme": "GitHub Dark Default",
     "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
-    "workbench.sideBar.location": "left"
+    "workbench.sideBar.location": "left",
+    //
+    "[go]": {
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "golang.go"
+    }
 }
