@@ -1,22 +1,23 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll": true
-  },
   "editor.fastScrollSensitivity": 3,
   "editor.fontFamily": "'Fira Code'",
   "editor.fontLigatures": true,
   "editor.fontSize": 14,
   "editor.fontWeight": "normal",
   "editor.formatOnPaste": true,
-  "editor.formatOnSave": true,
+  // "editor.formatOnSave": true,
   "editor.guides.bracketPairs": true,
   "editor.inlineSuggest.enabled": true,
   "editor.minimap.enabled": false,
+  "editor.suggest.insertMode": "replace",
   "editor.suggestSelection": "first",
   "editor.tabSize": 2,
-  "editor.wordWrap": "on",
+  "editor.wordWrap": "off",
+  "editor.linkedEditing": true,
+  "editor.lineNumbers": "relative",
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
+  //
   "files.autoSave": "onWindowChange",
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
@@ -24,7 +25,7 @@
   "github.copilot.enable": {
     "*": true,
     "plaintext": true,
-    "markdown": false,
+    "markdown": true,
     "scminput": false
   },
   "githubPullRequests.createOnPublishBranch": "never",
@@ -37,26 +38,134 @@
     "push:command"
   ],
   "gitlens.hovers.currentLine.over": "line",
-  "javascript.updateImportsOnFileMove.enabled": "always",
   "terminal.external.osxExec": "iTerm.app",
   "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
-  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "terminal.integrated.enableMultiLinePasteWarning": "never",
   "terminal.integrated.fontSize": 13,
   "terminal.integrated.shell.osx": "/bin/zsh",
-  "window.zoomLevel": 1,
-  "workbench.colorTheme": "GitHub Dark Default",
+  "terminal.integrated.fontFamily": "MesloLGS NF",
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
   "workbench.sideBar.location": "left",
-  "remote.SSH.useFlock": false,
-  "remote.SSH.localServerDownload": "always",
   "git.autofetch": true,
-  "svelte.enable-ts-plugin": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "vsicons.dontShowNewVersionMessage": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
   //
-  "[go]": {
-    "editor.insertSpaces": true,
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "golang.go"
-  }
+  "window.zoomLevel": 0.5,
+  "launch": {},
+  "workbench.statusBar.visible": true,
+  "update.showReleaseNotes": false,
+  "zenMode.hideLineNumbers": false,
+  "zenMode.centerLayout": false,
+  "zenMode.silentNotifications": true,
+  "zenMode.fullScreen": true,
+  "zenMode.showTabs": "multiple",
+  //
+  "vim.leader": "<Space>",
+  "vim.startInInsertMode": true,
+  "vim.hlsearch": true,
+  "vim.normalModeKeyBindingsNonRecursive": [
+    // NAVIGATION
+    { "before": ["<S-h>"], "commands": [":bprevious"] },
+    { "before": ["<S-l>"], "commands": [":bnext"] },
+
+    // splits
+    { "before": ["leader", "v"], "commands": [":vsplit"] },
+    { "before": ["leader", "s"], "commands": [":split"] },
+
+    // panes
+    {
+      "before": ["leader", "h"],
+      "commands": ["workbench.action.focusLeftGroup"]
+    },
+    {
+      "before": ["leader", "j"],
+      "commands": ["workbench.action.focusBelowGroup"]
+    },
+    {
+      "before": ["leader", "k"],
+      "commands": ["workbench.action.focusAboveGroup"]
+    },
+    {
+      "before": ["leader", "l"],
+      "commands": ["workbench.action.focusRightGroup"]
+    },
+    // NICE TO HAVE
+    { "before": ["leader", "w"], "commands": [":w!"] },
+    { "before": ["leader", "q"], "commands": [":q!"] },
+    { "before": ["leader", "x"], "commands": [":x!"] },
+    {
+      "before": ["[", "d"],
+      "commands": ["editor.action.marker.prev"]
+    },
+    {
+      "before": ["]", "d"],
+      "commands": ["editor.action.marker.next"]
+    },
+    {
+      "before": ["<leader>", "c", "a"],
+      "commands": ["editor.action.quickFix"]
+    },
+    { "before": ["leader", "f"], "commands": ["workbench.action.quickOpen"] },
+    { "before": ["leader", "p"], "commands": ["editor.action.formatDocument"] },
+    {
+      "before": ["g", "h"],
+      "commands": ["editor.action.showDefinitionPreviewHover"]
+    }
+  ],
+  "vim.visualModeKeyBindings": [
+    // Stay in visual mode while indenting
+    { "before": ["<"], "commands": ["editor.action.outdentLines"] },
+    { "before": [">"], "commands": ["editor.action.indentLines"] },
+    // Move selected lines while staying in visual mode
+    { "before": ["J"], "commands": ["editor.action.moveLinesDownAction"] },
+    { "before": ["K"], "commands": ["editor.action.moveLinesUpAction"] },
+    // toggle comment selection
+    { "before": ["leader", "c"], "commands": ["editor.action.commentLine"] }
+  ],
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[sql]": {
+    // "editor.defaultFormatter": "ReneSaarsoo.sql-formatter-vsc"
+  },
+  //
+  "cSpell.words": ["mysqlstore"],
+  "breadcrumbs.enabled": false,
+  "tabnine.experimentalAutoImports": true,
+  "workbench.startupEditor": "none",
+  "tabby.inlineCompletion.triggerMode": "manual",
+  "gitlens.ai.experimental.provider": "openai",
+  "gitlens.ai.experimental.openai.model": "gpt-4-turbo-preview",
+  "gitlens.ai.experimental.generateCommitMessage.enabled": false,
+  "codium.codeCompletion.enable": true,
+  "SQL-Formatter-VSCode.dialect": "postgresql",
+  "SQL-Formatter-VSCode.keywordCase": "upper",
+  "codium.rag.maxLocalSnippets": 10,
+  "workbench.colorTheme": "GitHub Dark Default",
+  "workbench.iconTheme": "vscode-icons",
+  "github.copilot.editor.enableAutoCompletions": true,
+  "svelte.enable-ts-plugin": true,
+  "supermaven.otherWarning": false,
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "go.toolsManagement.autoUpdate": true,
+  "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
+  "dev.containers.dockerPath": "podman",
+  "templ.goplsRPCTrace": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.format.enable": false,
+  "typescript.format.enable": false,
 }

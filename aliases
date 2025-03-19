@@ -4,7 +4,7 @@ alias w="cd ~/Workspaces"
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
 # Config
-alias reload="source ~/.zshrc"
+alias reload="source ~/.zprofile ~/.zshrc"
 
 # Include custom aliases
 if [[ -f ~/.aliases.local ]]; then
