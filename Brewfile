@@ -1,5 +1,6 @@
 tap "homebrew/bundle"
 tap "homebrew/cask-fonts"
+tap "homebrew/services"
 tap "menubar-apps/menubar-apps"
 brew "icu4c@76"
 brew "node"
@@ -7,6 +8,9 @@ brew "bruno-cli"
 brew "gh"
 brew "git"
 brew "git-extras"
+brew "mas"
+brew "ollama", restart_service: :changed
+brew "podman"
 brew "rcm"
 brew "spaceship"
 brew "tree"
@@ -14,10 +18,12 @@ brew "zsh"
 brew "zsh-syntax-highlighting"
 cask "1password"
 cask "1password-cli"
+cask "aldente"
 cask "alfred"
+cask "anythingllm"
 cask "arc"
 cask "bartender"
-cask "bettertouchtool"
+cask "blender"
 cask "bruno"
 cask "caffeine"
 cask "cyberduck"
@@ -25,11 +31,27 @@ cask "font-fira-code"
 cask "google-chrome"
 cask "home-assistant"
 cask "iterm2"
+cask "lm-studio"
 cask "lulu"
 cask "obsidian"
+cask "podman-desktop"
 cask "soundsource"
 cask "tableplus"
+cask "time-out"
+cask "transmission"
+cask "virtualdj"
 cask "visual-studio-code"
+cask "visual-studio-code@insiders"
+cask "zen-browser"
+mas "Brother P-touch Editor", id: 1453365242
+mas "Health Auto Export", id: 1115567069
+mas "Irvue", id: 1039633667
+mas "Keynote", id: 409183694
+mas "Numbers", id: 409203825
+mas "OctoSpace", id: 6473707939
+mas "Pages", id: 409201541
+mas "Session", id: 1521432881
+mas "TestFlight", id: 899247664
 vscode "github.copilot"
 vscode "github.copilot-chat"
 vscode "github.github-vscode-theme"
