@@ -27,6 +27,11 @@ mkrc
 brew bundle dump --file=~/.Brewfile
 ```
 
+## Cleanup
+```bash
+brew bundle cleanup --force
+```
+
 ## permissions denied
 
 ```bash
