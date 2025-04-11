@@ -118,11 +118,7 @@ source $ZSH/oh-my-zsh.sh
 [[ -f ~/.aliases ]] && source ~/.aliases
 
 # Spaceship prompt
-#source /opt/homebrew/opt/spaceship/spaceship.zsh
-
-# powerlevel10k prompt
-source ~/powerlevel10k/powerlevel10k.zsh-theme
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+source /opt/homebrew/opt/spaceship/spaceship.zsh
 
 # 1password
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
