@@ -52,7 +52,8 @@
   "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
   "terminal.integrated.enableMultiLinePasteWarning": "never",
   "terminal.integrated.fontSize": 12,
-  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "terminal.integrated.lineHeight": 1.1,
+  "terminal.integrated.fontFamily": "'MesloLGS NF'",
   "terminal.integrated.defaultProfile.osx": "zsh",
   //
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
