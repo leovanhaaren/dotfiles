@@ -54,6 +54,7 @@
   "terminal.integrated.fontSize": 12,
   "terminal.integrated.lineHeight": 1.1,
   "terminal.integrated.fontFamily": "'MesloLGS NF'",
+  "terminal.integrated.defaultProfile.linux": "zsh",
   "terminal.integrated.defaultProfile.osx": "zsh",
   //
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
