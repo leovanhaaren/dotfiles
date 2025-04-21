@@ -15,6 +15,10 @@
 # cd $HOME/dotfiles || exit
 
 # rcup -v -y
+
+#symlink .zshrc
+cp $HOME/dotfiles/.zshrc $HOME/.zshrc
+
 source $HOME/.zshrc
 
 reload
