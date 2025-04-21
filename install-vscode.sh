@@ -17,7 +17,7 @@
 # rcup -v -y
 
 #symlink .zshrc
-cp $HOME/dotfiles/.zshrc $HOME/.zshrc
+cp $HOME/dotfiles/zshrc $HOME/.zshrc
 
 source $HOME/.zshrc
 
