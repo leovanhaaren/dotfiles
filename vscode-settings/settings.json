@@ -87,7 +87,7 @@
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.format.enable": false,
   //
-  "dotfiles.installCommand": "~/.dotfiles/install-vscode.sh",
+  "dotfiles.installCommand": "install-vscode.sh",
   "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
-  "dotfiles.targetPath": "~/.dotfiles"
+  "dotfiles.targetPath": "~/dotfiles"
 }
