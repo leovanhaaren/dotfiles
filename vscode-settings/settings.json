@@ -54,6 +54,7 @@
   "terminal.integrated.fontSize": 12,
   "terminal.integrated.lineHeight": 1.1,
   "terminal.integrated.fontFamily": "'MesloLGS NF'",
+  "terminal.integrated.defaultProfile.linux": "zsh",
   "terminal.integrated.defaultProfile.osx": "zsh",
   //
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
@@ -86,4 +87,8 @@
   //
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.format.enable": false,
+  //
+  "dotfiles.installCommand": "install-vscode.sh",
+  "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
+  "dotfiles.targetPath": "~/dotfiles"
 }
