@@ -50,15 +50,7 @@ cask "virtualdj"
 cask "visual-studio-code"
 cask "visual-studio-code@insiders"
 cask "zen-browser"
-mas "Brother P-touch Editor", id: 1453365242
-mas "Health Auto Export", id: 1115567069
-mas "Irvue", id: 1039633667
-mas "Keynote", id: 409183694
-mas "Numbers", id: 409203825
-mas "OctoSpace", id: 6473707939
-mas "Pages", id: 409201541
-mas "Session", id: 1521432881
-mas "TestFlight", id: 899247664
+vscode "1password.op-vscode"
 vscode "eamodio.gitlens"
 vscode "formulahendry.auto-close-tag"
 vscode "github.copilot"
