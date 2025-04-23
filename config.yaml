@@ -6,3 +6,6 @@ excludes:
   - "installers"
   - "vscode-extensions"
   - "vscode-settings"
+local_extensions:
+  - ".zshrc.local"
+  - ".aliases.local"
