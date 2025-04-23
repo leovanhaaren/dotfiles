@@ -1,0 +1,8 @@
+excludes:
+  - ".git"
+  - ".gitignore"
+  - ".DS_Store"
+  - "*.md"
+  - "installers"
+  - "vscode-extensions"
+  - "vscode-settings"
