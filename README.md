@@ -7,20 +7,6 @@ Based on;
 
 ## Tools
 
-- <https://github.com/thoughtbot/rcm>
-
-## Use the rcup command to pull files from ~/dotfiles to the root
-
-```bash
-rcup
-```
-
-## Use the mkrc command to push the file from ~/ into your ~/dotfiles repo
-
-```bash
-mkrc
-```
-
 ## Dump Brewfile
 
 ```bash
