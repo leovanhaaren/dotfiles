@@ -23,3 +23,10 @@ brew bundle cleanup --force
 ```bash
 Make executable; ```chmod +x ~/dotfiles/bin/save_code_extensions
 ```
+
+## Helpful commands
+
+```bash
+# Set local ssh program in case obsidian does not work
+git config --local gpg.ssh.program "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+```
