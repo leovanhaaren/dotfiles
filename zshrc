@@ -110,7 +110,7 @@ source $ZSH/oh-my-zsh.sh
 # aliases
 [[ -f ~/.aliases ]] && source ~/.aliases
 
-eval "$(starship init zsh)"
+# eval "$(starship init zsh)"
 
 # 1password
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
