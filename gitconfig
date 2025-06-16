@@ -17,4 +17,6 @@
     path = ~/dotfiles/git/ksyos.gitconfig
 
 [includeIf "gitdir/i:~/Obsidian/ksyos/**"]
+    path = ~/dotfiles/git/ksyos.gitconfig
+[includeIf "gitdir/i:~/Obsidian/ksyos/**"]
     path = ~/dotfiles/git/op.gitconfig
