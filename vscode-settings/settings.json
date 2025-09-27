@@ -32,7 +32,8 @@
     "*": true,
     "plaintext": true,
     "markdown": true,
-    "scminput": false
+    "scminput": false,
+    "svelte": true
   },
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
   //
@@ -61,7 +62,7 @@
   "workbench.sideBar.location": "left",
   "workbench.statusBar.visible": true,
   "workbench.startupEditor": "none",
-  "workbench.colorTheme": "GitHub Dark Default",
+  "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
   "workbench.iconTheme": "vscode-icons",
   //
   "vsicons.dontShowNewVersionMessage": true,
@@ -88,7 +89,9 @@
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.format.enable": false,
   //
-  "dotfiles.installCommand": "install-vscode.sh",
+  "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
   "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
-  "dotfiles.targetPath": "~/dotfiles"
+  "dotfiles.targetPath": "~/dotfiles",
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "svelte.enable-ts-plugin": true
 }
