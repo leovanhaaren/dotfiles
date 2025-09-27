@@ -4,7 +4,7 @@
 [user]
     name = Leo van Haaren
     email = 814676+leovanhaaren@users.noreply.github.com
-    signingkey = ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7mYkAIOT9fNXa6nyuIpdFlcxT+SkbSe/dyEPL7bHWsQUNdfb+xKp6QnPUagAxW+m0W8VOexXU3+X5ycVAeR8qWTnsRWV5E5LgJH97Dp78RT8onANzLhAdre6qNWHYAholC98m00zJ8TUno94XlPi12ekiXfXKhm9t45bQvVuoXs6K77yAEQjH9fEV0XO7A6Qcm8bsEuGJBQPze7rFBGUSHPzpHdTC+6xRJiJAXtaHdvBiJOJrvzlD8PFcVxiiwkyunvClAMWQQsD4Z2bcwD31BwPtGFjauaSnlwaxHbCUUD91yv8a9zwg9nXgZHVmFilSnI3g5BM7LiSb6SqCJZ3Mscez/l3wjfBb6OKaEVmmMe020/k+M2FqncmCS3SDQdbthPQdJFhIa+AKBdbnvx6AugDMXp3BUN2zmixBNc4/Ecq6V8x3P/GBhKkS+DKeeDflA4WG8ufjxqkQDP3a4UZmfoJn/tN/pA2YIIaxj2EtIVRT2TVhN1v0x+yc88PDodc=
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEq2vQpdf4J/1DtH8OlcVcChB/LxvM4QM1LWQZjsVCj2
 
 [gpg]
     format = ssh
