@@ -4,7 +4,9 @@ alias w="cd ~/Workspaces"
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
 # LLM & AI-tools
-alias glm="pass-cli run -- CLAUDE_CONFIG_DIR=~/.claude-glm claude"
+alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
+alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
+alias cc="pass-cli run -- claude"
 # alias claudework="CLAUDE_CONFIG_DIR=~/.claude-work claude"
 
 # AI containers
