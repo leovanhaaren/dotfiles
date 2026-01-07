@@ -1,3 +1,4 @@
+#!/bin/bash
 # Fetch all tags from the remote
 git fetch --tags
 

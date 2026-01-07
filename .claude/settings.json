@@ -1,0 +1,101 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Write",
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "TodoWrite",
+      "Task"
+    ],
+    "ask": [
+      "// Network operations - always ask before making external requests",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "WebFetch(domain:*)",
+
+      "// Package management - confirm before installing dependencies",
+      "Bash(npm install:*)",
+      "Bash(pip install:*)",
+      "Bash(apt-get install:*)",
+      "Bash(brew install:*)",
+
+      "// Git operations - confirm before pushing or destructive operations",
+      "Bash(git push:*)",
+      "Bash(git force:*)",
+      "Bash(git reset --hard:*)",
+
+      "// File operations on sensitive directories",
+      "Write(.env*)",
+      "Edit(.env*)",
+      "Write(**/secrets/**)",
+      "Edit(**/secrets/**)"
+    ],
+    "deny": [
+      "// Secrets and credentials - never allow Claude Code to read these",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.key)",
+      "Read(**/*.pem)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/credentials*)",
+      "Read(**/.aws/credentials)",
+      "Read(**/.ssh/id_*)",
+
+      "// Destructive operations - prevent accidental data loss",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(format:*)",
+
+      "// System modifications - prevent container escape attempts",
+      "Bash(sudo su:*)",
+      "Bash(sudo -i:*)",
+      "Bash(chmod 777:*)",
+      "Bash(chown root:*)",
+
+      "// Network security - prevent unauthorized external access",
+      "Bash(nc:*)",
+      "Bash(netcat:*)",
+      "Bash(nmap:*)",
+
+      "// Prevent container escape",
+      "Bash(docker run:*)",
+      "Bash(nsenter:*)",
+
+      "// Browser and system data",
+      "Read(**/Cookies*)",
+      "Read(**/Login Data*)",
+      "Read(**/.mozilla/**)",
+      "Read(**/.config/google-chrome/**)"
+    ]
+  },
+
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"Session ended - \" + (.stop_hook_reason // \"unknown\")' | xargs -I {} sh -c 'mkdir -p /var/log/dev-container && echo \"$(date): {}\" >> /var/log/dev-container/claude-sessions.log'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '[.tool_name, (.tool_input.command // .tool_input.file_path // .tool_input.pattern // \"N/A\")] | @tsv' | while read tool detail; do mkdir -p ~/.claude/audit && echo \"$(date): [$tool] $detail\" >> ~/.claude/audit/audit.log; done"
+          }
+        ]
+      }
+    ]
+  }
+}

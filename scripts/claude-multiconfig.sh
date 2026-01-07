@@ -1,3 +1,4 @@
+#!/bin/bash
 # Create dirs, ignore existing
 mkdir -p ~/.claude
 mkdir -p ~/.claude-glm
