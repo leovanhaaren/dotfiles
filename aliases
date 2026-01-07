@@ -2,6 +2,10 @@
 alias w="cd ~/Workspaces"
 alias reload="exec zsh"
 
+# Symlinks
+alias symlinkls="find . -maxdepth 1 -type l -ls"
+alias symlinkrm="find . -maxdepth 1 -type l -delete"
+
 # Git
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 

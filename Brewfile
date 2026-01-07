@@ -13,6 +13,7 @@ brew "awscli"                           # AWS command line interface
 brew "bat"                              # Cat clone with syntax highlighting
 brew "node"                             # Node.js JavaScript runtime
 brew "bruno-cli"                        # CLI for Bruno API client
+brew "chezmoi"                          # Manage dotfiles across multiple machines
 brew "container", link: false           # Container management tool
 brew "eza"                              # Modern replacement for ls
 brew "fzf"                              # Fuzzy finder for command line
