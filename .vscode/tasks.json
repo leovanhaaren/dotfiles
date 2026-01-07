@@ -2,17 +2,16 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Set up pre-commit hook for VS Code extensions",
-      "detail": "This will only run in the ~/dotfiles directory to avoid Husky collisions",
+      "label": "Install VS Code extensions from list",
+      "detail": "Installs all VS Code extensions listed in the extensions.txt file",
       "type": "shell",
-      "command": "cp ~/dotfiles/dotfiles-precommit-hook ~/dotfiles/.git/hooks/pre-commit"
+      "command": "xargs -n 1 code --install-extension < ~/dotfiles/vscode/extensions.txt"
     },
     {
-      "label": "RCM: UP",
-      "detail": "Generate symlinks for dotfiles",
+      "label": "Sync VS Code settings from dotfiles",
+      "detail": "Copies the VS Code settings.json from the dotfiles to the VS Code user settings directory",
       "type": "shell",
-      "command": "rcup",
-      "problemMatcher": []
+      "command": "cp ~/dotfiles/vscode/settings.json ~/Library/Application\\ Support/Code/User/settings.json"
     }
   ]
 }
