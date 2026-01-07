@@ -6,6 +6,44 @@ alias greadme="git add README.md && git commit -m 'chore: Update README.md' && g
 # Config
 alias reload="source ~/.zprofile ~/.zshrc"
 
+# Git Worktrees
+alias gwl="git worktree list"
+alias gwa="git worktree add"
+alias gwr="git worktree remove"
+alias gwp="git worktree prune"
+
+# Quick worktree for current branch name as folder
+gwab() {
+  # Create worktree with new branch: gwab feature-name
+  git worktree add -b "$1" "../$(basename $(pwd))-$1"
+}
+
+gwae() {
+  # Add worktree for existing branch: gwae branch-name
+  git worktree add "../$(basename $(pwd))-$1" "$1"
+}
+
+gwao() {
+  # Add worktree for existing origin branch: gwao branch-name
+  local worktree_path="../$(basename $(pwd))-$1"
+  git worktree add --track -b "$1" "$worktree_path" "origin/$1"
+
+  # Auto-install dependencies if package.json exists
+  if [[ -f "$worktree_path/package.json" ]]; then
+    echo "📦 Installing dependencies..."
+    (cd "$worktree_path" && npm install)
+  fi
+
+  # Navigate to the new worktree
+  cd "$worktree_path"
+}
+
+gwcd() {
+  # Jump to worktree by branch name (partial match)
+  local wt=$(git worktree list | grep -i "$1" | head -1 | awk '{print $1}')
+  [[ -n "$wt" ]] && cd "$wt" || echo "No worktree matching '$1'"
+}
+
 # Include custom aliases
 if [[ -f ~/.aliases.local ]]; then
   source ~/.aliases.local
