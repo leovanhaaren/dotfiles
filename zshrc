@@ -33,3 +33,6 @@ export NVM_DIR="$HOME/.nvm"
 
 # Go
 export PATH="$PATH:$(go env GOPATH)/bin"
+
+# Editor
+export EDITOR="code --wait"
