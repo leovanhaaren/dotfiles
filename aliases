@@ -1,27 +1,9 @@
 # Productivity
 alias w="cd ~/Workspaces"
-
-alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
-
-# LLM & AI-tools
-alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
-alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
-alias cc="pass-cli run -- claude"
-# alias claudework="CLAUDE_CONFIG_DIR=~/.claude-work claude"
-
-# AI containers
-alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
-alias ccc="
-podman run -it \
-  -v $(pwd):/app \
-  -v /Users/leo/.claude:/home/claude/.claude \
-  -v /Users/leo/.claude.json:/home/claude/.claude.json \
-  claude-code-sandbox
-
-"
-
-# Config
 alias reload="exec zsh"
+
+# Git
+alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
 # Git Worktrees
 alias gwl="git worktree list"
@@ -29,39 +11,37 @@ alias gwa="git worktree add"
 alias gwr="git worktree remove"
 alias gwp="git worktree prune"
 
-# Quick worktree for current branch name as folder
 gwab() {
-  # Create worktree with new branch: gwab feature-name
   git worktree add -b "$1" "../$(basename $(pwd))-$1"
 }
 
 gwae() {
-  # Add worktree for existing branch: gwae branch-name
   git worktree add "../$(basename $(pwd))-$1" "$1"
 }
 
 gwao() {
-  # Add worktree for existing origin branch: gwao branch-name
   local worktree_path="../$(basename $(pwd))-$1"
   git worktree add --track -b "$1" "$worktree_path" "origin/$1"
-
-  # Auto-install dependencies if package.json exists
   if [[ -f "$worktree_path/package.json" ]]; then
-    echo "📦 Installing dependencies..."
+    echo "Installing dependencies..."
     (cd "$worktree_path" && npm install)
   fi
-
-  # Navigate to the new worktree
   cd "$worktree_path"
 }
 
 gwcd() {
-  # Jump to worktree by branch name (partial match)
   local wt=$(git worktree list | grep -i "$1" | head -1 | awk '{print $1}')
   [[ -n "$wt" ]] && cd "$wt" || echo "No worktree matching '$1'"
 }
 
-# Include custom aliases
-if [[ -f ~/.aliases.local ]]; then
-  source ~/.aliases.local
-fi
+# Claude Code
+alias cc="pass-cli run -- claude"
+alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
+alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
+
+# Claude Code Container
+alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
+alias ccc="podman run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
+
+# Local overrides
+[[ -f ~/.aliases.local ]] && source ~/.aliases.local
