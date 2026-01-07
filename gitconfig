@@ -13,10 +13,8 @@
     gpgsign = true
 
 # Override for ksyos
-[includeIf "gitdir/i:~/Workspaces/ksyos/**"]
+[includeIf "hasconfig:remote.*.url:git@github.com:ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
 
-[includeIf "gitdir/i:~/Obsidian/ksyos/**"]
-    path = ~/dotfiles/git/ksyos.gitconfig
 [includeIf "gitdir/i:~/Obsidian/ksyos/**"]
     path = ~/dotfiles/git/op.gitconfig
