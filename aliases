@@ -3,8 +3,25 @@ alias w="cd ~/Workspaces"
 
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
+# LLM & AI-tools
+alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
+alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
+alias cc="pass-cli run -- claude"
+# alias claudework="CLAUDE_CONFIG_DIR=~/.claude-work claude"
+
+# AI containers
+alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
+alias ccc="
+podman run -it \
+  -v $(pwd):/app \
+  -v /Users/leo/.claude:/home/claude/.claude \
+  -v /Users/leo/.claude.json:/home/claude/.claude.json \
+  claude-code-sandbox
+
+"
+
 # Config
-alias reload="source ~/.zprofile ~/.zshrc"
+alias reload="exec zsh"
 
 # Git Worktrees
 alias gwl="git worktree list"
