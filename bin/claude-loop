@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 #
-# claude-loop - Run Claude Code in a loop with a PRD as input
+# claude-loop - Run Claude Code in a structured loop for long-running agent sessions
 #
 # Inspired by: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
 #
 # Key patterns implemented:
-#   - Two-phase approach: init phase sets up environment, work phase makes progress
-#   - Progress tracking: claude-progress.md maintains state across sessions
+#   - Two-phase approach: init phase gathers requirements via wizard, work phase makes progress
+#   - Structured PRD: prd.json with features marked as passing/failing
+#   - Progress tracking: claude-progress.txt maintains state across sessions
 #   - Git checkpointing: commits after each iteration for rollback capability
 #   - Startup verification: validates environment before each iteration
 #   - Single task focus: one feature/task per iteration to prevent context exhaustion
@@ -20,9 +21,13 @@ ADDITIONAL_PROMPT=""
 AUTO_MODE=false
 SKIP_INIT=false
 NO_CHECKPOINT=false
-PRD_FILE=""
-PROGRESS_FILE="claude-progress.md"
+PRD_FILE="prd.json"
+PROGRESS_FILE="claude-progress.txt"
+INIT_SCRIPT="init.sh"
 WORKTREE_DIR=""
+CONCURRENT_MODE=false
+MAX_CONCURRENT=3
+WORKTREES_BASE=".claude-worktrees"
 
 # Colors
 RED='\033[0;31m'
@@ -35,39 +40,51 @@ NC='\033[0m'
 
 usage() {
     cat << EOF
-${BOLD}Usage:${NC} $(basename "$0") <prd-file> [options]
+${BOLD}Usage:${NC} $(basename "$0") [options]
 
-Run Claude Code in a structured loop with a PRD, using progress tracking
-and git checkpointing for reliable long-running agent sessions.
-
-${BOLD}Arguments:${NC}
-  prd-file                Path to the PRD file (required)
+Run Claude Code in a structured loop for long-running agent sessions.
+Uses an interactive wizard to gather project requirements and creates
+a structured prd.json with features tracked as passing/failing.
 
 ${BOLD}Options:${NC}
-  -m, --max-iterations N  Maximum iterations (default: 10)
+  -m, --max-iterations N  Maximum iterations per feature (default: 10)
   -p, --prompt TEXT       Additional instructions for each iteration
   -a, --auto              Run without confirmation prompts (unattended)
   -s, --skip-init         Skip initialization phase (resume existing work)
   -n, --no-checkpoint     Disable git checkpointing
   -d, --dir PATH          Working directory (default: current directory)
+  -f, --prd-file PATH     Use existing PRD file instead of wizard
+  -c, --concurrent N      Run N features in parallel using git worktrees (default: off)
+  --merge                 Merge completed feature branches back to main
+  --status                Show status of concurrent feature branches
   -h, --help              Show this help message
 
 ${BOLD}Files Created:${NC}
-  claude-progress.md      Progress log maintained across sessions
-  init.sh                 Quick environment setup script (init phase only)
+  prd.json                Structured project requirements with feature status
+  claude-progress.txt     Progress log maintained across sessions
+  init.sh                 Quick environment setup script
 
 ${BOLD}Examples:${NC}
-  # Start new project
-  $(basename "$0") ./PRD.md
+  # Start new project (interactive wizard)
+  $(basename "$0")
 
   # Resume existing work
-  $(basename "$0") ./PRD.md --skip-init
+  $(basename "$0") --skip-init
 
   # Run unattended with 20 iterations
-  $(basename "$0") ./PRD.md --auto -m 20
+  $(basename "$0") --auto -m 20
 
-  # Custom working directory
-  $(basename "$0") ./PRD.md -d ./my-project
+  # Use existing PRD file
+  $(basename "$0") -f ./my-prd.json
+
+  # Run 3 features in parallel (each in its own worktree)
+  $(basename "$0") --concurrent 3 --auto
+
+  # Check status of parallel feature work
+  $(basename "$0") --status
+
+  # Merge completed features back to main
+  $(basename "$0") --merge
 
 EOF
     exit 0
@@ -79,6 +96,11 @@ log_warning() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 log_phase()   { echo -e "\n${CYAN}${BOLD}══════ $1 ══════${NC}\n"; }
 
+USE_WIZARD=true
+INPUT_PRD_FILE=""
+MERGE_MODE=false
+STATUS_MODE=false
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -88,24 +110,19 @@ while [[ $# -gt 0 ]]; do
         -s|--skip-init) SKIP_INIT=true; shift ;;
         -n|--no-checkpoint) NO_CHECKPOINT=true; shift ;;
         -d|--dir) WORKTREE_DIR="$2"; shift 2 ;;
+        -f|--prd-file) INPUT_PRD_FILE="$2"; USE_WIZARD=false; shift 2 ;;
+        -c|--concurrent) CONCURRENT_MODE=true; MAX_CONCURRENT="$2"; shift 2 ;;
+        --merge) MERGE_MODE=true; shift ;;
+        --status) STATUS_MODE=true; shift ;;
         -h|--help) usage ;;
         -*) log_error "Unknown option: $1"; usage ;;
-        *)
-            if [[ -z "$PRD_FILE" ]]; then
-                PRD_FILE="$1"
-            else
-                log_error "Unexpected argument: $1"
-                usage
-            fi
-            shift
-            ;;
+        *) log_error "Unexpected argument: $1"; usage ;;
     esac
 done
 
 # Validation
-[[ -z "$PRD_FILE" ]] && { log_error "PRD file is required"; usage; }
-[[ ! -f "$PRD_FILE" ]] && { log_error "PRD file not found: $PRD_FILE"; exit 1; }
 command -v claude &>/dev/null || { log_error "Claude Code CLI not found"; exit 1; }
+command -v jq &>/dev/null || { log_error "jq is required but not found"; exit 1; }
 
 # Set working directory
 if [[ -n "$WORKTREE_DIR" ]]; then
@@ -114,8 +131,563 @@ if [[ -n "$WORKTREE_DIR" ]]; then
 fi
 WORK_DIR=$(pwd)
 
-# Resolve PRD to absolute path
-PRD_FILE=$(cd "$(dirname "$PRD_FILE")" && pwd)/$(basename "$PRD_FILE")
+# Resolve input PRD to absolute path if provided
+if [[ -n "$INPUT_PRD_FILE" ]]; then
+    [[ ! -f "$INPUT_PRD_FILE" ]] && { log_error "PRD file not found: $INPUT_PRD_FILE"; exit 1; }
+    INPUT_PRD_FILE=$(cd "$(dirname "$INPUT_PRD_FILE")" && pwd)/$(basename "$INPUT_PRD_FILE")
+fi
+
+#
+# Interactive Wizard
+# Gathers project requirements from user input, auto-generates verification steps
+#
+
+# Simple spinner for progress indication
+spin_pid=""
+start_spinner() {
+    local msg="$1"
+    local spin_chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    (
+        while true; do
+            for (( i=0; i<${#spin_chars}; i++ )); do
+                echo -ne "\r${BLUE}[${spin_chars:$i:1}]${NC} $msg"
+                sleep 0.1
+            done
+        done
+    ) &
+    spin_pid=$!
+}
+
+stop_spinner() {
+    local success="$1"
+    local msg="$2"
+    if [[ -n "$spin_pid" ]]; then
+        kill "$spin_pid" 2>/dev/null
+        wait "$spin_pid" 2>/dev/null
+        spin_pid=""
+    fi
+    if [[ "$success" == "true" ]]; then
+        echo -e "\r${GREEN}[✓]${NC} $msg"
+    else
+        echo -e "\r${RED}[✗]${NC} $msg"
+    fi
+}
+
+# Analyze feature complexity and suggest splits
+analyze_feature_complexity() {
+    local project_name="$1"
+    local project_desc="$2"
+    local tech_stack="$3"
+    local features_list="$4"
+
+    local prompt
+    read -r -d '' prompt << 'COMPLEXPROMPT' || true
+You are analyzing software features for complexity. For each feature, provide:
+1. A complexity score (1-10 scale)
+2. Whether it should be split (if score > 6)
+3. Explanation of why it's complex (if score > 6)
+4. Suggested sub-features if it should be split
+
+IMPORTANT: Return ONLY valid JSON, no markdown, no explanations, no code blocks.
+
+Complexity scoring guide:
+- 1-3: Simple (single responsibility, few components)
+- 4-6: Moderate (multiple components, some integration)
+- 7-8: Complex (many components, significant integration, should consider splitting)
+- 9-10: Very complex (must be split for manageable development)
+
+Return this exact JSON structure:
+{
+  "analyzed_features": [
+    {
+      "original": "feature name",
+      "complexity_score": 5,
+      "should_split": false,
+      "explanation": "",
+      "suggested_splits": []
+    }
+  ]
+}
+
+For features that should be split (score > 6), provide:
+- explanation: Clear reason why it's complex
+- suggested_splits: Array of simpler sub-features
+COMPLEXPROMPT
+
+    prompt="$prompt
+
+PROJECT: $project_name
+DESCRIPTION: $project_desc
+TECH STACK: $tech_stack
+
+FEATURES TO ANALYZE:
+$features_list
+
+Return ONLY the JSON object. No other text."
+
+    local prompt_file
+    prompt_file=$(mktemp)
+    echo "$prompt" > "$prompt_file"
+
+    local result
+    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
+    rm -f "$prompt_file"
+
+    # Validate JSON
+    if echo "$result" | jq -e '.analyzed_features' >/dev/null 2>&1; then
+        echo "$result"
+    else
+        echo '{"analyzed_features":[]}'
+    fi
+}
+
+# Suggest missing features based on project context
+suggest_missing_features() {
+    local project_name="$1"
+    local project_desc="$2"
+    local tech_stack="$3"
+    local existing_features="$4"
+
+    local prompt
+    read -r -d '' prompt << 'SUGGESTPROMPT' || true
+You are a software architect reviewing a project's feature list.
+Suggest useful features that might be missing but would add significant value.
+
+IMPORTANT: Return ONLY valid JSON, no markdown, no explanations, no code blocks.
+
+Guidelines:
+- Only suggest 3-5 features maximum
+- Focus on practical, commonly-needed features
+- Consider the tech stack when suggesting
+- Don't suggest features already covered by existing ones
+- Prioritize: security, UX improvements, error handling, testing
+
+Return this exact JSON structure:
+{
+  "suggestions": [
+    {
+      "feature": "Feature name",
+      "reason": "Why this would be valuable",
+      "priority": "high|medium|low"
+    }
+  ]
+}
+SUGGESTPROMPT
+
+    prompt="$prompt
+
+PROJECT: $project_name
+DESCRIPTION: $project_desc
+TECH STACK: $tech_stack
+
+EXISTING FEATURES:
+$existing_features
+
+Return ONLY the JSON object. No other text."
+
+    local prompt_file
+    prompt_file=$(mktemp)
+    echo "$prompt" > "$prompt_file"
+
+    local result
+    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
+    rm -f "$prompt_file"
+
+    # Validate JSON
+    if echo "$result" | jq -e '.suggestions' >/dev/null 2>&1; then
+        echo "$result"
+    else
+        echo '{"suggestions":[]}'
+    fi
+}
+
+# Generate verification steps and reorder features using Claude
+generate_feature_steps() {
+    local project_name="$1"
+    local project_desc="$2"
+    local tech_stack="$3"
+    local features_list="$4"
+
+    local prompt
+    read -r -d '' prompt << 'GENPROMPT' || true
+You are helping create a structured PRD for a software project.
+
+IMPORTANT: Return ONLY valid JSON, no markdown, no explanations, no code blocks.
+
+Your tasks:
+1. REORDER the features in the optimal build sequence (foundational features first, dependent features later)
+2. For each feature, create 2-4 specific, testable verification steps
+
+Build order guidelines:
+- Project setup/configuration first
+- Database/data models early
+- Authentication before features requiring auth
+- Core CRUD operations before advanced features
+- UI components after their backend dependencies
+- Integration features last
+
+Return this exact JSON structure:
+{
+  "features": [
+    {
+      "description": "feature name here",
+      "category": "functional",
+      "steps": ["step 1", "step 2", "step 3"],
+      "passes": false
+    }
+  ]
+}
+
+Steps should be:
+- Specific and actionable (e.g., "User can click login button and see dashboard")
+- Testable by a developer (not vague like "works correctly")
+- Written from user perspective when applicable
+GENPROMPT
+
+    prompt="$prompt
+
+PROJECT: $project_name
+DESCRIPTION: $project_desc
+TECH STACK: $tech_stack
+
+FEATURES TO REORDER AND EXPAND:
+$features_list
+
+Return ONLY the JSON object with features array, reordered optimally. No other text."
+
+    local prompt_file
+    prompt_file=$(mktemp)
+    echo "$prompt" > "$prompt_file"
+
+    local result
+    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
+    rm -f "$prompt_file"
+
+    # Validate JSON
+    if echo "$result" | jq -e '.features' >/dev/null 2>&1; then
+        echo "$result" | jq -c '.features'
+    else
+        # Fallback: create basic structure without steps
+        echo "[]"
+    fi
+}
+
+run_wizard() {
+    log_phase "PROJECT SETUP WIZARD"
+
+    echo -e "${BOLD}Let's set up your project. I'll ask a few questions, then auto-generate a PRD for you to review.${NC}"
+    echo ""
+
+    # Project name
+    echo -e "${CYAN}1. Project Name${NC}"
+    echo -e "   What should we call this project?"
+    read -p "   > " PROJECT_NAME
+    [[ -z "$PROJECT_NAME" ]] && PROJECT_NAME="my-project"
+    echo ""
+
+    # Project description
+    echo -e "${CYAN}2. Project Description${NC}"
+    echo -e "   Describe what you're building in 2-3 sentences:"
+    read -p "   > " PROJECT_DESCRIPTION
+    echo ""
+
+    # Tech stack
+    echo -e "${CYAN}3. Tech Stack${NC}"
+    echo -e "   What technologies will you use? (e.g., Node.js, React, Python, etc.)"
+    read -p "   > " TECH_STACK
+    echo ""
+
+    # Features - collect names
+    echo -e "${CYAN}4. Features${NC}"
+    echo -e "   List the main features you want to build (one per line)."
+    echo -e "   Press Enter on empty line when done:"
+    echo ""
+
+    local feature_names=()
+    while true; do
+        read -p "   - " feature
+        if [[ -z "$feature" ]]; then
+            break
+        fi
+        feature_names+=("$feature")
+    done
+    echo ""
+
+    # Verification command
+    echo -e "${CYAN}5. How to Test${NC}"
+    echo -e "   How should we verify the app works? (e.g., 'bun test', 'open http://localhost:3000')"
+    read -p "   > " TEST_COMMAND
+    echo ""
+
+    # Additional context
+    echo -e "${CYAN}6. Additional Context (optional)${NC}"
+    echo -e "   Any other important details? (Press Enter to skip)"
+    read -p "   > " ADDITIONAL_CONTEXT
+    echo ""
+
+    # Build features list for analysis
+    echo ""
+    local features_list=""
+    for feature in "${feature_names[@]}"; do
+        features_list="$features_list- $feature"$'\n'
+    done
+
+    # Step 1: Analyze complexity
+    start_spinner "Analyzing feature complexity..."
+
+    local complexity_result
+    complexity_result=$(analyze_feature_complexity "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$TECH_STACK" "$features_list")
+
+    stop_spinner "true" "Complexity analysis complete"
+
+    # Check for complex features that should be split
+    local has_complex=false
+    local complex_count
+    complex_count=$(echo "$complexity_result" | jq '[.analyzed_features[] | select(.should_split == true)] | length')
+
+    if [[ "$complex_count" -gt 0 ]]; then
+        has_complex=true
+        echo ""
+        echo -e "${YELLOW}${BOLD}Complex Features Detected${NC}"
+        echo -e "${CYAN}─────────────────────────────────────────${NC}"
+        echo ""
+
+        # Process each complex feature
+        local analyzed_features
+        analyzed_features=$(echo "$complexity_result" | jq -c '.analyzed_features[]')
+
+        local new_feature_names=()
+        local idx=0
+
+        for feature in "${feature_names[@]}"; do
+            local feature_analysis
+            feature_analysis=$(echo "$complexity_result" | jq -c ".analyzed_features[$idx]")
+
+            local score should_split explanation
+            score=$(echo "$feature_analysis" | jq -r '.complexity_score')
+            should_split=$(echo "$feature_analysis" | jq -r '.should_split')
+
+            if [[ "$should_split" == "true" ]]; then
+                explanation=$(echo "$feature_analysis" | jq -r '.explanation')
+                local splits
+                splits=$(echo "$feature_analysis" | jq -r '.suggested_splits[]' 2>/dev/null)
+
+                echo -e "${YELLOW}⚠${NC}  ${BOLD}$feature${NC} ${RED}(complexity: $score/10)${NC}"
+                echo -e "   ${explanation}"
+                echo ""
+                echo -e "   ${CYAN}Suggested sub-features:${NC}"
+                echo "$splits" | while read -r split; do
+                    [[ -n "$split" ]] && echo -e "     • $split"
+                done
+                echo ""
+
+                read -p "   Split this feature? [y/N]: " -n 1 -r split_choice
+                echo ""
+
+                if [[ "$split_choice" =~ ^[Yy]$ ]]; then
+                    # Add the sub-features instead
+                    while IFS= read -r split; do
+                        [[ -n "$split" ]] && new_feature_names+=("$split")
+                    done < <(echo "$feature_analysis" | jq -r '.suggested_splits[]' 2>/dev/null)
+                    log_success "Split into $(echo "$feature_analysis" | jq '.suggested_splits | length') sub-features"
+                else
+                    new_feature_names+=("$feature")
+                    log_info "Keeping original feature"
+                fi
+                echo ""
+            else
+                # Not complex, keep as-is
+                new_feature_names+=("$feature")
+                echo -e "${GREEN}✓${NC}  ${BOLD}$feature${NC} ${GREEN}(complexity: $score/10)${NC}"
+            fi
+
+            ((idx++))
+        done
+
+        echo ""
+        feature_names=("${new_feature_names[@]}")
+
+        # Rebuild features list after splits
+        features_list=""
+        for feature in "${feature_names[@]}"; do
+            features_list="$features_list- $feature"$'\n'
+        done
+    fi
+
+    # Step 2: Suggest missing features
+    start_spinner "Checking for useful missing features..."
+
+    local suggestions_result
+    suggestions_result=$(suggest_missing_features "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$TECH_STACK" "$features_list")
+
+    stop_spinner "true" "Feature analysis complete"
+
+    local suggestion_count
+    suggestion_count=$(echo "$suggestions_result" | jq '.suggestions | length')
+
+    if [[ "$suggestion_count" -gt 0 ]]; then
+        echo ""
+        echo -e "${CYAN}${BOLD}Suggested Additional Features${NC}"
+        echo -e "${CYAN}─────────────────────────────────────────${NC}"
+        echo ""
+
+        local suggestions_json
+        suggestions_json=$(echo "$suggestions_result" | jq -c '.suggestions[]')
+
+        local suggestion_idx=0
+        while IFS= read -r suggestion; do
+            local feat reason priority
+            feat=$(echo "$suggestion" | jq -r '.feature')
+            reason=$(echo "$suggestion" | jq -r '.reason')
+            priority=$(echo "$suggestion" | jq -r '.priority')
+
+            local priority_color="${NC}"
+            case "$priority" in
+                high) priority_color="${RED}" ;;
+                medium) priority_color="${YELLOW}" ;;
+                low) priority_color="${GREEN}" ;;
+            esac
+
+            echo -e "${BOLD}$((suggestion_idx + 1)).${NC} $feat ${priority_color}[$priority]${NC}"
+            echo -e "   ${reason}"
+            echo ""
+
+            read -p "   Add this feature? [y/N]: " -n 1 -r add_choice
+            echo ""
+
+            if [[ "$add_choice" =~ ^[Yy]$ ]]; then
+                feature_names+=("$feat")
+                log_success "Added: $feat"
+            fi
+            echo ""
+
+            ((suggestion_idx++))
+        done < <(echo "$suggestions_result" | jq -c '.suggestions[]')
+
+        # Rebuild features list after additions
+        features_list=""
+        for feature in "${feature_names[@]}"; do
+            features_list="$features_list- $feature"$'\n'
+        done
+    fi
+
+    # Step 3: Generate verification steps and reorder
+    echo ""
+    start_spinner "Generating verification steps and optimizing build order..."
+
+    local generated_features
+    generated_features=$(generate_feature_steps "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$TECH_STACK" "$features_list")
+
+    # If generation failed, create basic structure
+    if [[ "$generated_features" == "[]" ]] || [[ -z "$generated_features" ]]; then
+        stop_spinner "false" "Auto-generation failed, using basic structure"
+        generated_features="["
+        local first=true
+        for feature in "${feature_names[@]}"; do
+            if [[ "$first" == true ]]; then
+                first=false
+            else
+                generated_features+=","
+            fi
+            local escaped="${feature//\"/\\\"}"
+            generated_features+="{\"description\":\"$escaped\",\"category\":\"functional\",\"steps\":[],\"passes\":false}"
+        done
+        generated_features+="]"
+    else
+        stop_spinner "true" "Generated verification steps and optimized build order"
+    fi
+
+    # Create prd.json using jq for proper escaping
+    local escaped_name escaped_desc escaped_tech escaped_test escaped_context
+    escaped_name=$(echo "$PROJECT_NAME" | jq -Rs '.')
+    escaped_desc=$(echo "$PROJECT_DESCRIPTION" | jq -Rs '.')
+    escaped_tech=$(echo "$TECH_STACK" | jq -Rs '.')
+    escaped_test=$(echo "$TEST_COMMAND" | jq -Rs '.')
+    escaped_context=$(echo "$ADDITIONAL_CONTEXT" | jq -Rs '.')
+
+    # Write PRD
+    cat > "$WORK_DIR/$PRD_FILE" << PRDJSON
+{
+  "name": ${escaped_name},
+  "description": ${escaped_desc},
+  "techStack": ${escaped_tech},
+  "testCommand": ${escaped_test},
+  "additionalContext": ${escaped_context},
+  "features": $generated_features
+}
+PRDJSON
+
+    # Pretty-print the JSON
+    local tmp_file
+    tmp_file=$(mktemp)
+    if jq '.' "$WORK_DIR/$PRD_FILE" > "$tmp_file" 2>/dev/null; then
+        mv "$tmp_file" "$WORK_DIR/$PRD_FILE"
+    else
+        rm -f "$tmp_file"
+        log_error "Failed to create valid JSON"
+        exit 1
+    fi
+
+    log_success "Created $PRD_FILE"
+    echo ""
+
+    # Show generated PRD summary with build order
+    echo -e "${BOLD}Generated PRD - Build Order:${NC}"
+    echo -e "${CYAN}─────────────────────────────────────────${NC}"
+
+    # Show features in order with numbers
+    local feature_count
+    feature_count=$(jq '.features | length' "$WORK_DIR/$PRD_FILE")
+    for (( i=0; i<feature_count; i++ )); do
+        local desc steps_count
+        desc=$(jq -r ".features[$i].description" "$WORK_DIR/$PRD_FILE")
+        steps_count=$(jq ".features[$i].steps | length" "$WORK_DIR/$PRD_FILE")
+        echo -e "  ${BOLD}$((i+1)).${NC} $desc ${CYAN}($steps_count steps)${NC}"
+    done
+
+    echo -e "${CYAN}─────────────────────────────────────────${NC}"
+    echo ""
+
+    # Show full PRD
+    echo -e "${BOLD}Full PRD:${NC}"
+    jq -C '.' "$WORK_DIR/$PRD_FILE"
+    echo ""
+
+    # Ask user to review
+    echo -e "${YELLOW}Review the PRD above. You can:${NC}"
+    echo -e "  ${BOLD}[Enter]${NC}  Continue with this PRD"
+    echo -e "  ${BOLD}[e]${NC}      Edit $PRD_FILE in your editor"
+    echo -e "  ${BOLD}[q]${NC}      Quit and edit manually"
+    echo ""
+    read -p "Choice: " -n 1 -r REVIEW_CHOICE
+    echo ""
+
+    case $REVIEW_CHOICE in
+        [Ee])
+            # Open in editor
+            local editor="${EDITOR:-${VISUAL:-nano}}"
+            log_info "Opening $PRD_FILE in $editor..."
+            "$editor" "$WORK_DIR/$PRD_FILE"
+
+            # Validate after editing
+            if ! jq empty "$WORK_DIR/$PRD_FILE" 2>/dev/null; then
+                log_error "Invalid JSON after editing. Please fix $PRD_FILE and run with --skip-init"
+                exit 1
+            fi
+            log_success "PRD updated"
+            ;;
+        [Qq])
+            log_info "PRD saved to $PRD_FILE"
+            log_info "Edit it manually, then run: $(basename "$0") --skip-init"
+            exit 0
+            ;;
+        *)
+            log_success "Continuing with generated PRD"
+            ;;
+    esac
+
+    echo ""
+}
 
 #
 # Phase 1: Initialization
@@ -124,34 +696,50 @@ PRD_FILE=$(cd "$(dirname "$PRD_FILE")" && pwd)/$(basename "$PRD_FILE")
 run_init_phase() {
     log_phase "INITIALIZATION PHASE"
 
+    # Run wizard or use existing PRD file
+    if [[ "$USE_WIZARD" == true ]]; then
+        run_wizard
+    else
+        # Copy input PRD to working directory if different
+        if [[ "$INPUT_PRD_FILE" != "$WORK_DIR/$PRD_FILE" ]]; then
+            cp "$INPUT_PRD_FILE" "$WORK_DIR/$PRD_FILE"
+            log_info "Copied PRD file to $WORK_DIR/$PRD_FILE"
+        fi
+    fi
+
+    # Validate PRD structure
+    if ! jq empty "$WORK_DIR/$PRD_FILE" 2>/dev/null; then
+        log_error "Invalid JSON in PRD file"
+        exit 1
+    fi
+
     local init_prompt
     read -r -d '' init_prompt << 'INIT_EOF' || true
 You are initializing a new project. Your goal is to set up the foundation for iterative development.
 
 ## Your Tasks:
 
-1. **Read and analyze the PRD** to understand the full scope
-2. **Create claude-progress.md** with this structure:
-   ```markdown
-   # Project Progress
+1. **Read and analyze the prd.json** to understand the full scope
 
-   ## Overview
+2. **Create claude-progress.txt** with this structure:
+   ```
+   PROJECT PROGRESS
+   ================
+
+   Overview:
    [Brief project description from PRD]
 
-   ## Features Checklist
-   - [ ] Feature 1: [description]
-   - [ ] Feature 2: [description]
-   ...
+   Current State:
+   [What's working, what's next]
 
-   ## Session Log
-   ### Session 1 - [DATE]
+   Session Log:
+   -----------
+   Session 1 - [DATE]
    - Initialized project structure
    - [Other setup tasks completed]
 
-   ## Current State
-   [What's working, what's next]
-
-   ## Notes
+   Notes:
+   ------
    [Any important decisions or context for future sessions]
    ```
 
@@ -166,16 +754,17 @@ You are initializing a new project. Your goal is to set up the foundation for it
 
 5. **Make initial git commit** with message: "chore: initialize project structure"
 
-## Important:
-- Break down the PRD into discrete, testable features in the checklist
-- Each feature should be completable in a single session
+## Important Rules:
+- The prd.json file contains features with a "passes" field - NEVER modify this field during init
+- Break down each feature so it can be completed in a single session
 - Document any assumptions or decisions in the Notes section
+- The init.sh script should be idempotent (safe to run multiple times)
 INIT_EOF
 
     init_prompt="$init_prompt
 
-## PRD Content:
-$(cat "$PRD_FILE")"
+## PRD Content (prd.json):
+$(cat "$WORK_DIR/$PRD_FILE")"
 
     if [[ -n "$ADDITIONAL_PROMPT" ]]; then
         init_prompt="$init_prompt
@@ -184,12 +773,19 @@ $(cat "$PRD_FILE")"
 $ADDITIONAL_PROMPT"
     fi
 
-    log_info "Running initialization..."
+    log_info "Running initialization with Claude..."
+
+    # Write prompt to temp file to avoid argument length issues
+    local prompt_file
+    prompt_file=$(mktemp)
+    echo "$init_prompt" > "$prompt_file"
 
     set +e
-    claude --print "$init_prompt" 2>&1
+    claude --print < "$prompt_file" 2>&1
     local exit_code=$?
     set -e
+
+    rm -f "$prompt_file"
 
     if [[ $exit_code -ne 0 ]]; then
         log_error "Initialization failed with exit code: $exit_code"
@@ -203,46 +799,76 @@ $ADDITIONAL_PROMPT"
 # Phase 2: Working Loop
 # Iteratively completes features with checkpointing
 #
+get_next_feature() {
+    # Get the first feature where passes=false
+    jq -r '.features | to_entries | map(select(.value.passes == false)) | .[0] | .key // empty' "$WORK_DIR/$PRD_FILE" 2>/dev/null
+}
+
+get_feature_count() {
+    jq -r '.features | length' "$WORK_DIR/$PRD_FILE" 2>/dev/null || echo "0"
+}
+
+get_passing_count() {
+    jq -r '[.features[] | select(.passes == true)] | length' "$WORK_DIR/$PRD_FILE" 2>/dev/null || echo "0"
+}
+
 build_work_prompt() {
     local iteration=$1
     local progress_content=""
+    local prd_content=""
 
-    if [[ -f "$PROGRESS_FILE" ]]; then
-        progress_content=$(cat "$PROGRESS_FILE")
+    if [[ -f "$WORK_DIR/$PROGRESS_FILE" ]]; then
+        progress_content=$(cat "$WORK_DIR/$PROGRESS_FILE")
     fi
+
+    if [[ -f "$WORK_DIR/$PRD_FILE" ]]; then
+        prd_content=$(cat "$WORK_DIR/$PRD_FILE")
+    fi
+
+    local total_features
+    local passing_features
+    total_features=$(get_feature_count)
+    passing_features=$(get_passing_count)
 
     cat << WORK_EOF
 You are continuing work on a project. This is iteration $iteration of $MAX_ITERATIONS.
+Progress: $passing_features of $total_features features passing.
 
 ## Startup Verification (do this first):
 1. Run \`pwd\` to confirm you're in the right directory
-2. Read claude-progress.md to understand current state
+2. Read claude-progress.txt to understand current state
 3. Check git status for any uncommitted changes
-4. Run init.sh if environment needs setup
+4. Run \`./init.sh\` if environment needs setup
 5. Do a quick smoke test to verify the app still works
 
 ## Your Task This Iteration:
-1. Review the Features Checklist in claude-progress.md
-2. Pick the NEXT UNCOMPLETED feature (work on ONE feature only)
+1. Read prd.json to see all features and their status
+2. Pick the NEXT feature where "passes": false (work on ONE feature only)
 3. Implement and test that feature thoroughly
-4. Update claude-progress.md:
-   - Mark the feature as [x] complete
+4. When the feature works, update prd.json to set "passes": true for ONLY that feature
+5. Update claude-progress.txt:
    - Add a session log entry with what you did
    - Update "Current State" section
-5. Commit your changes with a descriptive message
+6. Commit your changes with a descriptive message
+
+## Critical Rules for prd.json:
+- You may ONLY change the "passes" field from false to true
+- NEVER add, remove, or modify feature descriptions
+- NEVER change a "passes": true back to false
+- Only mark a feature as passing AFTER you have verified it works
 
 ## Important Rules:
 - Only work on ONE feature per iteration to avoid context exhaustion
 - Code must be clean and ready for main branch (no debris)
-- Test your changes before marking complete
-- If blocked, document the blocker in Notes and move to next feature
-- When ALL features are complete, respond with: ALL_TASKS_COMPLETE
+- Self-verify through testing before marking passes: true
+- If blocked, document the blocker in claude-progress.txt Notes and move to next feature
+- When ALL features have "passes": true, respond with: ALL_TASKS_COMPLETE
 
-## Current Progress File:
+## Current Progress File (claude-progress.txt):
 $progress_content
 
-## PRD Reference:
-$(cat "$PRD_FILE")
+## PRD with Feature Status (prd.json):
+$prd_content
 WORK_EOF
 
     if [[ -n "$ADDITIONAL_PROMPT" ]]; then
@@ -296,6 +922,422 @@ rollback_last() {
     log_success "Rollback complete"
 }
 
+#
+# Concurrent Worktree Functions
+# Each feature gets its own worktree and branch for parallel development
+#
+
+# Convert feature description to a valid branch name
+feature_to_branch() {
+    local feature="$1"
+    local index="$2"
+    # Sanitize: lowercase, replace spaces/special chars with dashes, limit length
+    echo "feature-${index}-$(echo "$feature" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | cut -c1-30)"
+}
+
+# Get list of incomplete features with their indices
+get_incomplete_features() {
+    jq -r '.features | to_entries | map(select(.value.passes == false)) | .[] | "\(.key)|\(.value.description)"' "$WORK_DIR/$PRD_FILE" 2>/dev/null
+}
+
+# Create a worktree for a specific feature
+create_feature_worktree() {
+    local feature_index="$1"
+    local feature_desc="$2"
+    local branch_name
+    branch_name=$(feature_to_branch "$feature_desc" "$feature_index")
+    local worktree_path="$WORK_DIR/$WORKTREES_BASE/$branch_name"
+
+    # Check if worktree already exists
+    if [[ -d "$worktree_path" ]]; then
+        log_info "Worktree already exists: $branch_name"
+        echo "$worktree_path"
+        return 0
+    fi
+
+    # Create the worktrees base directory
+    mkdir -p "$WORK_DIR/$WORKTREES_BASE"
+
+    # Get the main branch name
+    local main_branch
+    main_branch=$(git rev-parse --abbrev-ref HEAD)
+
+    # Create branch if it doesn't exist
+    if ! git show-ref --verify --quiet "refs/heads/$branch_name"; then
+        git branch "$branch_name" "$main_branch"
+    fi
+
+    # Create worktree
+    git worktree add "$worktree_path" "$branch_name" 2>/dev/null || {
+        log_error "Failed to create worktree for $branch_name"
+        return 1
+    }
+
+    # Copy PRD and progress files to worktree
+    cp "$WORK_DIR/$PRD_FILE" "$worktree_path/"
+    [[ -f "$WORK_DIR/$PROGRESS_FILE" ]] && cp "$WORK_DIR/$PROGRESS_FILE" "$worktree_path/"
+    [[ -f "$WORK_DIR/$INIT_SCRIPT" ]] && cp "$WORK_DIR/$INIT_SCRIPT" "$worktree_path/"
+
+    log_success "Created worktree: $branch_name"
+    echo "$worktree_path"
+}
+
+# Build prompt for a specific feature in concurrent mode
+build_feature_prompt() {
+    local feature_index="$1"
+    local feature_desc="$2"
+    local worktree_path="$3"
+    local iteration="$4"
+
+    local progress_content=""
+    local prd_content=""
+
+    if [[ -f "$worktree_path/$PROGRESS_FILE" ]]; then
+        progress_content=$(cat "$worktree_path/$PROGRESS_FILE")
+    fi
+
+    if [[ -f "$worktree_path/$PRD_FILE" ]]; then
+        prd_content=$(cat "$worktree_path/$PRD_FILE")
+    fi
+
+    cat << FEATURE_EOF
+You are working on a SINGLE SPECIFIC feature in a dedicated git branch.
+This is iteration $iteration of $MAX_ITERATIONS for this feature.
+
+## YOUR ASSIGNED FEATURE (index $feature_index):
+$feature_desc
+
+## Startup Verification (do this first):
+1. Run \`pwd\` to confirm you're in the right directory
+2. Run \`git branch\` to confirm you're on the feature branch
+3. Run \`./init.sh\` if environment needs setup
+4. Do a quick smoke test to verify the app works
+
+## Your Task This Iteration:
+1. Focus ONLY on your assigned feature above
+2. Implement and test that feature thoroughly
+3. When the feature works, update prd.json to set "passes": true for feature index $feature_index
+4. Update claude-progress.txt with what you did
+5. Commit your changes with a descriptive message
+
+## Critical Rules for prd.json:
+- You may ONLY change the "passes" field for YOUR feature (index $feature_index)
+- NEVER modify other features' status
+- Only mark as passing AFTER you have verified it works
+
+## Important Rules:
+- Stay focused on YOUR assigned feature only
+- Code must be clean and ready for merging
+- Self-verify through testing before marking passes: true
+- When your feature is complete and passing, respond with: FEATURE_COMPLETE
+
+## Current Progress File (claude-progress.txt):
+$progress_content
+
+## PRD with Feature Status (prd.json):
+$prd_content
+FEATURE_EOF
+
+    if [[ -n "$ADDITIONAL_PROMPT" ]]; then
+        echo "
+## Additional Instructions:
+$ADDITIONAL_PROMPT"
+    fi
+}
+
+# Run Claude on a single feature in its worktree
+run_feature_worker() {
+    local feature_index="$1"
+    local feature_desc="$2"
+    local worktree_path="$3"
+    local log_file="$4"
+
+    local iteration=1
+
+    while [[ $iteration -le $MAX_ITERATIONS ]]; do
+        # Check if feature is already passing
+        local passes
+        passes=$(jq -r ".features[$feature_index].passes" "$worktree_path/$PRD_FILE" 2>/dev/null)
+        if [[ "$passes" == "true" ]]; then
+            echo "[OK] Feature $feature_index complete" >> "$log_file"
+            return 0
+        fi
+
+        echo "[INFO] Feature $feature_index - Iteration $iteration" >> "$log_file"
+
+        # Build and run prompt
+        local prompt
+        prompt=$(build_feature_prompt "$feature_index" "$feature_desc" "$worktree_path" "$iteration")
+
+        # Write prompt to temp file to avoid argument length issues
+        local prompt_file
+        prompt_file=$(mktemp)
+        echo "$prompt" > "$prompt_file"
+
+        # Run claude in the worktree directory
+        set +e
+        local output
+        output=$(cd "$worktree_path" && claude --print < "$prompt_file" 2>&1)
+        local exit_code=$?
+        set -e
+        rm -f "$prompt_file"
+
+        echo "$output" >> "$log_file"
+
+        if [[ $exit_code -ne 0 ]]; then
+            echo "[ERROR] Feature $feature_index failed with exit code $exit_code" >> "$log_file"
+            return $exit_code
+        fi
+
+        # Check for completion
+        if echo "$output" | grep -q "FEATURE_COMPLETE"; then
+            # Commit in worktree
+            (cd "$worktree_path" && git add -A && git commit -m "feat: complete feature $feature_index - $feature_desc
+
+🤖 Generated with claude-loop" 2>/dev/null || true)
+            echo "[OK] Feature $feature_index complete" >> "$log_file"
+            return 0
+        fi
+
+        # Checkpoint
+        (cd "$worktree_path" && git add -A && git commit -m "wip: feature $feature_index iteration $iteration
+
+🤖 Generated with claude-loop" 2>/dev/null || true)
+
+        ((iteration++))
+    done
+
+    echo "[WARN] Feature $feature_index reached max iterations" >> "$log_file"
+    return 1
+}
+
+# Show status of all feature worktrees
+show_concurrent_status() {
+    log_phase "CONCURRENT FEATURE STATUS"
+
+    if [[ ! -d "$WORK_DIR/$WORKTREES_BASE" ]]; then
+        log_info "No worktrees found. Run with --concurrent to start parallel work."
+        return 0
+    fi
+
+    echo ""
+    printf "%-40s %-15s %-10s\n" "FEATURE BRANCH" "STATUS" "COMMITS"
+    printf "%-40s %-15s %-10s\n" "----------------------------------------" "---------------" "----------"
+
+    for worktree in "$WORK_DIR/$WORKTREES_BASE"/*/; do
+        [[ -d "$worktree" ]] || continue
+        local branch_name
+        branch_name=$(basename "$worktree")
+
+        # Check if prd.json exists and get feature status
+        local status="unknown"
+        if [[ -f "$worktree/$PRD_FILE" ]]; then
+            local passing
+            passing=$(jq -r '[.features[] | select(.passes == true)] | length' "$worktree/$PRD_FILE" 2>/dev/null || echo "?")
+            local total
+            total=$(jq -r '.features | length' "$worktree/$PRD_FILE" 2>/dev/null || echo "?")
+
+            # Get the feature index from branch name
+            local feature_idx
+            feature_idx=$(echo "$branch_name" | sed 's/feature-\([0-9]*\)-.*/\1/')
+            local feature_passes
+            feature_passes=$(jq -r ".features[$feature_idx].passes" "$worktree/$PRD_FILE" 2>/dev/null)
+
+            if [[ "$feature_passes" == "true" ]]; then
+                status="${GREEN}complete${NC}"
+            else
+                status="${YELLOW}in-progress${NC}"
+            fi
+        fi
+
+        # Count commits ahead of main
+        local commits
+        commits=$(cd "$worktree" && git rev-list --count HEAD ^main 2>/dev/null || echo "?")
+
+        printf "%-40s " "$branch_name"
+        echo -e "$status"
+        printf "%-56s %s\n" "" "$commits ahead"
+    done
+
+    echo ""
+
+    # Show running workers
+    local pids_file="$WORK_DIR/$WORKTREES_BASE/.worker_pids"
+    if [[ -f "$pids_file" ]]; then
+        local running=0
+        while read -r pid; do
+            if kill -0 "$pid" 2>/dev/null; then
+                ((running++))
+            fi
+        done < "$pids_file"
+        log_info "Running workers: $running"
+    fi
+}
+
+# Merge completed feature branches back to main
+merge_completed_features() {
+    log_phase "MERGING COMPLETED FEATURES"
+
+    if [[ ! -d "$WORK_DIR/$WORKTREES_BASE" ]]; then
+        log_error "No worktrees found"
+        return 1
+    fi
+
+    local main_branch
+    main_branch=$(git rev-parse --abbrev-ref HEAD)
+
+    local merged=0
+    local failed=0
+
+    for worktree in "$WORK_DIR/$WORKTREES_BASE"/*/; do
+        [[ -d "$worktree" ]] || continue
+        local branch_name
+        branch_name=$(basename "$worktree")
+
+        # Check if feature is complete
+        local feature_idx
+        feature_idx=$(echo "$branch_name" | sed 's/feature-\([0-9]*\)-.*/\1/')
+        local feature_passes
+        feature_passes=$(jq -r ".features[$feature_idx].passes" "$worktree/$PRD_FILE" 2>/dev/null)
+
+        if [[ "$feature_passes" != "true" ]]; then
+            log_warning "Skipping incomplete: $branch_name"
+            continue
+        fi
+
+        log_info "Merging: $branch_name"
+
+        # Merge the branch
+        if git merge --no-ff "$branch_name" -m "Merge feature branch: $branch_name
+
+🤖 Generated with claude-loop"; then
+            # Update main PRD with the feature status
+            local feature_desc
+            feature_desc=$(jq -r ".features[$feature_idx].description" "$worktree/$PRD_FILE")
+            jq ".features[$feature_idx].passes = true" "$WORK_DIR/$PRD_FILE" > "$WORK_DIR/$PRD_FILE.tmp"
+            mv "$WORK_DIR/$PRD_FILE.tmp" "$WORK_DIR/$PRD_FILE"
+
+            # Remove the worktree
+            git worktree remove "$worktree" --force 2>/dev/null || true
+            git branch -d "$branch_name" 2>/dev/null || true
+
+            log_success "Merged and cleaned up: $branch_name"
+            ((merged++))
+        else
+            log_error "Failed to merge: $branch_name (resolve conflicts manually)"
+            git merge --abort 2>/dev/null || true
+            ((failed++))
+        fi
+    done
+
+    # Commit the updated PRD
+    if [[ $merged -gt 0 ]]; then
+        git add "$PRD_FILE"
+        git commit -m "chore: update feature status after merge
+
+🤖 Generated with claude-loop" 2>/dev/null || true
+    fi
+
+    echo ""
+    log_info "Merged: $merged, Failed: $failed"
+}
+
+# Run concurrent work phase with multiple worktrees
+run_concurrent_work_phase() {
+    log_phase "CONCURRENT WORK PHASE"
+
+    # Get incomplete features
+    local features
+    features=$(get_incomplete_features)
+
+    if [[ -z "$features" ]]; then
+        log_success "All features are already passing!"
+        return 0
+    fi
+
+    # Count features and limit concurrency
+    local feature_count
+    feature_count=$(echo "$features" | wc -l | tr -d ' ')
+    local concurrent=$MAX_CONCURRENT
+    if [[ $feature_count -lt $concurrent ]]; then
+        concurrent=$feature_count
+    fi
+
+    log_info "Starting $concurrent parallel workers for $feature_count incomplete features"
+    echo ""
+
+    # Create logs directory
+    local logs_dir="$WORK_DIR/$WORKTREES_BASE/logs"
+    mkdir -p "$logs_dir"
+
+    # Track PIDs
+    local pids=()
+    local pids_file="$WORK_DIR/$WORKTREES_BASE/.worker_pids"
+    > "$pids_file"
+
+    # Start workers for each feature (up to MAX_CONCURRENT)
+    local started=0
+    while IFS='|' read -r feature_index feature_desc; do
+        [[ -z "$feature_index" ]] && continue
+
+        if [[ $started -ge $concurrent ]]; then
+            break
+        fi
+
+        # Create worktree
+        local worktree_path
+        worktree_path=$(create_feature_worktree "$feature_index" "$feature_desc")
+
+        if [[ -z "$worktree_path" ]]; then
+            log_error "Failed to create worktree for feature $feature_index"
+            continue
+        fi
+
+        local log_file="$logs_dir/feature-${feature_index}.log"
+        > "$log_file"
+
+        log_info "Starting worker for feature $feature_index: ${feature_desc:0:40}..."
+
+        # Run worker in background
+        run_feature_worker "$feature_index" "$feature_desc" "$worktree_path" "$log_file" &
+        local pid=$!
+        pids+=("$pid")
+        echo "$pid" >> "$pids_file"
+
+        ((started++))
+    done <<< "$features"
+
+    log_info "Started $started workers. Logs: $logs_dir/"
+    echo ""
+
+    # Wait for all workers if in auto mode, otherwise return
+    if [[ "$AUTO_MODE" == true ]]; then
+        log_info "Waiting for all workers to complete..."
+
+        local completed=0
+        local failed=0
+
+        for pid in "${pids[@]}"; do
+            if wait "$pid"; then
+                ((completed++))
+            else
+                ((failed++))
+            fi
+        done
+
+        echo ""
+        log_info "Completed: $completed, Failed: $failed"
+
+        # Clean up pids file
+        rm -f "$pids_file"
+    else
+        log_info "Workers running in background. Use --status to check progress."
+        log_info "Use --merge to merge completed features back to main."
+        echo ""
+        echo "Monitor logs with: tail -f $logs_dir/*.log"
+    fi
+}
+
 run_work_phase() {
     log_phase "WORK PHASE"
 
@@ -303,17 +1345,35 @@ run_work_phase() {
 
     while [[ $iteration -le $MAX_ITERATIONS ]]; do
         echo ""
+
+        # Check if all features are already passing
+        local total_features passing_features
+        total_features=$(get_feature_count)
+        passing_features=$(get_passing_count)
+
+        if [[ "$passing_features" -eq "$total_features" ]] && [[ "$total_features" -gt 0 ]]; then
+            log_success "All $total_features features are passing!"
+            return 0
+        fi
+
         log_info "━━━ Iteration $iteration of $MAX_ITERATIONS ━━━"
+        log_info "Features: $passing_features/$total_features passing"
 
         # Build and run prompt
         local prompt
         prompt=$(build_work_prompt "$iteration")
 
+        # Write prompt to temp file to avoid argument length issues
+        local prompt_file
+        prompt_file=$(mktemp)
+        echo "$prompt" > "$prompt_file"
+
         set +e
         local output
-        output=$(claude --print "$prompt" 2>&1)
+        output=$(claude --print < "$prompt_file" 2>&1)
         local exit_code=$?
         set -e
+        rm -f "$prompt_file"
 
         echo "$output"
 
@@ -335,10 +1395,18 @@ run_work_phase() {
             fi
         fi
 
-        # Check for completion
+        # Check for completion (either by signal or by checking JSON)
         if echo "$output" | grep -q "ALL_TASKS_COMPLETE"; then
             git_checkpoint "$iteration"
             log_success "All tasks completed!"
+            return 0
+        fi
+
+        # Also verify by checking the JSON
+        passing_features=$(get_passing_count)
+        if [[ "$passing_features" -eq "$total_features" ]] && [[ "$total_features" -gt 0 ]]; then
+            git_checkpoint "$iteration"
+            log_success "All $total_features features are now passing!"
             return 0
         fi
 
@@ -368,10 +1436,24 @@ run_work_phase() {
 main() {
     echo ""
     echo -e "${BOLD}Claude Loop${NC} - Long-running agent harness"
-    echo -e "PRD: ${CYAN}$PRD_FILE${NC}"
     echo -e "Working directory: ${CYAN}$WORK_DIR${NC}"
+
+    # Handle special modes first
+    if [[ "$STATUS_MODE" == true ]]; then
+        show_concurrent_status
+        return 0
+    fi
+
+    if [[ "$MERGE_MODE" == true ]]; then
+        merge_completed_features
+        return 0
+    fi
+
+    # Show configuration
     echo -e "Max iterations: ${CYAN}$MAX_ITERATIONS${NC}"
     [[ "$AUTO_MODE" == true ]] && echo -e "Mode: ${YELLOW}Unattended${NC}"
+    [[ "$CONCURRENT_MODE" == true ]] && echo -e "Concurrency: ${CYAN}$MAX_CONCURRENT parallel workers${NC}"
+    [[ "$USE_WIZARD" == false ]] && echo -e "PRD source: ${CYAN}$INPUT_PRD_FILE${NC}"
     echo ""
 
     # Run phases
@@ -379,14 +1461,45 @@ main() {
         run_init_phase
     else
         log_info "Skipping init phase (--skip-init)"
-        [[ ! -f "$PROGRESS_FILE" ]] && log_warning "No progress file found - consider running without --skip-init"
+        if [[ ! -f "$WORK_DIR/$PRD_FILE" ]]; then
+            log_error "No prd.json found - run without --skip-init first"
+            exit 1
+        fi
+        if [[ ! -f "$WORK_DIR/$PROGRESS_FILE" ]]; then
+            log_warning "No progress file found"
+        fi
+
+        # Show current status
+        local total passing
+        total=$(get_feature_count)
+        passing=$(get_passing_count)
+        log_info "Resuming: $passing/$total features passing"
     fi
 
-    run_work_phase
+    # Choose work phase based on mode
+    if [[ "$CONCURRENT_MODE" == true ]]; then
+        run_concurrent_work_phase
+    else
+        run_work_phase
+    fi
 
     log_phase "SESSION COMPLETE"
     log_info "Progress saved in: $PROGRESS_FILE"
+    log_info "Feature status saved in: $PRD_FILE"
     [[ "$NO_CHECKPOINT" == false ]] && log_info "Checkpoints saved in git history"
+
+    # Final summary
+    local total passing
+    total=$(get_feature_count)
+    passing=$(get_passing_count)
+    echo ""
+    echo -e "${BOLD}Final Status:${NC} $passing/$total features passing"
+
+    if [[ "$CONCURRENT_MODE" == true ]] && [[ "$AUTO_MODE" == false ]]; then
+        echo ""
+        log_info "Run --status to check worker progress"
+        log_info "Run --merge to merge completed features"
+    fi
 }
 
 main
