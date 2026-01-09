@@ -134,7 +134,8 @@ done
 # Claude CLI
 log_info "Setting up Claude CLI configuration..."
 create_directory "$HOME/.claude"
-create_symlink "$DOTFILES/claude/agents" "$HOME/.claude/agents"
+create_symlink "$DOTFILES/.claude/agents" "$HOME/.claude/agents"
+create_symlink "$DOTFILES/.claude/settings.json" "$HOME/.claude/settings.json"
 create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
 
 echo ""

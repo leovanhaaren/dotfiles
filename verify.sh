@@ -125,7 +125,8 @@ echo ""
 # Check Claude CLI
 echo "Checking Claude CLI configuration..."
 check_directory "$HOME/.claude" "Claude config directory"
-check_symlink "$HOME/.claude/agents" "$DOTFILES/claude/agents" "Claude agents"
+check_symlink "$HOME/.claude/agents" "$DOTFILES/.claude/agents" "Claude agents"
+check_symlink "$HOME/.claude/settings.json" "$DOTFILES/.claude/settings.json" "Claude settings"
 check_symlink "$HOME/.claude/prompts" "$DOTFILES/claude/prompts" "Claude prompts"
 echo ""
 
