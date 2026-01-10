@@ -173,6 +173,22 @@ stop_spinner() {
     fi
 }
 
+# Run Claude with a prompt and return the result
+run_claude_prompt() {
+    local prompt="$1"
+    local prompt_file
+    prompt_file=$(mktemp)
+    echo "$prompt" > "$prompt_file"
+
+    local result
+    # Use stdin with --print, pipe through cat to ensure non-interactive
+    result=$(cat "$prompt_file" | claude --print --dangerously-skip-permissions 2>&1) || true
+    rm -f "$prompt_file"
+
+    # Clean up the result - remove markdown code blocks
+    echo "$result" | tr -d '\n' | sed 's/```json//g' | sed 's/```//g'
+}
+
 # Analyze feature complexity and suggest splits
 analyze_feature_complexity() {
     local project_name="$1"
@@ -225,13 +241,8 @@ $features_list
 
 Return ONLY the JSON object. No other text."
 
-    local prompt_file
-    prompt_file=$(mktemp)
-    echo "$prompt" > "$prompt_file"
-
     local result
-    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
-    rm -f "$prompt_file"
+    result=$(run_claude_prompt "$prompt")
 
     # Validate JSON
     if echo "$result" | jq -e '.analyzed_features' >/dev/null 2>&1; then
@@ -285,13 +296,8 @@ $existing_features
 
 Return ONLY the JSON object. No other text."
 
-    local prompt_file
-    prompt_file=$(mktemp)
-    echo "$prompt" > "$prompt_file"
-
     local result
-    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
-    rm -f "$prompt_file"
+    result=$(run_claude_prompt "$prompt")
 
     # Validate JSON
     if echo "$result" | jq -e '.suggestions' >/dev/null 2>&1; then
@@ -355,13 +361,8 @@ $features_list
 
 Return ONLY the JSON object with features array, reordered optimally. No other text."
 
-    local prompt_file
-    prompt_file=$(mktemp)
-    echo "$prompt" > "$prompt_file"
-
     local result
-    result=$(claude --print < "$prompt_file" 2>/dev/null | tr -d '\n' | sed 's/```json//g' | sed 's/```//g')
-    rm -f "$prompt_file"
+    result=$(run_claude_prompt "$prompt")
 
     # Validate JSON
     if echo "$result" | jq -e '.features' >/dev/null 2>&1; then
