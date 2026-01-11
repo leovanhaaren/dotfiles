@@ -1,5 +1,11 @@
+# Directory configuration
+WORKSPACES_DIR="$HOME/Workspaces"
+DOTFILES_DIR="$WORKSPACES_DIR/leovanhaaren/dotfiles"
+
 # Productivity
 alias w="cd ~/Workspaces"
+alias c="cd ~/Workspaces/claude"
+alias op="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 
 # Symlinks
@@ -42,6 +48,9 @@ gwcd() {
 alias cc="pass-cli run -- claude"
 alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
 alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
+
+# Copy GLM env
+alias cglme="cp $DOTFILES_DIR/bin/.ralph-loop.env.example .ralph-loop.env"
 
 # Claude Code Container
 alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
