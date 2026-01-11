@@ -127,7 +127,10 @@ create_directory "$HOME/bin"
 for script in "$DOTFILES/bin/"*; do
     if [ -f "$script" ]; then
         scriptname=$(basename "$script")
-        create_symlink "$script" "$HOME/bin/$scriptname"
+        # Skip hidden files like .env.example
+        if [[ "$scriptname" != .* ]]; then
+            create_symlink "$script" "$HOME/bin/$scriptname"
+        fi
     fi
 done
 
