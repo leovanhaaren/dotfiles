@@ -97,7 +97,6 @@ done
 
 # Claude CLI
 log_info "Removing Claude CLI symlinks..."
-remove_symlink "$HOME/.claude/agents"
 remove_symlink "$HOME/.claude/settings.json"
 remove_symlink "$HOME/.claude/prompts"
 
