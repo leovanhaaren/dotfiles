@@ -1,0 +1,27 @@
+# Brewfile.personal - Personal machine packages
+# Usage: brew bundle --file=Brewfile.personal
+
+# Include shared base packages
+instance_eval(File.read("Brewfile.base"))
+
+# Personal-only Taps
+tap "oven-sh/bun"                       # Bun JavaScript runtime
+
+# Personal-only CLI Tools
+brew "opencode"                         # AI coding assistant CLI
+brew "charmbracelet/tap/crush"          # Charm's compression tool
+brew "oven-sh/bun/bun"                  # Fast JavaScript runtime and bundler
+
+# Personal-only Desktop Applications
+cask "aldente"                          # Battery charge limiter for MacBooks
+cask "home-assistant"                   # Home automation control
+cask "proton-drive"                     # Proton Drive cloud storage
+cask "proton-mail"                      # Proton Mail client
+cask "protonvpn"                        # Proton VPN client
+cask "soundsource"                      # Per-app audio control
+cask "zed"                              # Zed code editor
+
+# Personal-only Mac App Store Apps
+mas "Brother P-touch Editor", id: 1453365242  # Label printer software
+mas "Health Auto Export", id: 1115567069      # Export Apple Health data
+mas "Session", id: 1521432881                 # Pomodoro timer
