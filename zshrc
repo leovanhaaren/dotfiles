@@ -1,3 +1,7 @@
+# Directory configuration
+WORKSPACES_DIR="$HOME/Workspaces"
+DOTFILES_DIR="$WORKSPACES_DIR/leovanhaaren/dotfiles"
+
 # Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
@@ -10,6 +14,9 @@ source $ZSH/oh-my-zsh.sh
 
 # 1Password SSH Agent
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+
+# Proton Pass SSH Agent
+# export SSH_AUTH_SOCK=/Users/leo/.ssh/proton-pass-agent.sock
 
 # Path
 export PATH="$HOME/.local/bin:$PATH"
@@ -36,3 +43,7 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 
 # Editor
 export EDITOR="code --wait"
+
+eval "$(mise activate zsh)"
+
+source /Users/leo/Workspaces/tools/taskdown/scripts/td-greeting.sh
