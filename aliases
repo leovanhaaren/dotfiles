@@ -11,6 +11,34 @@ alias symlinkrm="find . -maxdepth 1 -type l -delete"
 # Git
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
+# Initialize git, stage all, and generate commit message from diff
+commit() {
+  if [[ ! -d .git ]]; then
+    echo "Initializing git repository..."
+    git init
+  fi
+
+  echo "Staging all files..."
+  git add -A
+
+  local diff=$(git diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    echo "No changes to commit."
+    return 0
+  fi
+
+  echo "Generating commit message..."
+  local msg=$(git diff --cached | claude -p "Generate a concise conventional commit message for these changes. Output only the commit message, nothing else.")
+
+  echo "Proposed commit message: $msg"
+  read "confirm?Commit with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git commit -m "$msg"
+  else
+    echo "Commit aborted. Changes remain staged."
+  fi
+}
+
 # Git Worktrees
 alias gwl="git worktree list"
 alias gwa="git worktree add"
@@ -60,3 +88,12 @@ zai() {
 
   claude "$@"
 }
+
+mm() {
+  pass-cli inject --in-file "${DOTFILES_DIR}/claude/minimax.zsh" | while read -r line; do
+    eval "$line"
+  done
+
+  claude "$@"
+}
+
