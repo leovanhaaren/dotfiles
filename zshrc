@@ -44,6 +44,11 @@ export PATH="$PATH:$(go env GOPATH)/bin"
 # Editor
 export EDITOR="code --wait"
 
-eval "$(mise activate zsh)"
+# eval "$(mise activate zsh)"
 
 source /Users/leo/Workspaces/tools/taskdown/scripts/td-greeting.sh
+
+source <(_HASS_CLI_COMPLETE=zsh_source hass-cli)
+
+export HASS_SERVER=pass://Development/hass-cli/HASS_SERVER
+export HASS_TOKEN=pass://Development/hass-cli/HASS_TOKEN
