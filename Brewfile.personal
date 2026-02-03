@@ -19,7 +19,6 @@ cask "proton-drive"                     # Proton Drive cloud storage
 cask "proton-mail"                      # Proton Mail client
 cask "protonvpn"                        # Proton VPN client
 cask "soundsource"                      # Per-app audio control
-cask "zed"                              # Zed code editor
 
 # Personal-only Mac App Store Apps
 mas "Brother P-touch Editor", id: 1453365242  # Label printer software
