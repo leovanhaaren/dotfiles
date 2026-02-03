@@ -43,6 +43,7 @@ cask "tableplus"                        # Database management GUI
 cask "time-out"                         # Break reminder app
 cask "visual-studio-code"               # Code editor
 cask "zen"                              # Privacy-focused Firefox fork
+cask "zed"                              # Zed code editor
 
 # Mac App Store Apps
 mas "Irvue", id: 1039633667                   # Unsplash wallpapers
