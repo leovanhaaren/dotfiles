@@ -1,0 +1,31 @@
+# Brewfile.work - Work machine packages
+# Usage: brew bundle --file=Brewfile.work
+
+# Include shared base packages
+instance_eval(File.read("Brewfile.base"))
+
+# Work-only Taps
+tap "1password/tap"                     # 1Password CLI and integrations
+
+# Work-only CLI Tools
+brew "aws-vault"                        # Securely store and access AWS credentials
+brew "awscli"                           # AWS command line interface
+brew "bruno-cli"                        # CLI for Bruno API client
+brew "container", link: false           # Container management tool
+brew "git-lfs"                          # Git Large File Storage
+brew "graphicsmagick"                   # Image processing tools
+brew "node"                             # Node.js JavaScript runtime
+brew "podman"                           # Docker-compatible container engine
+brew "podman-compose"                   # Docker Compose for Podman
+
+# Work-only Desktop Applications
+cask "1password"                        # Password manager
+cask "1password-cli"                    # 1Password command line tool
+cask "bruno"                            # API client (Postman alternative)
+cask "container"                        # Container management GUI
+cask "meetingbar"                       # Calendar meetings in menu bar
+cask "podman-desktop"                   # Podman GUI
+cask "session-manager-plugin"           # AWS Session Manager plugin
+
+# Work-only VS Code Extensions
+vscode "1password.op-vscode"            # 1Password integration

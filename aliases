@@ -1,7 +1,3 @@
-# Directory configuration
-WORKSPACES_DIR="$HOME/Workspaces"
-DOTFILES_DIR="$WORKSPACES_DIR/leovanhaaren/dotfiles"
-
 # Productivity
 alias w="cd ~/Workspaces"
 alias c="cd ~/Workspaces/claude"
@@ -14,6 +10,34 @@ alias symlinkrm="find . -maxdepth 1 -type l -delete"
 
 # Git
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
+
+# Initialize git, stage all, and generate commit message from diff
+commit() {
+  if [[ ! -d .git ]]; then
+    echo "Initializing git repository..."
+    git init
+  fi
+
+  echo "Staging all files..."
+  git add -A
+
+  local diff=$(git diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    echo "No changes to commit."
+    return 0
+  fi
+
+  echo "Generating commit message..."
+  local msg=$(git diff --cached | claude -p "Generate a concise conventional commit message for these changes. Output only the commit message, nothing else.")
+
+  echo "Proposed commit message: $msg"
+  read "confirm?Commit with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git commit -m "$msg"
+  else
+    echo "Commit aborted. Changes remain staged."
+  fi
+}
 
 # Git Worktrees
 alias gwl="git worktree list"
@@ -44,13 +68,10 @@ gwcd() {
   [[ -n "$wt" ]] && cd "$wt" || echo "No worktree matching '$1'"
 }
 
-# Claude Code
-alias cc="pass-cli run -- claude"
-alias cc-glm="export CLAUDE_CONFIG_DIR=~/.claude-glm"
-alias cc-reset="export CLAUDE_CONFIG_DIR=~/.claude"
-
-# Copy GLM env
-alias cglme="cp $DOTFILES_DIR/bin/.ralph-loop.env.example .ralph-loop.env"
+# Tmux
+alias tmux="tmux -2"
+alias tmux2="tmux -2"
+alias tmux3="tmux -2"
 
 # Claude Code Container
 alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
@@ -58,3 +79,21 @@ alias ccc="podman run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~
 
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local
+
+# Z.AI + Claude Code launcher
+zai() {
+  pass-cli inject --in-file "${DOTFILES_DIR}/claude/zai.zsh" | while read -r line; do
+    eval "$line"
+  done
+
+  claude "$@"
+}
+
+mm() {
+  pass-cli inject --in-file "${DOTFILES_DIR}/claude/minimax.zsh" | while read -r line; do
+    eval "$line"
+  done
+
+  claude "$@"
+}
+
