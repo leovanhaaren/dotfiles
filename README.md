@@ -31,7 +31,9 @@ cd ~/Workspaces/leovanhaaren/dotfiles
 - **git/** - Additional git configs for multiple accounts
 
 ### Applications
-- **Brewfile** - Homebrew packages, casks, and VS Code extensions
+- **Brewfile.base** - Shared Homebrew packages for all machines
+- **Brewfile.personal** - Personal machine packages (includes base)
+- **Brewfile.work** - Work machine packages (includes base)
 - **vscode-settings/** - VS Code editor configuration
 - **claude/** - Claude CLI settings for different contexts
 
@@ -50,7 +52,9 @@ dotfiles/
 ├── zprofile              # Shell profile
 ├── aliases               # Shell aliases and functions
 ├── gitconfig             # Git configuration
-├── Brewfile              # Homebrew packages
+├── Brewfile.base         # Shared Homebrew packages
+├── Brewfile.personal     # Personal machine packages
+├── Brewfile.work         # Work machine packages
 ├── bin/                  # Custom scripts
 ├── claude/               # Claude CLI configs
 ├── git/                  # Git include files
@@ -118,19 +122,45 @@ Files ending in `.local` are sourced but not tracked in git:
 
 ## Homebrew
 
-### Update Brewfile from installed packages
+Brewfiles are split into three files:
+- **Brewfile.base** - Packages shared across all machines
+- **Brewfile.personal** - Personal-only packages (Proton apps, home automation, etc.)
+- **Brewfile.work** - Work-only packages (AWS tools, containers, 1Password, etc.)
+
+### Sync system with Brewfile
 ```bash
-brew bundle dump --file=~/Workspaces/leovanhaaren/dotfiles/Brewfile --force
+# Check what's missing (dry run)
+brew bundle check --file=Brewfile.personal
+
+# Install missing packages
+brew bundle --file=Brewfile.personal
+
+# See what would be installed
+brew bundle list --file=Brewfile.personal
 ```
 
-### Install packages from Brewfile
+Replace `Brewfile.personal` with `Brewfile.work` for work machines.
+
+### Update Brewfiles from system (preserving comments)
 ```bash
-brew bundle --file=~/Workspaces/leovanhaaren/dotfiles/Brewfile
+# See what would change (dry run)
+./scripts/brew-update.sh -n Brewfile.base
+
+# Add newly installed packages
+./scripts/brew-update.sh Brewfile.base
+
+# Also remove uninstalled packages
+./scripts/brew-update.sh -r Brewfile.base
 ```
+
+The update script compares installed packages with your Brewfile and:
+- Keeps existing entries with comments intact
+- Adds new packages that you've installed
+- Optionally removes packages no longer installed (`-r` flag)
 
 ### Cleanup unused packages
 ```bash
-brew bundle cleanup --force --file=~/Workspaces/leovanhaaren/dotfiles/Brewfile
+brew bundle cleanup --force --file=Brewfile.personal  # or Brewfile.work
 ```
 
 ## Verification
