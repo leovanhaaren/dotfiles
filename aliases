@@ -4,6 +4,9 @@ alias c="cd ~/Workspaces/claude"
 alias op="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 
+# Air (installed via go install)
+alias air='$(go env GOPATH)/bin/air'
+
 # Symlinks
 alias symlinkls="find . -maxdepth 1 -type l -ls"
 alias symlinkrm="find . -maxdepth 1 -type l -delete"
@@ -87,8 +90,6 @@ gwcd() {
 
 # Tmux
 alias tmux="tmux -2"
-alias tmux2="tmux -2"
-alias tmux3="tmux -2"
 
 # Claude Code Container
 alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
