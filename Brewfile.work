@@ -1,6 +1,12 @@
 # Brewfile.work - Work machine packages
 # Usage: brew bundle --file=Brewfile.work
 
+brew "webp"
+brew "jpeg-xl"
+brew "aom"
+brew "glib"
+brew "libheif"
+brew "pyenv"
 # Include shared base packages
 instance_eval(File.read("Brewfile.base"))
 
@@ -21,11 +27,22 @@ brew "podman-compose"                   # Docker Compose for Podman
 # Work-only Desktop Applications
 cask "1password"                        # Password manager
 cask "1password-cli"                    # 1Password command line tool
-cask "bruno"                            # API client (Postman alternative)
 cask "container"                        # Container management GUI
 cask "meetingbar"                       # Calendar meetings in menu bar
 cask "podman-desktop"                   # Podman GUI
 cask "session-manager-plugin"           # AWS Session Manager plugin
 
+cask "alfred"
+cask "cyberduck"
+cask "iterm2"
 # Work-only VS Code Extensions
 vscode "1password.op-vscode"            # 1Password integration
+
+# Additional Mac App Store Apps
+mas "Developer", id: 640199958
+mas "Session", id: 1521432881
+mas "WhatsApp", id: 310633997
+
+# Additional Go Packages
+go "github.com/leovanhaaren/go-maintain/cmd/jira-cli"
+go "github.com/leovanhaaren/go-maintain/cmd/workflow"

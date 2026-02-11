@@ -148,6 +148,45 @@ get_package_key() {
     fi
 }
 
+# Parse a Brewfile and add its packages to the existing keys/lines files
+# Also follows File.read includes recursively
+parse_brewfile() {
+    local file="$1"
+    local base_dir
+    base_dir=$(dirname "$file")
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip empty lines and comments-only lines
+        if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
+            continue
+        fi
+
+        # Follow File.read includes (used by Homebrew for modular Brewfiles)
+        if [[ "$line" =~ File\.read ]]; then
+            # Extract the included file path from instance_eval(File.read("..."))
+            local included_file
+            included_file=$(echo "$line" | sed -E 's/.*File\.read\("([^"]+)"\).*/\1/')
+            if [[ -n "$included_file" ]]; then
+                # Resolve relative path from the Brewfile's directory
+                if [[ ! "$included_file" = /* ]]; then
+                    included_file="$base_dir/$included_file"
+                fi
+                if [[ -f "$included_file" ]]; then
+                    log_info "Following include: $included_file"
+                    parse_brewfile "$included_file"
+                fi
+            fi
+            continue
+        fi
+
+        key=$(get_package_key "$line")
+        if [[ -n "$key" ]]; then
+            echo "$key" >> "$existing_keys_file"
+            echo "$key	$line" >> "$existing_lines_file"
+        fi
+    done < "$file"
+}
+
 # Build list of existing package keys
 log_info "Parsing existing Brewfile..."
 existing_keys_file="$TEMP_DIR/existing_keys.txt"
@@ -155,18 +194,7 @@ existing_lines_file="$TEMP_DIR/existing_lines.txt"
 > "$existing_keys_file"
 > "$existing_lines_file"
 
-while IFS= read -r line || [[ -n "$line" ]]; do
-    # Skip empty lines, comments-only lines, and instance_eval lines
-    if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]] || [[ "$line" =~ instance_eval ]]; then
-        continue
-    fi
-
-    key=$(get_package_key "$line")
-    if [[ -n "$key" ]]; then
-        echo "$key" >> "$existing_keys_file"
-        echo "$key	$line" >> "$existing_lines_file"
-    fi
-done < "$BREWFILE"
+parse_brewfile "$BREWFILE"
 
 # Build list of installed package keys
 log_info "Parsing installed packages..."
