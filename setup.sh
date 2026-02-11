@@ -141,6 +141,24 @@ create_symlink "$DOTFILES/.claude/agents" "$HOME/.claude/agents"
 create_symlink "$DOTFILES/.claude/settings.json" "$HOME/.claude/settings.json"
 create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
 
+# Agent configuration symlinks (shared AGENTS.md for Claude, Gemini, Codex)
+log_info "Setting up agent configuration symlinks..."
+if [ -f "$DOTFILES/AGENTS.md" ]; then
+    # Claude: ~/.claude/CLAUDE.md
+    create_directory "$HOME/.claude"
+    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.claude/CLAUDE.md"
+
+    # Gemini: ~/.gemini/GEMINI.md
+    create_directory "$HOME/.gemini"
+    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.gemini/GEMINI.md"
+
+    # Codex: ~/.codex/instructions.md
+    create_directory "$HOME/.codex"
+    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.codex/instructions.md"
+else
+    log_warn "AGENTS.md not found in $DOTFILES - skipping agent symlinks"
+fi
+
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="

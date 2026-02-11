@@ -14,28 +14,45 @@ alias greadme="git add README.md && git commit -m 'chore: Update README.md' && g
 # Initialize git, stage all, and generate commit message from diff
 commit() {
   if [[ ! -d .git ]]; then
-    echo "Initializing git repository..."
+    printf '\033[33m=> Initializing git repository...\033[0m\n'
     git init
   fi
 
-  echo "Staging all files..."
+  printf '\033[34m=> Staging all files...\033[0m\n'
   git add -A
 
   local diff=$(git diff --cached --stat)
   if [[ -z "$diff" ]]; then
-    echo "No changes to commit."
+    printf '\033[33m=> No changes to commit.\033[0m\n'
     return 0
   fi
 
-  echo "Generating commit message..."
-  local msg=$(git diff --cached | claude -p "Generate a concise conventional commit message for these changes. Output only the commit message, nothing else.")
+  printf '\033[36m%s\033[0m\n' "$diff"
+  printf '\n\033[34m=> Generating commit message...\033[0m\n'
+  local msg=$(git diff --cached | claude -p "
+Write a commit message in the Conventional Commits format. Use the structure:
+    <type>(<optional scope>): <short description>
 
-  echo "Proposed commit message: $msg"
+    <optional body>
+
+    <optional footer>
+
+Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+Optionally, include a body for more details in bullet points.
+Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanation of the breaking change.
+
+Just return the commit message, do not include any other text.
+")
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
   read "confirm?Commit with this message? [y/N] "
   if [[ "$confirm" =~ ^[Yy]$ ]]; then
     git commit -m "$msg"
+    printf '\033[32m=> Committed successfully.\033[0m\n'
   else
-    echo "Commit aborted. Changes remain staged."
+    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
   fi
 }
 
