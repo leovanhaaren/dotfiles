@@ -21,15 +21,12 @@ brew "container", link: false           # Container management tool
 brew "git-lfs"                          # Git Large File Storage
 brew "graphicsmagick"                   # Image processing tools
 brew "node"                             # Node.js JavaScript runtime
-brew "podman"                           # Docker-compatible container engine
-brew "podman-compose"                   # Docker Compose for Podman
 
 # Work-only Desktop Applications
 cask "1password"                        # Password manager
 cask "1password-cli"                    # 1Password command line tool
 cask "container"                        # Container management GUI
 cask "meetingbar"                       # Calendar meetings in menu bar
-cask "podman-desktop"                   # Podman GUI
 cask "session-manager-plugin"           # AWS Session Manager plugin
 
 cask "alfred"
