@@ -1,6 +1,6 @@
 # Dotfiles
 
-Personal dotfiles for macOS development environment.
+Personal dotfiles for macOS and Linux development environments.
 
 ## Quick Start
 
@@ -13,33 +13,36 @@ cd ~/Workspaces/leovanhaaren/dotfiles
 ./setup.sh
 
 # Install Homebrew packages (optional)
-./installers/brew.sh
+./install/brew.sh                    # defaults to Brewfile.personal
+./install/brew.sh Brewfile.work      # for work machines
 
 # Apply macOS preferences (optional)
-./installers/mac.sh
+./install/mac.sh
 ```
 
 ## What's Included
 
 ### Shell Configuration
-- **zshrc** - Zsh configuration with Oh My Zsh
-- **zprofile** - Environment variables and PATH setup
-- **aliases** - Shell aliases and functions
+- **shell/zshrc** - Zsh configuration with Oh My Zsh
+- **shell/zprofile.\*** - Environment variables and PATH setup (per platform)
+- **shell/aliases** - Shell aliases and functions
 
 ### Git
-- **gitconfig** - Git configuration with SSH signing via 1Password
-- **git/** - Additional git configs for multiple accounts
+- **git/gitconfig** - Git configuration with SSH signing via 1Password
+- **git/ksyos.gitconfig** - Conditional config for work account
+- **git/hooks/** - Git hooks for automation
 
 ### Applications
-- **Brewfile.base** - Shared Homebrew packages for all machines
-- **Brewfile.personal** - Personal machine packages (includes base)
-- **Brewfile.work** - Work machine packages (includes base)
-- **vscode-settings/** - VS Code editor configuration
+- **homebrew/Brewfile.base** - Shared Homebrew packages for all machines
+- **homebrew/Brewfile.personal** - Personal machine packages (includes base)
+- **homebrew/Brewfile.work** - Work machine packages (includes base)
+- **vscode/** - VS Code editor settings and extensions list
 - **claude/** - Claude CLI settings for different contexts
 
 ### Utilities
 - **bin/** - Custom scripts (port management, VS Code settings sync)
-- **hooks/** - Git hooks for automation
+- **scripts/** - Helper scripts (Brewfile sync, SSH setup)
+- **install/** - One-time setup scripts (Homebrew, macOS prefs, Ubuntu)
 
 ## Directory Structure
 
@@ -48,22 +51,33 @@ dotfiles/
 ├── setup.sh              # Main installer (creates symlinks)
 ├── uninstall.sh          # Remove symlinks
 ├── verify.sh             # Verify installation
-├── zshrc                 # Zsh configuration
-├── zprofile              # Shell profile
-├── aliases               # Shell aliases and functions
-├── gitconfig             # Git configuration
-├── Brewfile.base         # Shared Homebrew packages
-├── Brewfile.personal     # Personal machine packages
-├── Brewfile.work         # Work machine packages
-├── bin/                  # Custom scripts
+├── shell/                # Shell configuration
+│   ├── zshrc             # Zsh configuration
+│   ├── zshrc.macos       # macOS-specific shell config
+│   ├── zshrc.linux       # Linux-specific shell config
+│   ├── zprofile.macos    # macOS shell profile
+│   ├── zprofile.linux    # Linux shell profile
+│   └── aliases           # Shell aliases and functions
+├── homebrew/             # Homebrew package lists
+│   ├── Brewfile.base     # Shared packages
+│   ├── Brewfile.personal # Personal machine packages
+│   └── Brewfile.work     # Work machine packages
+├── git/                  # Git configuration
+│   ├── gitconfig         # Main git config
+│   ├── ksyos.gitconfig   # Work account config
+│   └── hooks/            # Git hooks
+├── ssh/                  # SSH configuration
+├── vscode/               # VS Code settings and extensions
+├── zed/                  # Zed editor settings
+├── ghostty/              # Ghostty terminal config
 ├── claude/               # Claude CLI configs
-├── git/                  # Git include files
-├── installers/           # Setup scripts
-│   ├── brew.sh           # Homebrew installation
-│   └── mac.sh            # macOS preferences
+├── bin/                  # Custom scripts
 ├── scripts/              # Helper scripts
-├── vscode-settings/      # VS Code configuration
-└── hooks/                # Git hooks
+├── install/              # Setup scripts
+│   ├── brew.sh           # Homebrew installation
+│   ├── mac.sh            # macOS preferences
+│   └── ubuntu.sh         # Ubuntu packages
+└── tools/                # Tools installation
 ```
 
 ## Aliases Reference
@@ -95,9 +109,8 @@ dotfiles/
 ### Claude Code
 | Alias | Description |
 |-------|-------------|
-| `cc` | Run Claude with pass-cli |
-| `cc-glm` | Switch to GLM Claude config |
-| `cc-reset` | Reset to default Claude config |
+| `zai` | Run Claude with z.ai config |
+| `mm` | Run Claude with minimax config |
 | `ccc` | Run Claude in container |
 
 ## Custom Scripts
@@ -122,7 +135,7 @@ Files ending in `.local` are sourced but not tracked in git:
 
 ## Homebrew
 
-Brewfiles are split into three files:
+Brewfiles are split into three files under `homebrew/`:
 - **Brewfile.base** - Packages shared across all machines
 - **Brewfile.personal** - Personal-only packages (Proton apps, home automation, etc.)
 - **Brewfile.work** - Work-only packages (AWS tools, containers, 1Password, etc.)
@@ -130,13 +143,13 @@ Brewfiles are split into three files:
 ### Sync system with Brewfile
 ```bash
 # Check what's missing (dry run)
-brew bundle check --file=Brewfile.personal
+brew bundle check --file=homebrew/Brewfile.personal
 
 # Install missing packages
-brew bundle --file=Brewfile.personal
+brew bundle --file=homebrew/Brewfile.personal
 
 # See what would be installed
-brew bundle list --file=Brewfile.personal
+brew bundle list --file=homebrew/Brewfile.personal
 ```
 
 Replace `Brewfile.personal` with `Brewfile.work` for work machines.
@@ -160,7 +173,7 @@ The update script compares installed packages with your Brewfile and:
 
 ### Cleanup unused packages
 ```bash
-brew bundle cleanup --force --file=Brewfile.personal  # or Brewfile.work
+brew bundle cleanup --force --file=homebrew/Brewfile.personal  # or Brewfile.work
 ```
 
 ## Verification

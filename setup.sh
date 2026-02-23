@@ -146,18 +146,18 @@ echo ""
 
 # Shell configuration
 log_info "Setting up shell configuration..."
-create_symlink "$DOTFILES/zshrc" "$HOME/.zshrc"
+create_symlink "$DOTFILES/shell/zshrc" "$HOME/.zshrc"
 case "$OS" in
-    Darwin) create_symlink "$DOTFILES/zprofile.macos" "$HOME/.zprofile" ;;
-    Linux)  create_symlink "$DOTFILES/zprofile.linux" "$HOME/.zprofile" ;;
+    Darwin) create_symlink "$DOTFILES/shell/zprofile.macos" "$HOME/.zprofile" ;;
+    Linux)  create_symlink "$DOTFILES/shell/zprofile.linux" "$HOME/.zprofile" ;;
 esac
-create_symlink "$DOTFILES/aliases" "$HOME/.aliases"
+create_symlink "$DOTFILES/shell/aliases" "$HOME/.aliases"
 
 # Platform-specific shell configuration
 log_info "Setting up platform-specific shell configuration..."
 case "$OS" in
-    Darwin) create_symlink "$DOTFILES/zshrc.macos" "$HOME/.zshrc.platform" ;;
-    Linux)  create_symlink "$DOTFILES/zshrc.linux" "$HOME/.zshrc.platform" ;;
+    Darwin) create_symlink "$DOTFILES/shell/zshrc.macos" "$HOME/.zshrc.platform" ;;
+    Linux)  create_symlink "$DOTFILES/shell/zshrc.linux" "$HOME/.zshrc.platform" ;;
 esac
 
 # Git configuration
@@ -214,9 +214,9 @@ else
     echo "Next steps:"
     echo "  1. Run 'source ~/.zshrc' to reload shell configuration"
     if [ "$OS" = "Darwin" ]; then
-        echo "  2. Run './installers/brew.sh' to install Homebrew packages"
-        echo "  3. Run './installers/mac.sh' to apply macOS preferences"
+        echo "  2. Run './install/brew.sh' to install Homebrew packages"
+        echo "  3. Run './install/mac.sh' to apply macOS preferences"
     else
-        echo "  2. Run './installers/ubuntu.sh' to install Ubuntu packages"
+        echo "  2. Run './install/ubuntu.sh' to install Ubuntu packages"
     fi
 fi

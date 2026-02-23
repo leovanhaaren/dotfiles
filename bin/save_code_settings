@@ -2,6 +2,6 @@
 
 echo "Saving VSCode settings..."
 case "$(uname -s)" in
-    Darwin) cp "$HOME/Library/Application Support/Code/User/settings.json" "$HOME/dotfiles/vscode-settings/settings.json" ;;
-    Linux)  cp "$HOME/.config/Code/User/settings.json" "$HOME/dotfiles/vscode-settings/settings.json" ;;
+    Darwin) cp "$HOME/Library/Application Support/Code/User/settings.json" "$HOME/dotfiles/vscode/settings.json" ;;
+    Linux)  cp "$HOME/.config/Code/User/settings.json" "$HOME/dotfiles/vscode/settings.json" ;;
 esac

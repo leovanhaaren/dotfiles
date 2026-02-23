@@ -102,15 +102,15 @@ echo ""
 
 # Check shell symlinks
 echo "Checking shell configuration..."
-check_symlink "$HOME/.zshrc" "$DOTFILES/zshrc" "zshrc"
+check_symlink "$HOME/.zshrc" "$DOTFILES/shell/zshrc" "zshrc"
 case "$OS" in
-    Darwin) check_symlink "$HOME/.zprofile" "$DOTFILES/zprofile.macos" "zprofile" ;;
-    Linux)  check_symlink "$HOME/.zprofile" "$DOTFILES/zprofile.linux" "zprofile" ;;
+    Darwin) check_symlink "$HOME/.zprofile" "$DOTFILES/shell/zprofile.macos" "zprofile" ;;
+    Linux)  check_symlink "$HOME/.zprofile" "$DOTFILES/shell/zprofile.linux" "zprofile" ;;
 esac
-check_symlink "$HOME/.aliases" "$DOTFILES/aliases" "aliases"
+check_symlink "$HOME/.aliases" "$DOTFILES/shell/aliases" "aliases"
 case "$OS" in
-    Darwin) check_symlink "$HOME/.zshrc.platform" "$DOTFILES/zshrc.macos" "zshrc.platform" ;;
-    Linux)  check_symlink "$HOME/.zshrc.platform" "$DOTFILES/zshrc.linux" "zshrc.platform" ;;
+    Darwin) check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.macos" "zshrc.platform" ;;
+    Linux)  check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.linux" "zshrc.platform" ;;
 esac
 echo ""
 
