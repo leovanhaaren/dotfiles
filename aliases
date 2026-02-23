@@ -91,8 +91,8 @@ alias tmux2="tmux -2"
 alias tmux3="tmux -2"
 
 # Claude Code Container
-alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
-alias ccc="podman run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
+alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
+alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
 
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local

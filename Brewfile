@@ -29,8 +29,6 @@ brew "mas"                              # Mac App Store CLI
 brew "nvm"                              # Node.js version manager
 brew "opencode"                         # AI coding assistant CLI
 brew "pnpm"                             # Fast, disk-efficient npm alternative
-brew "podman"                           # Docker-compatible container engine
-brew "podman-compose"                   # Docker Compose for Podman
 brew "pyenv"                            # Python version manager
 brew "syncthing"                        # Continuous file synchronization
 brew "tree"                             # Directory listing as tree
@@ -59,7 +57,6 @@ cask "iterm2"                           # Terminal emulator
 cask "lulu"                             # macOS firewall
 cask "meetingbar"                       # Calendar meetings in menu bar
 cask "obsidian"                         # Markdown knowledge base
-cask "podman-desktop"                   # Podman GUI
 cask "proton-drive"                     # Proton Drive cloud storage
 cask "proton-mail"                      # Proton Mail client
 cask "protonvpn"                        # Proton VPN client

@@ -107,11 +107,6 @@ remove_symlink "$HOME/.config/zed/settings.json"
 log_info "Removing Ghostty configuration symlinks..."
 remove_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 
-# Claude CLI
-log_info "Removing Claude CLI symlinks..."
-remove_symlink "$HOME/.claude/settings.json"
-remove_symlink "$HOME/.claude/prompts"
-
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="

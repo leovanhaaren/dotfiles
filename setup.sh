@@ -177,11 +177,6 @@ for script in "$DOTFILES/bin/"*; do
     fi
 done
 
-# Claude CLI
-log_info "Setting up Claude CLI configuration..."
-create_directory "$HOME/.claude"
-create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
-
 # Zed editor
 log_info "Setting up Zed configuration..."
 create_directory "$HOME/.config/zed"

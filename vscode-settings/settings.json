@@ -81,8 +81,6 @@
   //
   "breadcrumbs.enabled": false,
   //
-  "dev.containers.dockerPath": "podman",
-  //
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.format.enable": false,
   //
