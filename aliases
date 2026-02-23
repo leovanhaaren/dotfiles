@@ -1,7 +1,7 @@
 # Productivity
 alias w="cd ~/Workspaces"
 alias c="cd ~/Workspaces/claude"
-alias op="cd ~/Workspaces/opencode"
+alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 
 # Symlinks
