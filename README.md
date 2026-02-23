@@ -2,22 +2,54 @@
 
 Personal dotfiles for macOS and Linux development environments.
 
-## Quick Start
+## Installation
+
+### Prerequisites
+
+- Git
+- Bash (for running the setup scripts)
+
+### 1. Clone the Repository
 
 ```bash
-# Clone the repository
 git clone git@github.com:leovanhaaren/dotfiles.git ~/Workspaces/leovanhaaren/dotfiles
-
-# Create symlinks
 cd ~/Workspaces/leovanhaaren/dotfiles
-./setup.sh
+```
 
-# Install Homebrew packages (optional)
+### 2. Create Symlinks
+
+```bash
+./setup.sh
+```
+
+This detects the OS and creates the appropriate symlinks for shell config, git, SSH, editor settings, and custom scripts. Use `./setup.sh -n` for a dry run to preview changes.
+
+### 3. Install Packages
+
+#### macOS
+
+```bash
+# Install Homebrew packages
 ./install/brew.sh                    # defaults to Brewfile.personal
 ./install/brew.sh Brewfile.work      # for work machines
 
-# Apply macOS preferences (optional)
+# Apply macOS preferences
 ./install/mac.sh
+```
+
+#### Ubuntu Server
+
+```bash
+# Install packages, Oh My Zsh, NVM, Bun, pnpm, Go, and set zsh as default shell
+./install/ubuntu.sh
+```
+
+This installs: bat, curl, fzf, git, jq, tmux, tree, zsh, GitHub CLI, eza, Go, yq, Oh My Zsh (with autosuggestions and syntax highlighting plugins), NVM, Bun, and pnpm.
+
+### 4. Verify
+
+```bash
+./verify.sh
 ```
 
 ## What's Included
