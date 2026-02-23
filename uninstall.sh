@@ -99,6 +99,14 @@ for script in "$DOTFILES/bin/"*; do
     fi
 done
 
+# Zed editor
+log_info "Removing Zed configuration symlinks..."
+remove_symlink "$HOME/.config/zed/settings.json"
+
+# Ghostty terminal
+log_info "Removing Ghostty configuration symlinks..."
+remove_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+
 # Claude CLI
 log_info "Removing Claude CLI symlinks..."
 remove_symlink "$HOME/.claude/settings.json"

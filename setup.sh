@@ -182,6 +182,16 @@ log_info "Setting up Claude CLI configuration..."
 create_directory "$HOME/.claude"
 create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
 
+# Zed editor
+log_info "Setting up Zed configuration..."
+create_directory "$HOME/.config/zed"
+create_symlink "$DOTFILES/zed/settings.json" "$HOME/.config/zed/settings.json"
+
+# Ghostty terminal
+log_info "Setting up Ghostty configuration..."
+create_directory "$HOME/Library/Application Support/com.mitchellh.ghostty"
+create_symlink "$DOTFILES/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+
 # Agent configuration symlinks (shared AGENTS.md for Claude, Gemini, Codex)
 log_info "Setting up agent configuration symlinks..."
 if [ -f "$DOTFILES/AGENTS.md" ]; then
