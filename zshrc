@@ -46,7 +46,7 @@ export EDITOR="code --wait"
 
 # eval "$(mise activate zsh)"
 
-source /Users/leo/Workspaces/tools/taskdown/scripts/td-greeting.sh
+source /Users/leo/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh
 
 source <(_HASS_CLI_COMPLETE=zsh_source hass-cli)
 

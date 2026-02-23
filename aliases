@@ -3,6 +3,8 @@ alias w="cd ~/Workspaces"
 alias c="cd ~/Workspaces/claude"
 alias op="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
+alias dotfiles="code ~/Workspaces/leovanhaaren/dotfiles"
+alias dotai="code ~/Workspaces/leovanhaaren/dotai"
 
 # Air (installed via go install)
 alias air='$(go env GOPATH)/bin/air'
@@ -100,7 +102,7 @@ alias ccc="podman run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~
 
 # Z.AI + Claude Code launcher
 zai() {
-  pass-cli inject --in-file "${DOTFILES_DIR}/claude/zai.zsh" | while read -r line; do
+  pass-cli inject --in-file "${DOTFILES_DIR}/ai-providers/zai.zsh" | while read -r line; do
     eval "$line"
   done
 
@@ -108,10 +110,9 @@ zai() {
 }
 
 mm() {
-  pass-cli inject --in-file "${DOTFILES_DIR}/claude/minimax.zsh" | while read -r line; do
+  pass-cli inject --in-file "${DOTFILES_DIR}/ai-providers/minimax.zsh" | while read -r line; do
     eval "$line"
   done
 
   claude "$@"
 }
-
