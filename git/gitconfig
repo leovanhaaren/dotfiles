@@ -11,13 +11,6 @@
 
 [commit]
     gpgsign = true
-
-[url "ssh://git@github.com/"]
-        insteadOf = https://github.com/
-
-# Override for ksyos
+# Override for user and signing config for ksyos
 [includeIf "hasconfig:remote.*.url:git@github.com:ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
-
-[includeIf "gitdir/i:~/Obsidian/ksyos/**"]
-    path = ~/dotfiles/git/op.gitconfig
