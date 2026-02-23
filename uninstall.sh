@@ -86,6 +86,10 @@ remove_symlink "$HOME/.aliases"
 log_info "Removing git configuration symlinks..."
 remove_symlink "$HOME/.gitconfig"
 
+# SSH configuration
+log_info "Removing SSH configuration symlinks..."
+remove_symlink "$HOME/.ssh/config"
+
 # Bin directory
 log_info "Removing bin symlinks..."
 for script in "$DOTFILES/bin/"*; do

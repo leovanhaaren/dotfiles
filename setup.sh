@@ -80,6 +80,38 @@ create_directory() {
     fi
 }
 
+export_ssh_pubkey() {
+    local item="$1"
+    local account="$2"
+    local target="$3"
+
+    if [ -f "$target" ]; then
+        log_info "Already exists: $target"
+        return 0
+    fi
+
+    if ! command -v op &>/dev/null; then
+        log_warn "1Password CLI (op) not found - skipping $target"
+        return 1
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        log_info "[DRY-RUN] Would export public key from 1Password: $item -> $target"
+        return 0
+    fi
+
+    local pubkey
+    pubkey=$(op item get "$item" --account "$account" --fields "public key" 2>/dev/null)
+    if [ -z "$pubkey" ]; then
+        log_error "Failed to read public key from 1Password: $item ($account)"
+        return 1
+    fi
+
+    echo "$pubkey" > "$target"
+    chmod 600 "$target"
+    log_info "Exported public key: $item -> $target"
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -119,7 +151,18 @@ create_symlink "$DOTFILES/aliases" "$HOME/.aliases"
 
 # Git configuration
 log_info "Setting up git configuration..."
-create_symlink "$DOTFILES/gitconfig" "$HOME/.gitconfig"
+create_symlink "$DOTFILES/git/gitconfig" "$HOME/.gitconfig"
+
+# SSH configuration
+log_info "Setting up SSH configuration..."
+create_directory "$HOME/.ssh"
+chmod 700 "$HOME/.ssh" 2>/dev/null || true
+create_symlink "$DOTFILES/ssh/config" "$HOME/.ssh/config"
+
+# Export SSH public keys from 1Password for IdentityFile matching
+log_info "Exporting SSH public keys from 1Password..."
+export_ssh_pubkey "SSH Key leovhaaren@gmail.com" "my.1password.eu" "$HOME/.ssh/id_leovanhaaren.pub"
+export_ssh_pubkey "Github Authentication key" "ksyos.1password.com" "$HOME/.ssh/id_leo_ksyos.pub"
 
 # Bin directory
 log_info "Setting up bin directory..."
@@ -137,7 +180,6 @@ done
 # Claude CLI
 log_info "Setting up Claude CLI configuration..."
 create_directory "$HOME/.claude"
-create_symlink "$DOTFILES/.claude/settings.json" "$HOME/.claude/settings.json"
 create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
 
 # Agent configuration symlinks (shared AGENTS.md for Claude, Gemini, Codex)
