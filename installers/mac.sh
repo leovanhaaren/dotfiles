@@ -14,7 +14,7 @@ osascript -e 'tell application "System Preferences" to quit'
 sudo -v
 
 echo "# Creating folders"
-mkdir -p ~/Development
+mkdir -p ~/Workspaces
 mkdir -p ~/Screenshots
 
 echo "Finder: show all filename extensions"
