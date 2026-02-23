@@ -1,7 +1,7 @@
 # Productivity
 alias w="cd ~/Workspaces"
 alias c="cd ~/Workspaces/claude"
-alias op="cd ~/Workspaces/opencode"
+alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 alias dotfiles="code ~/Workspaces/leovanhaaren/dotfiles"
 alias dotai="code ~/Workspaces/leovanhaaren/dotai"
@@ -94,8 +94,8 @@ gwcd() {
 alias tmux="tmux -2"
 
 # Claude Code Container
-alias bccc="podman build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
-alias ccc="podman run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
+alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
+alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
 
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local

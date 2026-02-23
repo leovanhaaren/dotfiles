@@ -1,0 +1,9 @@
+Host github.com
+  HostName github.com
+  User git
+  IdentitiesOnly yes
+
+Host github.com-ksyos
+  HostName github.com
+  User git
+  IdentitiesOnly yes

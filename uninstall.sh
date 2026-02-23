@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-DOTFILES="$HOME/Workspaces/leovanhaaren/dotfiles"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS="$(uname -s)"
 DRY_RUN=false
 
 # Colors for output
@@ -81,10 +82,15 @@ log_info "Removing shell configuration symlinks..."
 remove_symlink "$HOME/.zshrc"
 remove_symlink "$HOME/.zprofile"
 remove_symlink "$HOME/.aliases"
+remove_symlink "$HOME/.zshrc.platform"
 
 # Git configuration
 log_info "Removing git configuration symlinks..."
 remove_symlink "$HOME/.gitconfig"
+
+# SSH configuration
+log_info "Removing SSH configuration symlinks..."
+remove_symlink "$HOME/.ssh/config"
 
 # Bin directory
 log_info "Removing bin symlinks..."
@@ -95,10 +101,15 @@ for script in "$DOTFILES/bin/"*; do
     fi
 done
 
-# Claude CLI
-log_info "Removing Claude CLI symlinks..."
-remove_symlink "$HOME/.claude/settings.json"
-remove_symlink "$HOME/.claude/prompts"
+# Zed editor
+log_info "Removing Zed configuration symlinks..."
+remove_symlink "$HOME/.config/zed/settings.json"
+
+# Ghostty terminal (macOS only)
+if [ "$OS" = "Darwin" ]; then
+    log_info "Removing Ghostty configuration symlinks..."
+    remove_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then

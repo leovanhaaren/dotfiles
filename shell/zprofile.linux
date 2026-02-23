@@ -1,0 +1,7 @@
+# Linuxbrew (if installed)
+if [ -d "/home/linuxbrew/.linuxbrew" ]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# Path
+export PATH="$HOME/bin:$HOME/dotfiles/bin:$PATH"

@@ -96,7 +96,12 @@ fi
 
 # Resolve Brewfile path
 if [[ ! "$BREWFILE" = /* ]]; then
-    BREWFILE="$DOTFILES_DIR/$BREWFILE"
+    # If no directory component, assume homebrew/ prefix
+    if [[ "$BREWFILE" != */* ]]; then
+        BREWFILE="$DOTFILES_DIR/homebrew/$BREWFILE"
+    else
+        BREWFILE="$DOTFILES_DIR/$BREWFILE"
+    fi
 fi
 
 if [[ ! -f "$BREWFILE" ]]; then

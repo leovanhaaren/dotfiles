@@ -1,0 +1,21 @@
+# 1Password SSH Agent
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+
+# Proton Pass SSH Agent
+# export SSH_AUTH_SOCK=/Users/leo/.ssh/proton-pass-agent.sock
+
+# pnpm
+export PNPM_HOME="$HOME/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+# Taskdown greeting
+[[ -f /Users/leo/Workspaces/tools/taskdown/scripts/td-greeting.sh ]] && \
+  source /Users/leo/Workspaces/tools/taskdown/scripts/td-greeting.sh
+
+# Home Assistant CLI
+command -v hass-cli &>/dev/null && source <(_HASS_CLI_COMPLETE=zsh_source hass-cli)
+export HASS_SERVER=pass://Development/hass-cli/HASS_SERVER
+export HASS_TOKEN=pass://Development/hass-cli/HASS_TOKEN

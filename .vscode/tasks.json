@@ -3,9 +3,9 @@
   "tasks": [
     {
       "label": "Install VS Code extensions from list",
-      "detail": "Installs all VS Code extensions listed in the extensions.txt file",
+      "detail": "Installs all VS Code extensions listed in the extensions.list file",
       "type": "shell",
-      "command": "xargs -n 1 code --install-extension < ~/dotfiles/vscode/extensions.txt"
+      "command": "xargs -n 1 code --install-extension < ~/dotfiles/vscode/extensions.list"
     },
     {
       "label": "Sync VS Code settings from dotfiles",

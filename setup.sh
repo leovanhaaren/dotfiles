@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-DOTFILES="$HOME/Workspaces/leovanhaaren/dotfiles"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS="$(uname -s)"
 DRY_RUN=false
 
 # Colors for output
@@ -80,6 +81,38 @@ create_directory() {
     fi
 }
 
+export_ssh_pubkey() {
+    local item="$1"
+    local account="$2"
+    local target="$3"
+
+    if [ -f "$target" ]; then
+        log_info "Already exists: $target"
+        return 0
+    fi
+
+    if ! command -v op &>/dev/null; then
+        log_warn "1Password CLI (op) not found - skipping $target"
+        return 1
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        log_info "[DRY-RUN] Would export public key from 1Password: $item -> $target"
+        return 0
+    fi
+
+    local pubkey
+    pubkey=$(op item get "$item" --account "$account" --fields "public key" 2>/dev/null)
+    if [ -z "$pubkey" ]; then
+        log_error "Failed to read public key from 1Password: $item ($account)"
+        return 1
+    fi
+
+    echo "$pubkey" > "$target"
+    chmod 600 "$target"
+    log_info "Exported public key: $item -> $target"
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -107,19 +140,45 @@ echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== DRY RUN MODE - No changes will be made ==="
 else
-    echo "=== Setting up dotfiles ==="
+    echo "=== Setting up dotfiles ($OS) ==="
 fi
 echo ""
 
 # Shell configuration
 log_info "Setting up shell configuration..."
-create_symlink "$DOTFILES/zshrc" "$HOME/.zshrc"
-create_symlink "$DOTFILES/zprofile" "$HOME/.zprofile"
-create_symlink "$DOTFILES/aliases" "$HOME/.aliases"
+create_symlink "$DOTFILES/shell/zshrc" "$HOME/.zshrc"
+case "$OS" in
+    Darwin) create_symlink "$DOTFILES/shell/zprofile.macos" "$HOME/.zprofile" ;;
+    Linux)  create_symlink "$DOTFILES/shell/zprofile.linux" "$HOME/.zprofile" ;;
+esac
+create_symlink "$DOTFILES/shell/aliases" "$HOME/.aliases"
+
+# Platform-specific shell configuration
+log_info "Setting up platform-specific shell configuration..."
+case "$OS" in
+    Darwin) create_symlink "$DOTFILES/shell/zshrc.macos" "$HOME/.zshrc.platform" ;;
+    Linux)  create_symlink "$DOTFILES/shell/zshrc.linux" "$HOME/.zshrc.platform" ;;
+esac
 
 # Git configuration
 log_info "Setting up git configuration..."
-create_symlink "$DOTFILES/gitconfig" "$HOME/.gitconfig"
+create_symlink "$DOTFILES/git/gitconfig" "$HOME/.gitconfig"
+
+# SSH configuration
+log_info "Setting up SSH configuration..."
+create_directory "$HOME/.ssh"
+chmod 700 "$HOME/.ssh" 2>/dev/null || true
+case "$OS" in
+    Darwin) create_symlink "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" ;;
+    Linux)  create_symlink "$DOTFILES/ssh/config.linux" "$HOME/.ssh/config" ;;
+esac
+
+# Export SSH public keys from 1Password (macOS only)
+if [ "$OS" = "Darwin" ]; then
+    log_info "Exporting SSH public keys from 1Password..."
+    export_ssh_pubkey "SSH Key leovhaaren@gmail.com" "my.1password.eu" "$HOME/.ssh/id_leovanhaaren.pub"
+    export_ssh_pubkey "Github Authentication key" "ksyos.1password.com" "$HOME/.ssh/id_leo_ksyos.pub"
+fi
 
 # Bin directory
 log_info "Setting up bin directory..."
@@ -134,28 +193,16 @@ for script in "$DOTFILES/bin/"*; do
     fi
 done
 
-# Claude CLI
-log_info "Setting up Claude CLI configuration..."
-create_directory "$HOME/.claude"
-create_symlink "$DOTFILES/.claude/settings.json" "$HOME/.claude/settings.json"
-create_symlink "$DOTFILES/claude/prompts" "$HOME/.claude/prompts"
+# Zed editor
+log_info "Setting up Zed configuration..."
+create_directory "$HOME/.config/zed"
+create_symlink "$DOTFILES/zed/settings.json" "$HOME/.config/zed/settings.json"
 
-# Agent configuration symlinks (shared AGENTS.md for Claude, Gemini, Codex)
-log_info "Setting up agent configuration symlinks..."
-if [ -f "$DOTFILES/AGENTS.md" ]; then
-    # Claude: ~/.claude/CLAUDE.md
-    create_directory "$HOME/.claude"
-    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.claude/CLAUDE.md"
-
-    # Gemini: ~/.gemini/GEMINI.md
-    create_directory "$HOME/.gemini"
-    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.gemini/GEMINI.md"
-
-    # Codex: ~/.codex/instructions.md
-    create_directory "$HOME/.codex"
-    create_symlink "$DOTFILES/AGENTS.md" "$HOME/.codex/instructions.md"
-else
-    log_warn "AGENTS.md not found in $DOTFILES - skipping agent symlinks"
+# Ghostty terminal (macOS only)
+if [ "$OS" = "Darwin" ]; then
+    log_info "Setting up Ghostty configuration..."
+    create_directory "$HOME/Library/Application Support/com.mitchellh.ghostty"
+    create_symlink "$DOTFILES/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 fi
 
 echo ""
@@ -166,6 +213,10 @@ else
     echo ""
     echo "Next steps:"
     echo "  1. Run 'source ~/.zshrc' to reload shell configuration"
-    echo "  2. Run './installers/brew.sh' to install Homebrew packages"
-    echo "  3. Run './installers/mac.sh' to apply macOS preferences"
+    if [ "$OS" = "Darwin" ]; then
+        echo "  2. Run './install/brew.sh' to install Homebrew packages"
+        echo "  3. Run './install/mac.sh' to apply macOS preferences"
+    else
+        echo "  2. Run './install/ubuntu.sh' to install Ubuntu packages"
+    fi
 fi

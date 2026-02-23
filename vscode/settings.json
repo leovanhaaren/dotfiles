@@ -81,15 +81,13 @@
   //
   "breadcrumbs.enabled": false,
   //
-  "dev.containers.dockerPath": "podman",
-  //
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.format.enable": false,
   //
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.format.enable": false,
   //
-  "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
+  "dotfiles.installCommand": "~/dotfiles/install/install-vscode.sh",
   "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
   "dotfiles.targetPath": "~/dotfiles",
   "github.copilot.nextEditSuggestions.enabled": false,
