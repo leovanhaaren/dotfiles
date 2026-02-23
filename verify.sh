@@ -1,6 +1,7 @@
 #!/bin/bash
 
-DOTFILES="$HOME/Workspaces/leovanhaaren/dotfiles"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OS="$(uname -s)"
 
 # Colors for output
 RED='\033[0;31m'
@@ -91,7 +92,7 @@ check_file_executable() {
 }
 
 echo ""
-echo "=== Verifying Dotfiles Installation ==="
+echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
 # Check dotfiles directory
@@ -102,13 +103,28 @@ echo ""
 # Check shell symlinks
 echo "Checking shell configuration..."
 check_symlink "$HOME/.zshrc" "$DOTFILES/zshrc" "zshrc"
-check_symlink "$HOME/.zprofile" "$DOTFILES/zprofile" "zprofile"
+case "$OS" in
+    Darwin) check_symlink "$HOME/.zprofile" "$DOTFILES/zprofile.macos" "zprofile" ;;
+    Linux)  check_symlink "$HOME/.zprofile" "$DOTFILES/zprofile.linux" "zprofile" ;;
+esac
 check_symlink "$HOME/.aliases" "$DOTFILES/aliases" "aliases"
+case "$OS" in
+    Darwin) check_symlink "$HOME/.zshrc.platform" "$DOTFILES/zshrc.macos" "zshrc.platform" ;;
+    Linux)  check_symlink "$HOME/.zshrc.platform" "$DOTFILES/zshrc.linux" "zshrc.platform" ;;
+esac
 echo ""
 
 # Check git configuration
 echo "Checking git configuration..."
-check_symlink "$HOME/.gitconfig" "$DOTFILES/gitconfig" "gitconfig"
+check_symlink "$HOME/.gitconfig" "$DOTFILES/git/gitconfig" "gitconfig"
+echo ""
+
+# Check SSH configuration
+echo "Checking SSH configuration..."
+case "$OS" in
+    Darwin) check_symlink "$HOME/.ssh/config" "$DOTFILES/ssh/config.macos" "ssh/config" ;;
+    Linux)  check_symlink "$HOME/.ssh/config" "$DOTFILES/ssh/config.linux" "ssh/config" ;;
+esac
 echo ""
 
 # Check bin directory
@@ -122,11 +138,21 @@ for script in "$DOTFILES/bin/"*; do
 done
 echo ""
 
+# Check Ghostty configuration (macOS only)
+if [ "$OS" = "Darwin" ]; then
+    echo "Checking Ghostty configuration..."
+    check_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config" \
+        "$DOTFILES/ghostty/config" "ghostty/config"
+    echo ""
+fi
+
 # Check key dependencies
 echo "Checking dependencies..."
 check_command "git" "Git"
 check_command "zsh" "Zsh"
-check_command "brew" "Homebrew"
+if [ "$OS" = "Darwin" ]; then
+    check_command "brew" "Homebrew"
+fi
 echo ""
 
 # Check script permissions

@@ -1,4 +1,7 @@
 #!/bin/sh
 
 echo "Restoring VSCode settings..."
-cp "$HOME"/dotfiles/vscode-settings/settings.json "$HOME"/Library/Application\ Support/Code/User/settings.json
+case "$(uname -s)" in
+    Darwin) cp "$HOME/dotfiles/vscode-settings/settings.json" "$HOME/Library/Application Support/Code/User/settings.json" ;;
+    Linux)  cp "$HOME/dotfiles/vscode-settings/settings.json" "$HOME/.config/Code/User/settings.json" ;;
+esac
