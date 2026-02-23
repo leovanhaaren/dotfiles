@@ -1,3 +1,9 @@
+# Resolve dotfiles directory from symlink
+DOTFILES_DIR="$(cd "$(dirname "$(readlink "$HOME/.zshrc")")/.." && pwd)"
+
+# Source shared configuration
+source "$DOTFILES_DIR/shell/zshrc"
+
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
