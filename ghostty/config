@@ -1,5 +1,5 @@
 term = xterm-256color
-theme = Catppuccin Frappe
+theme = dark:Catppuccin Frappe,light:Catppuccin Latte
 
 macos-icon = xray
 macos-titlebar-style = tabs

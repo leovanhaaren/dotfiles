@@ -34,7 +34,7 @@ commit() {
 
   printf '\033[36m%s\033[0m\n' "$diff"
   printf '\n\033[34m=> Generating commit message...\033[0m\n'
-  local msg=$(git diff --cached | claude -p "
+  local msg=$(git diff --cached | claude -p --model haiku "
 Write a commit message in the Conventional Commits format. Use the structure:
     <type>(<optional scope>): <short description>
 

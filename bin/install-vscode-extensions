@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Install VS Code extensions from vscode/extensions.list
+#
+# Usage: install-vscode-extensions
+
+DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+INPUT="$DOTFILES_DIR/vscode/extensions.list"
+
+if [ ! -f "$INPUT" ]; then
+  echo >&2 "Error: $INPUT not found"
+  exit 1
+fi
+
+while IFS= read -r ext; do
+  [ -z "$ext" ] && continue
+  code --install-extension "$ext" --force
+done < "$INPUT"
+
+echo "Done installing extensions from $INPUT"

@@ -6,9 +6,6 @@
   "claudeCode.preferredLocation": "panel",
   "claudeCode.selectedModel": "opus",
   //
-  // Dev Containers
-  "dev.containers.dockerPath": "podman",
-  //
   // Dotfiles
   "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
   "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
@@ -101,7 +98,7 @@
   //
   // Workbench
   "workbench.colorTheme": "MacOS Modern Dark - Ventura Xcode",
-  "workbench.iconTheme": "catppuccin-macchiato",
+  "workbench.iconTheme": "catppuccin-latte",
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
   "workbench.productIconTheme": "macos-modern",
   "workbench.sideBar.location": "left",
