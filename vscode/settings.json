@@ -1,4 +1,5 @@
 {
+  "chat.disableAIFeatures": true,
   "editor.fastScrollSensitivity": 3,
   "editor.fontFamily": "'Fira Code'",
   "editor.fontLigatures": true,
@@ -29,11 +30,12 @@
   "git.ignoreRebaseWarning": true,
   //
   "github.copilot.enable": {
-    "*": true,
+    "*": false,
     "plaintext": true,
     "markdown": true,
     "scminput": false,
-    "svelte": true
+    "svelte": true,
+    "shellscript": false,
   },
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
   //
@@ -45,7 +47,7 @@
     "fetch:command",
     "stash-push:command",
     "switch:command",
-    "push:command"
+    "push:command",
   ],
   "gitlens.hovers.currentLine.over": "line",
   //
@@ -62,8 +64,7 @@
   "workbench.sideBar.location": "left",
   "workbench.statusBar.visible": true,
   "workbench.startupEditor": "none",
-  "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
-  "workbench.iconTheme": "vscode-icons",
+  "workbench.iconTheme": "catppuccin-macchiato",
   //
   "vsicons.dontShowNewVersionMessage": true,
   //
@@ -79,7 +80,7 @@
   "zenMode.fullScreen": true,
   "zenMode.showTabs": "multiple",
   //
-  "breadcrumbs.enabled": false,
+  "dev.containers.dockerPath": "podman",
   //
   "typescript.updateImportsOnFileMove.enabled": "always",
   "typescript.format.enable": false,
@@ -87,9 +88,24 @@
   "javascript.updateImportsOnFileMove.enabled": "always",
   "javascript.format.enable": false,
   //
-  "dotfiles.installCommand": "~/dotfiles/install/install-vscode.sh",
+  "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
   "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
   "dotfiles.targetPath": "~/dotfiles",
   "github.copilot.nextEditSuggestions.enabled": false,
-  "svelte.enable-ts-plugin": true
+  "errorLens.enabled": true,
+  "vsicons.presets.jsOfficial": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.selectedModel": "opus",
+  "kilo-code.allowedCommands": ["git log", "git diff", "git show"],
+  "kilo-code.deniedCommands": [],
+  "cSpell.userWords": ["worktree"],
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "go.toolsManagement.autoUpdate": true,
+  "kilo-code.debug": false,
+  "workbench.colorTheme": "MacOS Modern Dark - Ventura Xcode",
+  "workbench.productIconTheme": "macos-modern",
 }

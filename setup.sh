@@ -198,6 +198,19 @@ log_info "Setting up Zed configuration..."
 create_directory "$HOME/.config/zed"
 create_symlink "$DOTFILES/zed/settings.json" "$HOME/.config/zed/settings.json"
 
+# VS Code
+log_info "Setting up VS Code configuration..."
+case "$OS" in
+    Darwin)
+        create_directory "$HOME/Library/Application Support/Code/User"
+        create_symlink "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
+        ;;
+    Linux)
+        create_directory "$HOME/.config/Code/User"
+        create_symlink "$DOTFILES/vscode/settings.json" "$HOME/.config/Code/User/settings.json"
+        ;;
+esac
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Setting up Ghostty configuration..."
