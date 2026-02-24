@@ -98,7 +98,7 @@
   //
   // Workbench
   "workbench.colorTheme": "MacOS Modern Dark - Ventura Xcode",
-  "workbench.iconTheme": "catppuccin-macchiato",
+  "workbench.iconTheme": "catppuccin-latte",
   "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
   "workbench.productIconTheme": "macos-modern",
   "workbench.sideBar.location": "left",
