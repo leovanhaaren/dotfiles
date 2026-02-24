@@ -176,8 +176,8 @@ esac
 # Export SSH public keys from 1Password (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Exporting SSH public keys from 1Password..."
-    export_ssh_pubkey "SSH Key leovhaaren@gmail.com" "my.1password.eu" "$HOME/.ssh/id_leovanhaaren.pub"
-    export_ssh_pubkey "Github Authentication key" "ksyos.1password.com" "$HOME/.ssh/id_leo_ksyos.pub"
+    export_ssh_pubkey "SSH Key leovhaaren@gmail.com" "my.1password.eu" "$HOME/.ssh/id_leovanhaaren.pub" || true
+    export_ssh_pubkey "Github Authentication key" "ksyos.1password.com" "$HOME/.ssh/id_leo_ksyos.pub" || true
 fi
 
 # Bin directory

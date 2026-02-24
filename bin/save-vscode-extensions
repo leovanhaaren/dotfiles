@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Save currently installed VS Code extensions to vscode/extensions.list
+#
+# Usage: save-vscode-extensions
+
+DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+OUTPUT="$DOTFILES_DIR/vscode/extensions.list"
+
+code --list-extensions | sort > "$OUTPUT"
+
+echo "Saved extensions to $OUTPUT"

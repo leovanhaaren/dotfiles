@@ -3,12 +3,8 @@
   "chat.disableAIFeatures": true,
   //
   // Claude Code
-  "claudeCode.preferredLocation": "panel",
+  "claudeCode.preferredLocation": "sideBar",
   "claudeCode.selectedModel": "opus",
-  //
-  // cSpell
-  "cSpell.language": "en",
-  "cSpell.userWords": ["worktree"],
   //
   // Dev Containers
   "dev.containers.dockerPath": "podman",
