@@ -3,7 +3,7 @@
   "chat.disableAIFeatures": true,
   //
   // Claude Code
-  "claudeCode.preferredLocation": "sideBar",
+  "claudeCode.preferredLocation": "panel",
   "claudeCode.selectedModel": "opus",
   //
   // Dev Containers
