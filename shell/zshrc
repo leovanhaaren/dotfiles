@@ -26,3 +26,7 @@ command -v go &>/dev/null && export PATH="$PATH:$(go env GOPATH)/bin"
 
 # Editor
 export EDITOR="code --wait"
+
+# Taskdown
+[[ -x "$(command -v td)" ]] && \
+  source /Users/leovanhaaren/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh

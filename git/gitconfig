@@ -11,6 +11,13 @@
 
 [commit]
     gpgsign = true
+
+# Rewrite HTTPS GitHub URLs to use SSH
+[url "git@github.com:"]
+    insteadOf = https://github.com/
+
 # Override for user and signing config for ksyos
 [includeIf "hasconfig:remote.*.url:git@github.com:ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
+
+
