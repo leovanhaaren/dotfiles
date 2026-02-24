@@ -1,5 +1,24 @@
 {
+  // Chat
   "chat.disableAIFeatures": true,
+  //
+  // Claude Code
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.selectedModel": "opus",
+  //
+  // cSpell
+  "cSpell.language": "en",
+  "cSpell.userWords": ["worktree"],
+  //
+  // Dev Containers
+  "dev.containers.dockerPath": "podman",
+  //
+  // Dotfiles
+  "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
+  "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
+  "dotfiles.targetPath": "~/dotfiles",
+  //
+  // Editor
   "editor.fastScrollSensitivity": 3,
   "editor.fontFamily": "'Fira Code'",
   "editor.fontLigatures": true,
@@ -9,103 +28,94 @@
   "editor.formatOnSave": true,
   "editor.guides.bracketPairs": true,
   "editor.inlineSuggest.enabled": true,
+  "editor.lineNumbers": "relative",
+  "editor.linkedEditing": true,
   "editor.minimap.enabled": false,
   "editor.suggest.insertMode": "replace",
   "editor.suggestSelection": "first",
   "editor.tabSize": 2,
   "editor.wordWrap": "off",
-  "editor.linkedEditing": true,
-  "editor.lineNumbers": "relative",
   //
-  "cSpell.language": "en",
+  // Error Lens
+  "errorLens.enabled": true,
   //
+  // Explorer
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
   //
+  // Files
   "files.autoSave": "onWindowChange",
   //
+  // Git
   "git.autofetch": true,
   "git.confirmSync": false,
   "git.enableSmartCommit": true,
   "git.ignoreRebaseWarning": true,
   //
+  // GitHub Copilot
   "github.copilot.enable": {
     "*": false,
     "plaintext": true,
     "markdown": true,
     "scminput": false,
     "svelte": true,
-    "shellscript": false,
+    "shellscript": false
   },
+  "github.copilot.nextEditSuggestions.enabled": false,
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
   //
+  // GitHub Pull Requests
   "githubPullRequests.createOnPublishBranch": "never",
   //
-  "gitlens.codeLens.enabled": false,
-  "gitlens.codeLens.includeSingleLineSymbols": true,
-  "gitlens.gitCommands.skipConfirmations": [
-    "fetch:command",
-    "stash-push:command",
-    "switch:command",
-    "push:command",
-  ],
-  "gitlens.hovers.currentLine.over": "line",
+  // JavaScript
+  "javascript.format.enable": false,
+  "javascript.updateImportsOnFileMove.enabled": "always",
   //
-  "terminal.external.osxExec": "iTerm.app",
-  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
-  "terminal.integrated.enableMultiLinePasteWarning": "never",
-  "terminal.integrated.fontSize": 12,
-  "terminal.integrated.lineHeight": 1.1,
-  "terminal.integrated.fontFamily": "'MesloLGS NF'",
-  "terminal.integrated.defaultProfile.linux": "zsh",
-  "terminal.integrated.defaultProfile.osx": "zsh",
+  // Language Overrides
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   //
-  "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
-  "workbench.sideBar.location": "left",
-  "workbench.statusBar.visible": true,
-  "workbench.startupEditor": "none",
-  "workbench.iconTheme": "catppuccin-macchiato",
-  //
-  "vsicons.dontShowNewVersionMessage": true,
-  //
-  "window.zoomLevel": 0.5,
-  //
+  // Launch
   "launch": {},
   //
+  // Terminal
+  "terminal.external.osxExec": "iTerm.app",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+  "terminal.integrated.enableMultiLinePasteWarning": "never",
+  "terminal.integrated.fontFamily": "'MesloLGS NF'",
+  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.lineHeight": 1.1,
+  //
+  // TypeScript
+  "typescript.format.enable": false,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  //
+  // Update
   "update.showReleaseNotes": false,
   //
-  "zenMode.hideLineNumbers": false,
-  "zenMode.centerLayout": false,
-  "zenMode.silentNotifications": true,
-  "zenMode.fullScreen": true,
-  "zenMode.showTabs": "multiple",
-  //
-  "dev.containers.dockerPath": "podman",
-  //
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.format.enable": false,
-  //
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.format.enable": false,
-  //
-  "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
-  "dotfiles.repository": "https://github.com/leovanhaaren/dotfiles.git",
-  "dotfiles.targetPath": "~/dotfiles",
-  "github.copilot.nextEditSuggestions.enabled": false,
-  "errorLens.enabled": true,
+  // VS Icons
+  "vsicons.dontShowNewVersionMessage": true,
   "vsicons.presets.jsOfficial": true,
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-  },
-  "claudeCode.preferredLocation": "panel",
-  "claudeCode.selectedModel": "opus",
-  "kilo-code.allowedCommands": ["git log", "git diff", "git show"],
-  "kilo-code.deniedCommands": [],
-  "cSpell.userWords": ["worktree"],
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
-  "go.toolsManagement.autoUpdate": true,
-  "kilo-code.debug": false,
+  //
+  // Window
+  "window.zoomLevel": 0.5,
+  //
+  // Workbench
   "workbench.colorTheme": "MacOS Modern Dark - Ventura Xcode",
+  "workbench.iconTheme": "catppuccin-macchiato",
+  "workbench.preferredHighContrastColorTheme": "GitHub Dark Default",
   "workbench.productIconTheme": "macos-modern",
+  "workbench.sideBar.location": "left",
+  "workbench.startupEditor": "none",
+  "workbench.statusBar.visible": true,
+  //
+  // Zen Mode
+  "zenMode.centerLayout": false,
+  "zenMode.fullScreen": true,
+  "zenMode.hideLineNumbers": false,
+  "zenMode.showTabs": "multiple",
+  "zenMode.silentNotifications": true
 }
