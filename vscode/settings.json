@@ -3,11 +3,8 @@
   "chat.disableAIFeatures": true,
   //
   // Claude Code
-  "claudeCode.preferredLocation": "sideBar",
+  "claudeCode.preferredLocation": "panel",
   "claudeCode.selectedModel": "opus",
-  //
-  // Dev Containers
-  "dev.containers.dockerPath": "podman",
   //
   // Dotfiles
   "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",
