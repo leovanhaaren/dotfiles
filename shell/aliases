@@ -183,6 +183,57 @@ dump() {
   fi
 }
 
+# Dump a file to ~/Workspaces/leovanhaaren/dump and push
+dumpf() {
+  local dump_dir="$HOME/Workspaces/leovanhaaren/dump"
+
+  if [[ -z "$1" || ! -f "$1" ]]; then
+    printf '\033[31m=> Usage: dumpf <file>\033[0m\n'
+    return 1
+  fi
+
+  local src="$1"
+  local basename="${src:t}"
+
+  read "filename?Filename (leave blank for '${basename}'): "
+  [[ -z "$filename" ]] && filename="$basename"
+
+  local filepath="$dump_dir/$filename"
+  if [[ -f "$filepath" ]]; then
+    printf '\033[33m=> File already exists: %s\033[0m\n' "$filepath"
+    read "overwrite?Overwrite? [y/N] "
+    if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+      printf '\033[31m=> Aborted.\033[0m\n'
+      return 1
+    fi
+  fi
+
+  cp "$src" "$filepath"
+  printf '\033[32m=> Copied to %s\033[0m\n' "$filepath"
+
+  git -C "$dump_dir" add "$filepath"
+
+  local diff=$(git -C "$dump_dir" diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  read "confirm?Commit and push with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git -C "$dump_dir" commit -m "$msg"
+    git -C "$dump_dir" push
+    printf '\033[32m=> Committed and pushed successfully.\033[0m\n'
+  else
+    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
+  fi
+}
+
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local
 
