@@ -1,5 +1,5 @@
 [core]
-    excludesfile = ~/dotfiles/git/gitignore
+    excludesfile = ~/Workspaces/leovanhaaren/dotfiles/git/gitignore
 
 [init]
     defaultBranch = main
