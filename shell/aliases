@@ -16,6 +16,20 @@ alias symlinkrm="find . -maxdepth 1 -type l -delete"
 # Git
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
+# Shared commit message prompt for AI-generated messages
+_COMMIT_MSG_PROMPT="Write a commit message in the Conventional Commits format. Use the structure:
+    <type>(<optional scope>): <short description>
+
+    <optional body>
+
+    <optional footer>
+
+Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+Optionally, include a body for more details in bullet points.
+Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanation of the breaking change.
+
+Just return the commit message, do not include any other text."
+
 # Initialize git, stage all, and generate commit message from diff
 commit() {
   if [[ ! -d .git ]]; then
@@ -34,20 +48,7 @@ commit() {
 
   printf '\033[36m%s\033[0m\n' "$diff"
   printf '\n\033[34m=> Generating commit message...\033[0m\n'
-  local msg=$(git diff --cached | claude -p --model haiku "
-Write a commit message in the Conventional Commits format. Use the structure:
-    <type>(<optional scope>): <short description>
-
-    <optional body>
-
-    <optional footer>
-
-Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
-Optionally, include a body for more details in bullet points.
-Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanation of the breaking change.
-
-Just return the commit message, do not include any other text.
-")
+  local msg=$(git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
@@ -96,6 +97,57 @@ alias tmux="tmux -2"
 # Claude Code Container
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
 alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
+
+# Dump text to ~/Workspaces/leovanhaaren/dump and push
+dump() {
+  local dump_dir="$HOME/Workspaces/leovanhaaren/dump"
+
+  if [[ -z "$1" ]]; then
+    printf '\033[31m=> Usage: dump "your text content"\033[0m\n'
+    return 1
+  fi
+
+  read "filename?Filename (without extension): "
+  if [[ -z "$filename" ]]; then
+    printf '\033[31m=> No filename provided. Aborted.\033[0m\n'
+    return 1
+  fi
+
+  local filepath="$dump_dir/${filename}.md"
+  if [[ -f "$filepath" ]]; then
+    printf '\033[33m=> File already exists: %s\033[0m\n' "$filepath"
+    read "overwrite?Overwrite? [y/N] "
+    if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+      printf '\033[31m=> Aborted.\033[0m\n'
+      return 1
+    fi
+  fi
+
+  printf '%s\n' "$1" > "$filepath"
+  printf '\033[32m=> Saved to %s\033[0m\n' "$filepath"
+
+  git -C "$dump_dir" add "$filepath"
+
+  local diff=$(git -C "$dump_dir" diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  read "confirm?Commit and push with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git -C "$dump_dir" commit -m "$msg"
+    git -C "$dump_dir" push
+    printf '\033[32m=> Committed and pushed successfully.\033[0m\n'
+  else
+    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
+  fi
+}
 
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local
