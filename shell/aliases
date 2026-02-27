@@ -30,7 +30,12 @@ Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanati
 
 Just return the commit message, do not include any other text."
 
-# Initialize git, stage all, and generate commit message from diff
+# Generate commit message from staged diff
+_generate_commit_msg() {
+  git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT"
+}
+
+# Stage and generate commit message from diff
 commit() {
   if [[ ! -d .git ]]; then
     printf '\033[33m=> Initializing git repository...\033[0m\n'
@@ -48,7 +53,7 @@ commit() {
 
   printf '\033[36m%s\033[0m\n' "$diff"
   printf '\n\033[34m=> Generating commit message...\033[0m\n'
-  local msg=$(git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
+  local msg=$(_generate_commit_msg)
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
@@ -60,6 +65,35 @@ commit() {
   else
     printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
   fi
+}
+
+# Auto stage, generate commit message, and push
+acp() {
+  if [[ ! -d .git ]]; then
+    printf '\033[33m=> Initializing git repository...\033[0m\n'
+    git init
+  fi
+
+  printf '\033[34m=> Staging all files...\033[0m\n'
+  git add -A
+
+  local diff=$(git diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  printf '\033[36m%s\033[0m\n' "$diff"
+  printf '\n\033[34m=> Generating commit message...\033[0m\n'
+  local msg=$(_generate_commit_msg)
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  git commit -m "$msg"
+  printf '\033[34m=> Pushing to remote...\033[0m\n'
+  git push
+  printf '\033[32m=> Done.\033[0m\n'
 }
 
 # Git Worktrees
