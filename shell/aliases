@@ -23,8 +23,8 @@ commit() {
     git init
   fi
 
-  printf '\033[34m=> Staging all files...\033[0m\n'
-  git add -A
+  # printf '\033[34m=> Staging all files...\033[0m\n'
+  # git add -A
 
   local diff=$(git diff --cached --stat)
   if [[ -z "$diff" ]]; then
