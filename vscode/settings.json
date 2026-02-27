@@ -90,8 +90,6 @@
   "update.showReleaseNotes": false,
   //
   // VS Icons
-  "vsicons.dontShowNewVersionMessage": true,
-  "vsicons.presets.jsOfficial": true,
   //
   // Window
   "window.zoomLevel": 0.5,
