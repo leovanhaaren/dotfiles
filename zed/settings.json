@@ -18,7 +18,7 @@
   "theme": {
     "mode": "dark",
     "light": "macOS Classic Light",
-    "dark": "macOS Classic Dark"
+    "dark": "Xcode High Contrast Dark"
     // "light": "Gruvbox Light Soft",
     // "dark": "Xcode High Contrast Darker",
   },

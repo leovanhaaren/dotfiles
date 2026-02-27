@@ -4,7 +4,7 @@ alias c="cd ~/Workspaces/claude"
 alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 alias dotfiles="code ~/Workspaces/leovanhaaren/dotfiles"
-alias dotai="code ~/Workspaces/leovanhaaren/dotai"
+alias dotai="code ~/Workspaces/leovanhaaren/dot-ai"
 
 # Air (installed via go install)
 alias air='$(go env GOPATH)/bin/air'
