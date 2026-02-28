@@ -28,7 +28,7 @@ Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, r
 Optionally, include a body for more details in bullet points.
 Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanation of the breaking change.
 
-Just return the commit message, do not include any other text."
+Just return the commit message as plain text. Do not wrap it in backticks or any other formatting."
 
 # Generate commit message from staged diff
 _generate_commit_msg() {
