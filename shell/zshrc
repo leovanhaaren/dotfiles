@@ -29,4 +29,4 @@ export EDITOR="code --wait"
 
 # Taskdown
 [[ -x "$(command -v td)" ]] && \
-  source /Users/leovanhaaren/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh
+  source ~/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh
