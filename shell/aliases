@@ -32,7 +32,7 @@ Just return the commit message, do not include any other text."
 
 # Generate commit message from staged diff
 _generate_commit_msg() {
-  git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT"
+  git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g'
 }
 
 # Stage and generate commit message from diff
@@ -168,7 +168,7 @@ dump() {
     return 0
   fi
 
-  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
+  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g')
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
@@ -219,7 +219,7 @@ dumpf() {
     return 0
   fi
 
-  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT")
+  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g')
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
