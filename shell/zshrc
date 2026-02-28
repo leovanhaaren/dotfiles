@@ -23,6 +23,7 @@ export NVM_DIR="$HOME/.nvm"
 
 # Go
 command -v go &>/dev/null && export PATH="$PATH:$(go env GOPATH)/bin"
+export GOPRIVATE=github.com/leovanhaaren/*
 
 # Editor
 export EDITOR="code --wait"
