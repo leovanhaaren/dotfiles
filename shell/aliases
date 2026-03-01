@@ -130,6 +130,7 @@ alias ta="tmux attach -t"
 alias tad="tmux attach -d -t"
 alias tl="tmux list-sessions"
 alias tn="tmux new-session -s"
+alias tna="tmux new-session -A -s"
 alias tk="tmux kill-session -t"
 alias tks="tmux kill-server"
 
