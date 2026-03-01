@@ -133,6 +133,7 @@ alias tn="tmux new-session -s"
 alias tna="tmux new-session -A -s"
 alias tk="tmux kill-session -t"
 alias tks="tmux kill-server"
+alias trw="tmux rename-window"
 
 # Claude Code Container
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
