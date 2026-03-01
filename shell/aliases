@@ -126,7 +126,12 @@ gwcd() {
 }
 
 # Tmux
-alias tmux="tmux -2"
+alias ta="tmux attach -t"
+alias tad="tmux attach -d -t"
+alias tl="tmux list-sessions"
+alias tn="tmux new-session -s"
+alias tk="tmux kill-session -t"
+alias tks="tmux kill-server"
 
 # Claude Code Container
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
