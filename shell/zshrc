@@ -28,6 +28,9 @@ export GOPRIVATE=github.com/leovanhaaren/*
 # Editor
 export EDITOR="code --wait"
 
+# Tmux
+[[ -f ~/.tmux.conf ]] && export TMUX_CONF="$HOME/.tmux.conf"
+
 # Taskdown
 [[ -x "$(command -v td)" ]] && \
   source ~/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh

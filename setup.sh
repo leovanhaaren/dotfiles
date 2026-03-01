@@ -211,6 +211,10 @@ case "$OS" in
         ;;
 esac
 
+# Tmux
+log_info "Setting up tmux configuration..."
+create_symlink "$DOTFILES/tmux/tmux.conf" "$HOME/.tmux.conf"
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Setting up Ghostty configuration..."
