@@ -6,7 +6,7 @@ window-theme = ghostty
 # macos-titlebar-style = tabs
 macos-titlebar-style = transparent
 
-font-family = "Fira Code"
+font-family = "FiraCode Nerd Font"
 font-thicken = true
 font-size = 12
 
