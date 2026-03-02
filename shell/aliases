@@ -241,6 +241,9 @@ dumpf() {
   fi
 }
 
+# Jira
+export JIRA_API_TOKEN=$(op read "op://Employee/Jira API/JIRA_API_TOKEN")
+
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local
 
