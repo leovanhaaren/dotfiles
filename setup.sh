@@ -215,6 +215,33 @@ esac
 log_info "Setting up tmux configuration..."
 create_symlink "$DOTFILES/tmux/tmux.conf" "$HOME/.tmux.conf"
 
+# Install TPM (Tmux Plugin Manager) and plugins
+TPM_DIR="$HOME/.tmux/plugins/tpm"
+if [ -d "$TPM_DIR" ]; then
+    log_info "TPM already installed: $TPM_DIR"
+else
+    if [ "$DRY_RUN" = true ]; then
+        log_info "[DRY-RUN] Would clone TPM to $TPM_DIR"
+    else
+        if command -v git &>/dev/null; then
+            git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null 2>&1
+            log_info "Installed TPM: $TPM_DIR"
+        else
+            log_warn "git not found - skipping TPM installation"
+        fi
+    fi
+fi
+
+# Install tmux plugins via TPM
+if [ -x "$TPM_DIR/bin/install_plugins" ]; then
+    if [ "$DRY_RUN" = true ]; then
+        log_info "[DRY-RUN] Would install tmux plugins via TPM"
+    else
+        "$TPM_DIR/bin/install_plugins" >/dev/null 2>&1
+        log_info "Installed tmux plugins via TPM"
+    fi
+fi
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Setting up Ghostty configuration..."
