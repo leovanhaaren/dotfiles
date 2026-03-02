@@ -6,13 +6,13 @@ Include ~/.orbstack/ssh/config
 Host github.com
   HostName github.com
   User git
-  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-  IdentityFile ~/.ssh/id_leovanhaaren.pub
-  IdentitiesOnly yes
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_leovanhaaren
 
 Host github.com-ksyos
   HostName github.com
   User git
-  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-  IdentityFile ~/.ssh/id_leo_ksyos.pub
-  IdentitiesOnly yes
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_leo_ksyos
