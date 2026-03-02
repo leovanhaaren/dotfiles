@@ -146,6 +146,13 @@ if [ "$OS" = "Darwin" ]; then
     echo ""
 fi
 
+# Check Neovim configuration
+echo "Checking Neovim configuration..."
+check_symlink "$HOME/.config/nvim/init.lua" "$DOTFILES/nvim/init.lua" "nvim/init.lua"
+check_symlink "$HOME/.config/nvim/lua" "$DOTFILES/nvim/lua" "nvim/lua"
+check_command "nvim" "Neovim"
+echo ""
+
 # Check key dependencies
 echo "Checking dependencies..."
 check_command "git" "Git"

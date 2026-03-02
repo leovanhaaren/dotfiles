@@ -242,6 +242,14 @@ if [ -x "$TPM_DIR/bin/install_plugins" ]; then
     fi
 fi
 
+# Neovim
+log_info "Setting up Neovim configuration..."
+create_directory "$HOME/.config/nvim"
+create_symlink "$DOTFILES/nvim/init.lua" "$HOME/.config/nvim/init.lua"
+create_symlink "$DOTFILES/nvim/lua" "$HOME/.config/nvim/lua"
+create_symlink "$DOTFILES/nvim/stylua.toml" "$HOME/.config/nvim/stylua.toml"
+create_symlink "$DOTFILES/nvim/.neoconf.json" "$HOME/.config/nvim/.neoconf.json"
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Setting up Ghostty configuration..."

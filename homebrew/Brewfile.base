@@ -17,6 +17,7 @@ brew "glances"                          # System monitoring tool
 brew "go"                               # Go programming language
 brew "jq"                               # JSON processor
 brew "mas"                              # Mac App Store CLI
+brew "neovim"                            # Hyperextensible Vim-based text editor
 brew "nvm"                              # Node.js version manager
 brew "opencode"                         # AI coding assistant CLI
 brew "pnpm"                             # Fast, disk-efficient npm alternative                          # Python version manager

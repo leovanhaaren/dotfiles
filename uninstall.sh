@@ -105,6 +105,13 @@ done
 log_info "Removing Zed configuration symlinks..."
 remove_symlink "$HOME/.config/zed/settings.json"
 
+# Neovim configuration
+log_info "Removing Neovim configuration symlinks..."
+remove_symlink "$HOME/.config/nvim/init.lua"
+remove_symlink "$HOME/.config/nvim/lua"
+remove_symlink "$HOME/.config/nvim/stylua.toml"
+remove_symlink "$HOME/.config/nvim/.neoconf.json"
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Removing Ghostty configuration symlinks..."
