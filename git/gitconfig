@@ -23,6 +23,6 @@
 [includeIf "hasconfig:remote.*.url:git@github.com:ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
 
-# Override for user and signing config for ksyos
+# Override for user and signing config for leo-ksyos
 [includeIf "hasconfig:remote.*.url:git@github.com:leo-ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
