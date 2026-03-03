@@ -3,8 +3,11 @@ alias w="cd ~/Workspaces"
 alias c="cd ~/Workspaces/claude"
 alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
+alias zshlocal="code ~/.zshrc.local"
+alias aliaseslocal="code ~/.aliases.local"
 alias dotfiles="code ~/Workspaces/leovanhaaren/dotfiles"
 alias dotai="code ~/Workspaces/leovanhaaren/dot-ai"
+alias claudedir="code ~/.claude"
 
 # Air (installed via go install)
 alias air='$(go env GOPATH)/bin/air'
@@ -240,9 +243,6 @@ dumpf() {
     printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
   fi
 }
-
-# Jira
-# export JIRA_API_TOKEN=$(op read "op://Employee/Jira API/JIRA_API_TOKEN")
 
 # Local overrides
 [[ -f ~/.aliases.local ]] && source ~/.aliases.local
