@@ -112,6 +112,10 @@ remove_symlink "$HOME/.config/nvim/lua"
 remove_symlink "$HOME/.config/nvim/stylua.toml"
 remove_symlink "$HOME/.config/nvim/.neoconf.json"
 
+# Starship prompt
+log_info "Removing Starship configuration symlinks..."
+remove_symlink "$HOME/.config/starship.toml"
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Removing Ghostty configuration symlinks..."

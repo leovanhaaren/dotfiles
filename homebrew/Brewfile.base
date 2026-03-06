@@ -21,6 +21,7 @@ brew "neovim"                            # Hyperextensible Vim-based text editor
 brew "nvm"                              # Node.js version manager
 brew "opencode"                         # AI coding assistant CLI
 brew "pnpm"                             # Fast, disk-efficient npm alternative                          # Python version manager
+brew "starship"                         # Cross-shell prompt
 brew "syncthing"                        # Continuous file synchronization
 brew "tree"                             # Directory listing as tree
 brew "yq"                               # YAML processor (like jq for YAML)
