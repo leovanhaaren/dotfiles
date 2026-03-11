@@ -35,6 +35,7 @@ cask "font-fira-code"                   # Monospace font with ligatures
 cask "font-iosevka"                     # Monospace font for code
 cask "font-meslo-for-powerlevel10k"     # Font for Powerlevel10k zsh theme
 cask "ghostty"                          # GPU-accelerated terminal emulator
+cask "wezterm"                          # GPU-accelerated terminal emulator
 cask "google-chrome"                    # Google Chrome browser
 cask "lulu"                             # macOS firewall
 cask "obsidian"                         # Markdown knowledge base

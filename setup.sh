@@ -262,6 +262,11 @@ if [ "$OS" = "Darwin" ]; then
     create_symlink "$DOTFILES/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 fi
 
+# WezTerm terminal
+log_info "Setting up WezTerm configuration..."
+create_directory "$HOME/.config/wezterm"
+create_symlink "$DOTFILES/wezterm/wezterm.lua" "$HOME/.config/wezterm/wezterm.lua"
+
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="
