@@ -16,3 +16,6 @@ Host github.com-ksyos
   AddKeysToAgent yes
   UseKeychain yes
   IdentityFile ~/.ssh/id_leo_ksyos
+
+Host 46.225.53.85
+  IdentityFile ~/.ssh/id_hetzner

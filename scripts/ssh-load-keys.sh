@@ -20,6 +20,7 @@ set -euo pipefail
 # Format (1Password): "op:op_item_title:op_account:local_key_name:label"
 # Format (pass):      "pass:pass_entry_path:local_key_name:label"
 KEYS=(
+  "pass:SSH:Hetzner"
   "op:SSH Key leovhaaren@gmail.com:my.1password.eu:id_leovanhaaren:Personal GitHub (auth)"
   "op:SSH Key leovhaaren+signing@gmail.com:my.1password.eu:id_leovanhaaren_signing:Personal GitHub (signing)"
   "op:Github Authentication key:ksyos.1password.com:id_leo_ksyos:Ksyos GitHub (auth)"
