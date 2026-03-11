@@ -1,8 +1,4 @@
 {
-  // Chat
-  "chat.disableAIFeatures": true,
-  //
-  // Claude Code
   "claudeCode.preferredLocation": "panel",
   "claudeCode.selectedModel": "opus",
   //
@@ -52,7 +48,7 @@
     "markdown": true,
     "scminput": false,
     "svelte": true,
-    "shellscript": false
+    "shellscript": false,
   },
   "github.copilot.nextEditSuggestions.enabled": false,
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
@@ -66,7 +62,7 @@
   //
   // Language Overrides
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   //
   // Launch
@@ -116,6 +112,8 @@
     "https://json.schemastore.org/": true,
     "https://json-schema.org/": true,
     "https://opencode.ai": true,
-    "https://models.dev": true
-  }
+    "https://models.dev": true,
+  },
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "copilot:gpt-4.1",
 }

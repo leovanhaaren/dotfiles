@@ -36,4 +36,32 @@ config.scrollback_lines = 100000
 -- Mouse
 config.hide_mouse_cursor_when_typing = true
 
+-- Keybindings
+local act = wezterm.action
+config.keys = {
+	{ key = "d", mods = "CMD", action = act.SplitHorizontal({ domain = "CurrentPaneDomain" }) },
+	{ key = "d", mods = "CMD|SHIFT", action = act.SplitVertical({ domain = "CurrentPaneDomain" }) },
+	{ key = "w", mods = "CMD", action = act.CloseCurrentPane({ confirm = true }) },
+
+	-- Pane navigation
+	{ key = "[", mods = "CMD", action = act.ActivatePaneDirection("Prev") },
+	{ key = "]", mods = "CMD", action = act.ActivatePaneDirection("Next") },
+	{ key = "LeftArrow", mods = "CMD|ALT", action = act.ActivatePaneDirection("Left") },
+	{ key = "RightArrow", mods = "CMD|ALT", action = act.ActivatePaneDirection("Right") },
+	{ key = "UpArrow", mods = "CMD|ALT", action = act.ActivatePaneDirection("Up") },
+	{ key = "DownArrow", mods = "CMD|ALT", action = act.ActivatePaneDirection("Down") },
+
+	-- Pane resizing
+	{ key = "LeftArrow", mods = "CMD|SHIFT", action = act.AdjustPaneSize({ "Left", 5 }) },
+	{ key = "RightArrow", mods = "CMD|SHIFT", action = act.AdjustPaneSize({ "Right", 5 }) },
+	{ key = "UpArrow", mods = "CMD|SHIFT", action = act.AdjustPaneSize({ "Up", 5 }) },
+	{ key = "DownArrow", mods = "CMD|SHIFT", action = act.AdjustPaneSize({ "Down", 5 }) },
+
+	-- Scrollback
+	{ key = "k", mods = "CMD", action = act.ClearScrollback("ScrollbackAndViewport") },
+
+	-- Copy mode
+	{ key = "x", mods = "CMD|SHIFT", action = act.ActivateCopyMode },
+}
+
 return config
