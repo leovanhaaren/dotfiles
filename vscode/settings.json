@@ -108,5 +108,14 @@
   "zenMode.fullScreen": true,
   "zenMode.hideLineNumbers": false,
   "zenMode.showTabs": "multiple",
-  "zenMode.silentNotifications": true
+  "zenMode.silentNotifications": true,
+  "json.schemaDownload.trustedDomains": {
+    "https://schemastore.azurewebsites.net/": true,
+    "https://raw.githubusercontent.com/": true,
+    "https://www.schemastore.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://json-schema.org/": true,
+    "https://opencode.ai": true,
+    "https://models.dev": true
+  }
 }

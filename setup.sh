@@ -250,6 +250,11 @@ create_symlink "$DOTFILES/nvim/lua" "$HOME/.config/nvim/lua"
 create_symlink "$DOTFILES/nvim/stylua.toml" "$HOME/.config/nvim/stylua.toml"
 create_symlink "$DOTFILES/nvim/.neoconf.json" "$HOME/.config/nvim/.neoconf.json"
 
+# Starship prompt
+log_info "Setting up Starship configuration..."
+create_directory "$HOME/.config"
+create_symlink "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
+
 # Ghostty terminal (macOS only)
 if [ "$OS" = "Darwin" ]; then
     log_info "Setting up Ghostty configuration..."

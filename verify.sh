@@ -146,6 +146,12 @@ if [ "$OS" = "Darwin" ]; then
     echo ""
 fi
 
+# Check Starship configuration
+echo "Checking Starship configuration..."
+check_symlink "$HOME/.config/starship.toml" "$DOTFILES/starship/starship.toml" "starship/starship.toml"
+check_command "starship" "Starship"
+echo ""
+
 # Check Neovim configuration
 echo "Checking Neovim configuration..."
 check_symlink "$HOME/.config/nvim/init.lua" "$DOTFILES/nvim/init.lua" "nvim/init.lua"

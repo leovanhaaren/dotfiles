@@ -5,9 +5,10 @@ alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
 alias zshlocal="code ~/.zshrc.local"
 alias aliaseslocal="code ~/.aliases.local"
-alias dotfiles="code ~/Workspaces/leovanhaaren/dotfiles"
+alias dotfiles="code $DOTFILES_DIR"
 alias dotai="code ~/Workspaces/leovanhaaren/dot-ai"
 alias claudedir="code ~/.claude"
+alias ssh-load-keys="~/Workspaces/leovanhaaren/dotfiles/scripts/ssh-load-keys.sh"
 
 # Air (installed via go install)
 alias air='$(go env GOPATH)/bin/air'
