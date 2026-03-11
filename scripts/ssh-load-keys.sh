@@ -1,14 +1,15 @@
 #!/bin/bash
 #
-# Load SSH private keys from 1Password or pass into the macOS Keychain-backed
-# SSH agent.
+# Load SSH private keys from 1Password and Proton Pass into the macOS
+# Keychain-backed SSH agent.
 #
-# Fetches private keys via the 1Password CLI (op) or pass (password-store),
-# converts PKCS#8 keys to OpenSSH format if needed, loads them into the macOS
-# Keychain-backed agent, and securely removes the temp files.
+# Fetches private keys via the 1Password CLI (op) and Proton Pass CLI
+# (pass-cli), converts PKCS#8 keys to OpenSSH format if needed, loads them
+# into the macOS Keychain-backed agent, and securely removes the temp files.
 #
 # Prerequisites:
-#   - 1Password CLI (op) installed and signed in, and/or pass installed
+#   - 1Password CLI (op) installed and signed in
+#   - Proton Pass CLI (pass-cli) installed and logged in
 #   - python3 (for PKCS#8 to OpenSSH conversion)
 #   - macOS with Keychain-backed SSH agent
 #
@@ -17,14 +18,12 @@
 
 set -euo pipefail
 
-# Format (1Password): "op:op_item_title:op_account:local_key_name:label"
-# Format (pass):      "pass:pass_entry_path:local_key_name:label"
-KEYS=(
-  "pass:SSH:Hetzner"
-  "op:SSH Key leovhaaren@gmail.com:my.1password.eu:id_leovanhaaren:Personal GitHub (auth)"
-  "op:SSH Key leovhaaren+signing@gmail.com:my.1password.eu:id_leovanhaaren_signing:Personal GitHub (signing)"
-  "op:Github Authentication key:ksyos.1password.com:id_leo_ksyos:Ksyos GitHub (auth)"
-  "op:Github Signing key:ksyos.1password.com:id_leo_ksyos_signing:Ksyos GitHub (signing)"
+# Format: "op_item_title:op_account:local_key_name:label"
+OP_KEYS=(
+  "SSH Key leovhaaren@gmail.com:my.1password.eu:id_leovanhaaren:Personal GitHub (auth)"
+  "SSH Key leovhaaren+signing@gmail.com:my.1password.eu:id_leovanhaaren_signing:Personal GitHub (signing)"
+  "Github Authentication key:ksyos.1password.com:id_leo_ksyos:Ksyos GitHub (auth)"
+  "Github Signing key:ksyos.1password.com:id_leo_ksyos_signing:Ksyos GitHub (signing)"
 )
 
 # Convert a PKCS#8 ed25519 private key (BEGIN PRIVATE KEY) to OpenSSH format.
@@ -62,13 +61,6 @@ print('-----END OPENSSH PRIVATE KEY-----')
 "
 }
 
-# Extract the private key from a pass entry with a `private_key:` field.
-# Expects the PEM block to start on the line after the field label.
-fetch_from_pass() {
-  local entry_path="$1"
-  pass show "$entry_path" | sed -n '/^private_key:$/,/^-----END .* KEY-----$/{/^private_key:$/d;p}'
-}
-
 # Fetch a key from 1Password via the op CLI.
 fetch_from_op() {
   local op_title="$1" op_account="$2"
@@ -76,35 +68,25 @@ fetch_from_op() {
     | jq -r '.value'
 }
 
+# Load SSH keys from Proton Pass directly into the system agent
+echo ""
+echo "=== Proton Pass ==="
+echo "Loading SSH keys via pass-cli..."
+pass-cli ssh-agent load
+echo "✓ Proton Pass keys loaded"
+
+# Load SSH keys from 1Password
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-for entry in "${KEYS[@]}"; do
-  backend="${entry%%:*}"
-  rest="${entry#*:}"
+for entry in "${OP_KEYS[@]}"; do
+  IFS=':' read -r op_title op_account key_name label <<< "$entry"
+  temp_key="$TEMP_DIR/$key_name"
 
-  case "$backend" in
-    op)
-      IFS=':' read -r op_title op_account key_name label <<< "$rest"
-      temp_key="$TEMP_DIR/$key_name"
-      echo ""
-      echo "=== $label ==="
-      echo "Fetching from 1Password ($op_account)..."
-      fetch_from_op "$op_title" "$op_account" > "$temp_key"
-      ;;
-    pass)
-      IFS=':' read -r pass_path key_name label <<< "$rest"
-      temp_key="$TEMP_DIR/$key_name"
-      echo ""
-      echo "=== $label ==="
-      echo "Fetching from pass ($pass_path)..."
-      fetch_from_pass "$pass_path" > "$temp_key"
-      ;;
-    *)
-      echo "Unknown backend: $backend (entry: $entry)" >&2
-      exit 1
-      ;;
-  esac
+  echo ""
+  echo "=== $label ==="
+  echo "Fetching from 1Password ($op_account)..."
+  fetch_from_op "$op_title" "$op_account" > "$temp_key"
 
   # Convert PKCS#8 to OpenSSH format if needed (ssh-add only accepts OpenSSH)
   if head -1 "$temp_key" | grep -q "BEGIN PRIVATE KEY"; then
