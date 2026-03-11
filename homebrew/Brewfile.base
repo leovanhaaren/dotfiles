@@ -25,6 +25,7 @@ brew "starship"                         # Cross-shell prompt
 brew "syncthing"                        # Continuous file synchronization
 brew "tree"                             # Directory listing as tree
 brew "yq"                               # YAML processor (like jq for YAML)
+brew "fish"                             # Friendly interactive shell
 brew "zsh"                              # Z shell
 brew "zsh-syntax-highlighting"          # Syntax highlighting for zsh
 

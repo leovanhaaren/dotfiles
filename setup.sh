@@ -267,6 +267,22 @@ log_info "Setting up WezTerm configuration..."
 create_directory "$HOME/.config/wezterm"
 create_symlink "$DOTFILES/wezterm/wezterm.lua" "$HOME/.config/wezterm/wezterm.lua"
 
+# Fish shell
+log_info "Setting up Fish configuration..."
+create_directory "$HOME/.config/fish/conf.d"
+create_directory "$HOME/.config/fish/functions"
+create_symlink "$DOTFILES/fish/config.fish" "$HOME/.config/fish/config.fish"
+for conf in "$DOTFILES/fish/conf.d/"*.fish; do
+    if [ -f "$conf" ]; then
+        create_symlink "$conf" "$HOME/.config/fish/conf.d/$(basename "$conf")"
+    fi
+done
+for func in "$DOTFILES/fish/functions/"*.fish; do
+    if [ -f "$func" ]; then
+        create_symlink "$func" "$HOME/.config/fish/functions/$(basename "$func")"
+    fi
+done
+
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="
