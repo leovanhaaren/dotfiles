@@ -11,6 +11,7 @@ tap "homebrew/autoupdate"
 tap "menubar-apps/menubar-apps"
 tap "nguyenphutrong/tap"
 tap "oven-sh/bun"
+tap "manaflow-ai/cmux"
 tap "steipete/tap"
 
 # CLI Tools
@@ -94,6 +95,7 @@ cask "wezterm"
 cask "zed"
 cask "zen"
 cask "nguyenphutrong/tap/quotio"
+cask "manaflow-ai/cmux/cmux"
 cask "steipete/tap/codexbar"
 
 # Mac App Store Apps
