@@ -20,9 +20,5 @@
     insteadOf = https://github.com/
 
 # Override for user and signing config for ksyos
-[includeIf "hasconfig:remote.*.url:git@github.com:ksyos/**"]
-    path = ~/dotfiles/git/ksyos.gitconfig
-
-# Override for user and signing config for leo-ksyos
-[includeIf "hasconfig:remote.*.url:git@github.com:leo-ksyos/**"]
+[includeIf "hasconfig:remote.*.url:git@github.com-ksyos:Ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
