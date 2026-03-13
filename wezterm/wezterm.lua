@@ -16,10 +16,10 @@ config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 config.initial_cols = 120
 config.initial_rows = 30
 config.window_padding = {
-	left = 8,
-	right = 8,
-	top = 8,
-	bottom = 8,
+	left = 24,
+	right = 24,
+	top = 24,
+	bottom = 24,
 }
 
 -- Tab bar
