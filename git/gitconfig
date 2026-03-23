@@ -22,3 +22,7 @@
 # Override for user and signing config for ksyos
 [includeIf "hasconfig:remote.*.url:git@github.com-ksyos:Ksyos/**"]
     path = ~/dotfiles/git/ksyos.gitconfig
+
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
