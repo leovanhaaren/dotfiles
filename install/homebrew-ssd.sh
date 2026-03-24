@@ -164,10 +164,9 @@ run mkdir -p "$MOUNT_POINT"
 run diskutil unmount "/Volumes/$VOLUME_NAME"
 run diskutil mount -mountPoint "$MOUNT_POINT" "$DISK_ID"
 
-# Step 6b: Enable ownership and fix tmp permissions
-log_info "Enabling ownership on volume and fixing tmp permissions..."
+# Step 6b: Enable ownership on volume
+log_info "Enabling ownership on volume..."
 run diskutil enableOwnership "$DISK_ID"
-run chown -R "$(whoami)" "$MOUNT_POINT/tmp"
 
 # Step 7: Create automount script
 # The script waits for the external disk to be detected (up to 60s), then
@@ -197,9 +196,11 @@ fi
 
 /usr/sbin/diskutil mount -mountPoint $MOUNT_POINT "\$VOLUME"
 
-# Enable ownership on the volume and fix tmp permissions
+# Enable ownership on the volume
 /usr/sbin/diskutil enableOwnership "\$VOLUME"
-/usr/sbin/chown -R $(whoami) $MOUNT_POINT/tmp
+
+# Ensure HOMEBREW_TEMP exists on local disk (hdiutil cannot attach DMGs from external SSD)
+/bin/mkdir -p /tmp/homebrew
 SCRIPT
     chmod +x "$MOUNT_SCRIPT"
 else
@@ -229,9 +230,11 @@ else
     log_info "[DRY-RUN] Would write LaunchDaemon to $LAUNCH_DAEMON"
 fi
 
-# Step 9: Create HOMEBREW_TEMP directory
-log_info "Creating HOMEBREW_TEMP directory..."
-run mkdir -p "$MOUNT_POINT/tmp"
+# Step 9: Set HOMEBREW_TEMP to local disk
+# hdiutil cannot attach DMGs from an external SSD volume, so HOMEBREW_TEMP
+# must point to a local filesystem path instead of /opt/homebrew/tmp.
+log_info "Creating HOMEBREW_TEMP directory at /tmp/homebrew..."
+run mkdir -p /tmp/homebrew
 
 # Step 10: Verify
 log_info "Verifying Homebrew installation..."
