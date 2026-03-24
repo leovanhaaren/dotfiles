@@ -3,12 +3,12 @@ local config = wezterm.config_builder()
 
 -- Appearance
 config.color_scheme = "Catppuccin Frappe"
-config.window_background_opacity = 0.9
+config.window_background_opacity = 1
 config.macos_window_background_blur = 20
 config.window_decorations = "RESIZE"
 
 -- Font
-config.font = wezterm.font("FiraCode Nerd Font")
+config.font = wezterm.font("JetBrains Mono")
 config.font_size = 12.0
 config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 
