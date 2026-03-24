@@ -43,12 +43,12 @@
   //
   // GitHub Copilot
   "github.copilot.enable": {
-    "*": false,
+    "*": true,
     "plaintext": true,
     "markdown": true,
     "scminput": false,
     "svelte": true,
-    "shellscript": false,
+    "shellscript": true
   },
   "github.copilot.nextEditSuggestions.enabled": false,
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
