@@ -1,6 +1,9 @@
 # Disable terminal bell
 # setopt NO_BEEP
 
+# Homebrew
+export HOMEBREW_TEMP=/opt/homebrew/tmp
+
 # Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
