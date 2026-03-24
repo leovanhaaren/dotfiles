@@ -164,6 +164,11 @@ run mkdir -p "$MOUNT_POINT"
 run diskutil unmount "/Volumes/$VOLUME_NAME"
 run diskutil mount -mountPoint "$MOUNT_POINT" "$DISK_ID"
 
+# Step 6b: Enable ownership and fix tmp permissions
+log_info "Enabling ownership on volume and fixing tmp permissions..."
+run diskutil enableOwnership "$DISK_ID"
+run chown -R "$(whoami)" "$MOUNT_POINT/tmp"
+
 # Step 7: Create automount script
 # The script waits for the external disk to be detected (up to 60s), then
 # unmounts the volume if macOS auto-mounted it at /Volumes/Homebrew before
@@ -191,6 +196,10 @@ if [ -n "\$CURRENT_MOUNT" ] && [ "\$CURRENT_MOUNT" != "$MOUNT_POINT" ]; then
 fi
 
 /usr/sbin/diskutil mount -mountPoint $MOUNT_POINT "\$VOLUME"
+
+# Enable ownership on the volume and fix tmp permissions
+/usr/sbin/diskutil enableOwnership "\$VOLUME"
+/usr/sbin/chown -R $(whoami) $MOUNT_POINT/tmp
 SCRIPT
     chmod +x "$MOUNT_SCRIPT"
 else
