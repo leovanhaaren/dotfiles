@@ -1,6 +1,6 @@
 {
   "claudeCode.preferredLocation": "panel",
-  "claudeCode.selectedModel": "opus",
+  "claudeCode.selectedModel": "default",
   //
   // Dotfiles
   "dotfiles.installCommand": "~/dotfiles/installers/install-vscode.sh",

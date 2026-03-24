@@ -9,6 +9,16 @@ osascript -e 'tell application "System Preferences" to quit'
 # Ask for the administrator password upfront
 sudo -v
 
+##################
+### Appearance ###
+##################
+
+# Dark mode
+defaults write NSGlobalDomain AppleInterfaceStyle -string "Dark"
+
+# Liquid glass tinted
+defaults write NSGlobalDomain AppleGlassStyle -int 1
+
 ###############
 ### Folders ###
 ###############
@@ -127,6 +137,9 @@ defaults write com.apple.menuextra.battery ShowTime -string "NO"
 # Set date display format
 defaults write com.apple.menuextra.clock "DateFormat" "EEE MMM d  H.mm"
 
+# Automatically hide and show the menu bar on desktop only
+defaults write NSGlobalDomain _HIHideMenuBar -bool true
+
 # Always show scrollbars
 defaults write -g AppleShowScrollBars -string "Always"
 
@@ -195,6 +208,12 @@ defaults write com.apple.TextEdit PlainTextEncoding -int 4
 # Enable subpixel font rendering on non-Apple LCDs
 defaults write NSGlobalDomain AppleFontSmoothing -int 2
 
+# Set display resolution to 3008x1692
+sudo displayplacer "res:3008x1692"
+
+# Turn display off when inactive for 1 hour (60 minutes)
+sudo pmset -a displaysleep 60
+
 #############
 ### Media ###
 #############
@@ -206,15 +225,18 @@ launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2> /dev/nul
 ### Security ###
 ################
 
-# Require password after screensaver
-defaults write com.apple.screensaver askForPassword -int 1
-
-# Require password immediately
-defaults write com.apple.screensaver askForPasswordDelay -int 0
+# Require password after screensaver never
+defaults write com.apple.screensaver askForPassword -int 0
 
 ##############
 ### System ###
 ##############
+
+# Prevent automatic sleeping when display is off
+sudo pmset -a sleep 0
+
+# Start up automatically after a power failure
+sudo pmset -a autorestart 1
 
 # Disable the sound effects on boot
 sudo nvram SystemAudioVolume=" "
