@@ -144,56 +144,7 @@ alias trw="tmux rename-window"
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
 alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
 
-# Dump text to ~/Workspaces/leovanhaaren/dump and push
-dump() {
-  local dump_dir="$HOME/Workspaces/leovanhaaren/dump"
-
-  if [[ -z "$1" ]]; then
-    printf '\033[31m=> Usage: dump "your text content"\033[0m\n'
-    return 1
-  fi
-
-  read "filename?Filename (without extension): "
-  if [[ -z "$filename" ]]; then
-    printf '\033[31m=> No filename provided. Aborted.\033[0m\n'
-    return 1
-  fi
-
-  local filepath="$dump_dir/${filename}.md"
-  if [[ -f "$filepath" ]]; then
-    printf '\033[33m=> File already exists: %s\033[0m\n' "$filepath"
-    read "overwrite?Overwrite? [y/N] "
-    if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
-      printf '\033[31m=> Aborted.\033[0m\n'
-      return 1
-    fi
-  fi
-
-  printf '%s\n' "$1" > "$filepath"
-  printf '\033[32m=> Saved to %s\033[0m\n' "$filepath"
-
-  git -C "$dump_dir" add "$filepath"
-
-  local diff=$(git -C "$dump_dir" diff --cached --stat)
-  if [[ -z "$diff" ]]; then
-    printf '\033[33m=> No changes to commit.\033[0m\n'
-    return 0
-  fi
-
-  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g')
-
-  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
-  printf '\033[32m%s\033[0m\n' "$msg"
-  printf '\033[1m-------------------------------\033[0m\n\n'
-  read "confirm?Commit and push with this message? [y/N] "
-  if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    git -C "$dump_dir" commit -m "$msg"
-    git -C "$dump_dir" push
-    printf '\033[32m=> Committed and pushed successfully.\033[0m\n'
-  else
-    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
-  fi
-}
+alias dump='obsidian daily:append heading=dump content=test'
 
 # Dump a file to ~/Workspaces/leovanhaaren/dump and push
 dumpf() {
