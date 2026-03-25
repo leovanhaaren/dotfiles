@@ -1,5 +1,6 @@
 # Productivity
 alias w="cd ~/Workspaces"
+alias thought='obsidian daily:append content=test'
 alias c="cd ~/Workspaces/claude"
 alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
