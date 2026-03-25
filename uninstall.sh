@@ -82,6 +82,7 @@ log_info "Removing shell configuration symlinks..."
 remove_symlink "$HOME/.zshrc"
 remove_symlink "$HOME/.zprofile"
 remove_symlink "$HOME/.aliases"
+remove_symlink "$HOME/.functions"
 remove_symlink "$HOME/.zshrc.platform"
 
 # Git configuration

@@ -14,6 +14,7 @@ source $ZSH/oh-my-zsh.sh
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 [[ -f ~/.aliases ]] && source ~/.aliases
+[[ -f ~/.functions ]] && source ~/.functions
 
 # Path
 export PATH="$HOME/.local/bin:$PATH"

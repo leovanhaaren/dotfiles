@@ -1,0 +1,172 @@
+# Obsidian
+thought() { obsidian "daily:append" "content=-$1"; }
+dump() { obsidian "daily:append" "heading=dump" "content=-$1"; }
+
+# Shared commit message prompt for AI-generated messages
+_COMMIT_MSG_PROMPT="Write a commit message in the Conventional Commits format. Use the structure:
+    <type>(<optional scope>): <short description>
+
+    <optional body>
+
+    <optional footer>
+
+Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+Optionally, include a body for more details in bullet points.
+Optionally, in the footer, use BREAKING CHANGE: followed by a detailed explanation of the breaking change.
+
+Just return the commit message as plain text. Do not wrap it in backticks or any other formatting."
+
+# Generate commit message from staged diff
+_generate_commit_msg() {
+  git diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g'
+}
+
+# Stage and generate commit message from diff
+commit() {
+  if [[ ! -d .git ]]; then
+    printf '\033[33m=> Initializing git repository...\033[0m\n'
+    git init
+  fi
+
+  local diff=$(git diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  printf '\033[36m%s\033[0m\n' "$diff"
+  printf '\n\033[34m=> Generating commit message...\033[0m\n'
+  local msg=$(_generate_commit_msg)
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  read "confirm?Commit with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git commit -m "$msg"
+    printf '\033[32m=> Committed successfully.\033[0m\n'
+  else
+    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
+  fi
+}
+
+# Auto stage, generate commit message, and push
+acp() {
+  if [[ ! -d .git ]]; then
+    printf '\033[33m=> Initializing git repository...\033[0m\n'
+    git init
+  fi
+
+  printf '\033[34m=> Staging all files...\033[0m\n'
+  git add -A
+
+  local diff=$(git diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  printf '\033[36m%s\033[0m\n' "$diff"
+  printf '\n\033[34m=> Generating commit message...\033[0m\n'
+  local msg=$(_generate_commit_msg)
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  git commit -m "$msg"
+  printf '\033[34m=> Pushing to remote...\033[0m\n'
+  git push
+  printf '\033[32m=> Done.\033[0m\n'
+}
+
+# Git Worktrees
+gwab() {
+  git worktree add -b "$1" "../$(basename $(pwd))-$1"
+}
+
+gwae() {
+  git worktree add "../$(basename $(pwd))-$1" "$1"
+}
+
+gwao() {
+  local worktree_path="../$(basename $(pwd))-$1"
+  git worktree add --track -b "$1" "$worktree_path" "origin/$1"
+  if [[ -f "$worktree_path/package.json" ]]; then
+    echo "Installing dependencies..."
+    (cd "$worktree_path" && npm install)
+  fi
+  cd "$worktree_path"
+}
+
+gwcd() {
+  local wt=$(git worktree list | grep -i "$1" | head -1 | awk '{print $1}')
+  [[ -n "$wt" ]] && cd "$wt" || echo "No worktree matching '$1'"
+}
+
+# Dump a file to ~/Workspaces/leovanhaaren/dump and push
+dumpf() {
+  local dump_dir="$HOME/Workspaces/leovanhaaren/dump"
+
+  if [[ -z "$1" || ! -f "$1" ]]; then
+    printf '\033[31m=> Usage: dumpf <file>\033[0m\n'
+    return 1
+  fi
+
+  local src="$1"
+  local basename="${src:t}"
+
+  read "filename?Filename (leave blank for '${basename}'): "
+  [[ -z "$filename" ]] && filename="$basename"
+
+  local filepath="$dump_dir/$filename"
+  if [[ -f "$filepath" ]]; then
+    printf '\033[33m=> File already exists: %s\033[0m\n' "$filepath"
+    read "overwrite?Overwrite? [y/N] "
+    if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+      printf '\033[31m=> Aborted.\033[0m\n'
+      return 1
+    fi
+  fi
+
+  cp "$src" "$filepath"
+  printf '\033[32m=> Copied to %s\033[0m\n' "$filepath"
+
+  git -C "$dump_dir" add "$filepath"
+
+  local diff=$(git -C "$dump_dir" diff --cached --stat)
+  if [[ -z "$diff" ]]; then
+    printf '\033[33m=> No changes to commit.\033[0m\n'
+    return 0
+  fi
+
+  local msg=$(git -C "$dump_dir" diff --cached | claude -p --model haiku "$_COMMIT_MSG_PROMPT" | sed 's/`//g')
+
+  printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
+  printf '\033[32m%s\033[0m\n' "$msg"
+  printf '\033[1m-------------------------------\033[0m\n\n'
+  read "confirm?Commit and push with this message? [y/N] "
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    git -C "$dump_dir" commit -m "$msg"
+    git -C "$dump_dir" push
+    printf '\033[32m=> Committed and pushed successfully.\033[0m\n'
+  else
+    printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
+  fi
+}
+
+# Z.AI + Claude Code launcher
+zai() {
+  pass-cli inject --in-file "${DOTFILES_DIR}/ai-providers/zai.zsh" | while read -r line; do
+    eval "$line"
+  done
+
+  claude "$@"
+}
+
+mm() {
+  pass-cli inject --in-file "${DOTFILES_DIR}/ai-providers/minimax.zsh" | while read -r line; do
+    eval "$line"
+  done
+
+  claude "$@"
+}

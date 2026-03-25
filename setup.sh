@@ -152,6 +152,7 @@ case "$OS" in
     Linux)  create_symlink "$DOTFILES/shell/zprofile.linux" "$HOME/.zprofile" ;;
 esac
 create_symlink "$DOTFILES/shell/aliases" "$HOME/.aliases"
+create_symlink "$DOTFILES/shell/functions" "$HOME/.functions"
 
 # Platform-specific shell configuration
 log_info "Setting up platform-specific shell configuration..."
