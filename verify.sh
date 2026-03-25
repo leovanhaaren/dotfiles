@@ -108,6 +108,7 @@ case "$OS" in
     Linux)  check_symlink "$HOME/.zprofile" "$DOTFILES/shell/zprofile.linux" "zprofile" ;;
 esac
 check_symlink "$HOME/.aliases" "$DOTFILES/shell/aliases" "aliases"
+check_symlink "$HOME/.functions" "$DOTFILES/shell/functions" "functions"
 case "$OS" in
     Darwin) check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.macos" "zshrc.platform" ;;
     Linux)  check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.linux" "zshrc.platform" ;;
