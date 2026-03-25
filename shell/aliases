@@ -1,6 +1,5 @@
 # Productivity
 alias w="cd ~/Workspaces"
-thought() { obsidian "daily:append" "content=$1"; }
 alias c="cd ~/Workspaces/claude"
 alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
@@ -20,6 +19,9 @@ alias symlinkrm="find . -maxdepth 1 -type l -delete"
 
 # Git
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
+
+thought() { obsidian "daily:append" "content=-$1"; }
+dump() { obsidian "daily:append" "heading=dump" "content=-$1"; }
 
 # Shared commit message prompt for AI-generated messages
 _COMMIT_MSG_PROMPT="Write a commit message in the Conventional Commits format. Use the structure:
@@ -144,7 +146,6 @@ alias trw="tmux rename-window"
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
 alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
 
-dump() { obsidian "daily:append" "heading=dump" "content=$1"; }
 
 # Dump a file to ~/Workspaces/leovanhaaren/dump and push
 dumpf() {
