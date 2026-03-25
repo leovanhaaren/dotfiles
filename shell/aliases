@@ -1,6 +1,6 @@
 # Productivity
 alias w="cd ~/Workspaces"
-alias thought='obsidian daily:append content=test'
+thought() { obsidian "daily:append" "content=$1"; }
 alias c="cd ~/Workspaces/claude"
 alias oc="cd ~/Workspaces/opencode"
 alias reload="exec zsh"
@@ -144,7 +144,7 @@ alias trw="tmux rename-window"
 alias bccc="docker build -t claude-code-sandbox ~/Workspaces/leovanhaaren/llm-container"
 alias ccc="docker run -it -v \$(pwd):/app -v ~/.claude:/home/claude/.claude -v ~/.claude.json:/home/claude/.claude.json claude-code-sandbox"
 
-alias dump='obsidian daily:append heading=dump content=test'
+dump() { obsidian "daily:append" "heading=dump" "content=$1"; }
 
 # Dump a file to ~/Workspaces/leovanhaaren/dump and push
 dumpf() {
