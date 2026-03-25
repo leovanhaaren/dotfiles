@@ -1,6 +1,7 @@
 # Obsidian
-thought() { obsidian "daily:append" "content=-$1"; }
-dump() { obsidian "daily:append" "heading=dump" "content=-$1"; }
+thought() { obsidian "daily:append" "content=- $1"; }
+dump() { obsidian "daily:append" "heading=Dump" "content=- $1"; }
+todo() { obsidian "daily:append" "heading=Todo" "content=- [ ] $1"; }
 
 # Shared commit message prompt for AI-generated messages
 _COMMIT_MSG_PROMPT="Write a commit message in the Conventional Commits format. Use the structure:
