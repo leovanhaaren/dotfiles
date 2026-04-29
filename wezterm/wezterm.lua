@@ -23,8 +23,8 @@ config.window_padding = {
 }
 
 -- Pane borders
-config.pane_border_size = 4
-config.pane_border_color = "#414559"
+-- config.pane_border_size = 4
+-- config.pane_border_color = "#414559"
 
 -- Tab bar
 config.hide_tab_bar_if_only_one_tab = true
