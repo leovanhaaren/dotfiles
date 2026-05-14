@@ -16,7 +16,7 @@ This will:
 
 1. Install Homebrew if missing
 2. Update Homebrew recipes
-3. Install all packages from the default Brewfile (`Brewfile.personal`)
+3. Install all packages from the default Brewfile (`Brewfile.installed`)
 
 To install from a specific Brewfile:
 

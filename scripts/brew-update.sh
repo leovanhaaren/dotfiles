@@ -40,9 +40,9 @@ usage() {
     echo "  -h, --help        Show this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 Brewfile.base           # Update base Brewfile"
-    echo "  $0 -n Brewfile.work        # Dry run on work Brewfile"
-    echo "  $0 -r Brewfile.personal    # Update and remove uninstalled packages"
+    echo "  $0 Brewfile.installed      # Update full Brewfile"
+    echo "  $0 -n Brewfile.slim        # Dry run on slim Brewfile"
+    echo "  $0 -r Brewfile.installed   # Update and remove uninstalled packages"
 }
 
 log_info() {
@@ -116,7 +116,7 @@ fi
 
 # Create temp directory for working files
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 # Dump currently installed packages
 log_info "Dumping currently installed packages..."
@@ -196,8 +196,8 @@ parse_brewfile() {
 log_info "Parsing existing Brewfile..."
 existing_keys_file="$TEMP_DIR/existing_keys.txt"
 existing_lines_file="$TEMP_DIR/existing_lines.txt"
-> "$existing_keys_file"
-> "$existing_lines_file"
+: > "$existing_keys_file"
+: > "$existing_lines_file"
 
 parse_brewfile "$BREWFILE"
 
@@ -205,8 +205,8 @@ parse_brewfile "$BREWFILE"
 log_info "Parsing installed packages..."
 installed_keys_file="$TEMP_DIR/installed_keys.txt"
 installed_lines_file="$TEMP_DIR/installed_lines.txt"
-> "$installed_keys_file"
-> "$installed_lines_file"
+: > "$installed_keys_file"
+: > "$installed_lines_file"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
@@ -222,7 +222,7 @@ done < "$TEMP_DIR/current.brewfile"
 
 # Find new packages (installed but not in Brewfile)
 new_packages_file="$TEMP_DIR/new_packages.txt"
-> "$new_packages_file"
+: > "$new_packages_file"
 
 while IFS= read -r key; do
     if ! grep -qxF "$key" "$existing_keys_file"; then
@@ -237,7 +237,7 @@ done < "$installed_keys_file"
 
 # Find removed packages (in Brewfile but not installed)
 removed_keys_file="$TEMP_DIR/removed_keys.txt"
-> "$removed_keys_file"
+: > "$removed_keys_file"
 
 while IFS= read -r key; do
     if ! grep -qxF "$key" "$installed_keys_file"; then

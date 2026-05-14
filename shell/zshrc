@@ -9,7 +9,7 @@ export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
 DISABLE_AUTO_TITLE="true"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
-source $ZSH/oh-my-zsh.sh
+source "$ZSH/oh-my-zsh.sh"
 
 export DOTFILES_DIR="$HOME/Workspaces/leovanhaaren/dotfiles"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
@@ -28,7 +28,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Bun completions
-[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # NVM
 export NVM_DIR="$HOME/.nvm"

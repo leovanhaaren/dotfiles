@@ -106,6 +106,17 @@ done
 log_info "Removing Zed configuration symlinks..."
 remove_symlink "$HOME/.config/zed/settings.json"
 
+# VS Code
+log_info "Removing VS Code configuration symlinks..."
+case "$OS" in
+    Darwin) remove_symlink "$HOME/Library/Application Support/Code/User/settings.json" ;;
+    Linux)  remove_symlink "$HOME/.config/Code/User/settings.json" ;;
+esac
+
+# Tmux
+log_info "Removing tmux configuration symlinks..."
+remove_symlink "$HOME/.tmux.conf"
+
 # Neovim configuration
 log_info "Removing Neovim configuration symlinks..."
 remove_symlink "$HOME/.config/nvim/init.lua"
@@ -122,6 +133,24 @@ if [ "$OS" = "Darwin" ]; then
     log_info "Removing Ghostty configuration symlinks..."
     remove_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 fi
+
+# WezTerm terminal
+log_info "Removing WezTerm configuration symlinks..."
+remove_symlink "$HOME/.config/wezterm/wezterm.lua"
+
+# Fish shell
+log_info "Removing Fish configuration symlinks..."
+remove_symlink "$HOME/.config/fish/config.fish"
+for conf in "$DOTFILES/fish/conf.d/"*.fish; do
+    if [ -f "$conf" ]; then
+        remove_symlink "$HOME/.config/fish/conf.d/$(basename "$conf")"
+    fi
+done
+for func in "$DOTFILES/fish/functions/"*.fish; do
+    if [ -f "$func" ]; then
+        remove_symlink "$HOME/.config/fish/functions/$(basename "$func")"
+    fi
+done
 
 echo ""
 if [ "$DRY_RUN" = true ]; then

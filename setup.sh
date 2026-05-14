@@ -168,7 +168,11 @@ create_symlink "$DOTFILES/git/gitconfig" "$HOME/.gitconfig"
 # SSH configuration
 log_info "Setting up SSH configuration..."
 create_directory "$HOME/.ssh"
-chmod 700 "$HOME/.ssh" 2>/dev/null || true
+if [ "$DRY_RUN" = true ]; then
+    log_info "[DRY-RUN] Would set permissions: $HOME/.ssh"
+else
+    chmod 700 "$HOME/.ssh" 2>/dev/null || true
+fi
 case "$OS" in
     Darwin) create_symlink "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" ;;
     Linux)  create_symlink "$DOTFILES/ssh/config.linux" "$HOME/.ssh/config" ;;

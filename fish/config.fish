@@ -1,7 +1,7 @@
 # Path
+set -gx DOTFILES_DIR $HOME/Workspaces/leovanhaaren/dotfiles
 fish_add_path $HOME/.local/bin
 fish_add_path $HOME/bin
-fish_add_path $HOME/dotfiles/bin
 
 # Bun
 set -gx BUN_INSTALL $HOME/.bun

@@ -2,7 +2,7 @@
 
 # List process running on provided port
 #
-# whats-in-port 3000
+# check-port 3000
 #
 # output:
 # COMMAND   PID   USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
@@ -11,6 +11,6 @@
 if [ -n "$1" ]; then
   lsof -ni4TCP:"$1"
 else
-  echo >&2 Usage: whats-in-port port-number
+  echo >&2 Usage: check-port port-number
   exit 1
 fi

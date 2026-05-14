@@ -147,6 +147,27 @@ if [ "$OS" = "Darwin" ]; then
     echo ""
 fi
 
+# Check editor configuration
+echo "Checking editor configuration..."
+check_symlink "$HOME/.config/zed/settings.json" "$DOTFILES/zed/settings.json" "zed/settings.json"
+case "$OS" in
+    Darwin)
+        check_symlink "$HOME/Library/Application Support/Code/User/settings.json" \
+            "$DOTFILES/vscode/settings.json" "vscode/settings.json"
+        ;;
+    Linux)
+        check_symlink "$HOME/.config/Code/User/settings.json" \
+            "$DOTFILES/vscode/settings.json" "vscode/settings.json"
+        ;;
+esac
+echo ""
+
+# Check terminal configuration
+echo "Checking terminal configuration..."
+check_symlink "$HOME/.tmux.conf" "$DOTFILES/tmux/tmux.conf" "tmux/tmux.conf"
+check_symlink "$HOME/.config/wezterm/wezterm.lua" "$DOTFILES/wezterm/wezterm.lua" "wezterm/wezterm.lua"
+echo ""
+
 # Check Starship configuration
 echo "Checking Starship configuration..."
 check_symlink "$HOME/.config/starship.toml" "$DOTFILES/starship/starship.toml" "starship/starship.toml"
@@ -157,7 +178,26 @@ echo ""
 echo "Checking Neovim configuration..."
 check_symlink "$HOME/.config/nvim/init.lua" "$DOTFILES/nvim/init.lua" "nvim/init.lua"
 check_symlink "$HOME/.config/nvim/lua" "$DOTFILES/nvim/lua" "nvim/lua"
+check_symlink "$HOME/.config/nvim/stylua.toml" "$DOTFILES/nvim/stylua.toml" "nvim/stylua.toml"
+check_symlink "$HOME/.config/nvim/.neoconf.json" "$DOTFILES/nvim/.neoconf.json" "nvim/.neoconf.json"
 check_command "nvim" "Neovim"
+echo ""
+
+# Check Fish configuration
+echo "Checking Fish configuration..."
+check_symlink "$HOME/.config/fish/config.fish" "$DOTFILES/fish/config.fish" "fish/config.fish"
+for conf in "$DOTFILES/fish/conf.d/"*.fish; do
+    if [ -f "$conf" ]; then
+        confname=$(basename "$conf")
+        check_symlink "$HOME/.config/fish/conf.d/$confname" "$conf" "fish/conf.d/$confname"
+    fi
+done
+for func in "$DOTFILES/fish/functions/"*.fish; do
+    if [ -f "$func" ]; then
+        funcname=$(basename "$func")
+        check_symlink "$HOME/.config/fish/functions/$funcname" "$func" "fish/functions/$funcname"
+    fi
+done
 echo ""
 
 # Check key dependencies

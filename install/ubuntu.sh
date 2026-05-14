@@ -21,7 +21,7 @@ log_info "Updating package lists..."
 sudo apt-get update
 
 # ──────────────────────────────────────────────
-# APT packages (Brewfile.base equivalents)
+# APT packages (rough equivalents of the core Homebrew tools)
 # ──────────────────────────────────────────────
 log_info "Installing APT packages..."
 PACKAGES=(

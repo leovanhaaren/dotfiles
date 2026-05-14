@@ -30,11 +30,12 @@ This detects the OS and creates the appropriate symlinks for shell config, git, 
 
 ```bash
 # Install Homebrew packages
-./install/brew.sh                    # defaults to Brewfile.personal
-./install/brew.sh Brewfile.work      # for work machines
+./install/brew.sh                    # defaults to Brewfile.installed
+./install/brew.sh Brewfile.slim      # smaller machine profile
 
 # Apply macOS preferences
 ./install/mac.sh
+./install/mac.sh --apply-display --disable-screensaver-password  # optional personal settings
 ```
 
 #### Ubuntu Server
@@ -65,11 +66,10 @@ This installs: bat, curl, fzf, git, jq, tmux, tree, zsh, GitHub CLI, eza, Go, yq
 - **git/hooks/** - Git hooks for automation
 
 ### Applications
-- **homebrew/Brewfile.base** - Shared Homebrew packages for all machines
-- **homebrew/Brewfile.personal** - Personal machine packages (includes base)
-- **homebrew/Brewfile.work** - Work machine packages (includes base)
+- **homebrew/Brewfile.installed** - Full Homebrew package set
+- **homebrew/Brewfile.slim** - Smaller Homebrew package set
 - **vscode/** - VS Code editor settings and extensions list
-- **claude/** - Claude CLI settings for different contexts
+- **.claude/** - Claude CLI local settings
 
 ### Utilities
 - **bin/** - Custom scripts (port management, VS Code settings sync)
@@ -91,9 +91,8 @@ dotfiles/
 │   ├── zprofile.linux    # Linux shell profile
 │   └── aliases           # Shell aliases and functions
 ├── homebrew/             # Homebrew package lists
-│   ├── Brewfile.base     # Shared packages
-│   ├── Brewfile.personal # Personal machine packages
-│   └── Brewfile.work     # Work machine packages
+│   ├── Brewfile.installed # Full package set
+│   └── Brewfile.slim      # Smaller package set
 ├── git/                  # Git configuration
 │   ├── gitconfig         # Main git config
 │   ├── ksyos.gitconfig   # Work account config
@@ -102,7 +101,7 @@ dotfiles/
 ├── vscode/               # VS Code settings and extensions
 ├── zed/                  # Zed editor settings
 ├── ghostty/              # Ghostty terminal config
-├── claude/               # Claude CLI configs
+├── .claude/              # Claude CLI local settings
 ├── bin/                  # Custom scripts
 ├── scripts/              # Helper scripts
 ├── install/              # Setup scripts
@@ -155,8 +154,8 @@ kill-port 3000     # Kill process on port
 
 ### VS Code Settings
 ```bash
-save_code_settings     # Backup VS Code settings
-restore_code_settings  # Restore VS Code settings
+save-vscode-extensions     # Backup VS Code extensions
+install-vscode-extensions  # Install VS Code extensions
 ```
 
 ## Local Overrides
@@ -167,35 +166,34 @@ Files ending in `.local` are sourced but not tracked in git:
 
 ## Homebrew
 
-Brewfiles are split into three files under `homebrew/`:
-- **Brewfile.base** - Packages shared across all machines
-- **Brewfile.personal** - Personal-only packages (Proton apps, home automation, etc.)
-- **Brewfile.work** - Work-only packages (AWS tools, containers, 1Password, etc.)
+Brewfiles are stored under `homebrew/`:
+- **Brewfile.installed** - Full package set for the primary machine
+- **Brewfile.slim** - Smaller package set for lean installs
 
 ### Sync system with Brewfile
 ```bash
 # Check what's missing (dry run)
-brew bundle check --file=homebrew/Brewfile.personal
+brew bundle check --file=homebrew/Brewfile.installed
 
 # Install missing packages
-brew bundle --file=homebrew/Brewfile.personal
+brew bundle --file=homebrew/Brewfile.installed
 
 # See what would be installed
-brew bundle list --file=homebrew/Brewfile.personal
+brew bundle list --file=homebrew/Brewfile.installed
 ```
 
-Replace `Brewfile.personal` with `Brewfile.work` for work machines.
+Replace `Brewfile.installed` with `Brewfile.slim` for a smaller install.
 
 ### Update Brewfiles from system (preserving comments)
 ```bash
 # See what would change (dry run)
-./scripts/brew-update.sh -n Brewfile.base
+./scripts/brew-update.sh -n Brewfile.installed
 
 # Add newly installed packages
-./scripts/brew-update.sh Brewfile.base
+./scripts/brew-update.sh Brewfile.installed
 
 # Also remove uninstalled packages
-./scripts/brew-update.sh -r Brewfile.base
+./scripts/brew-update.sh -r Brewfile.installed
 ```
 
 The update script compares installed packages with your Brewfile and:
@@ -205,7 +203,7 @@ The update script compares installed packages with your Brewfile and:
 
 ### Cleanup unused packages
 ```bash
-brew bundle cleanup --force --file=homebrew/Brewfile.personal  # or Brewfile.work
+brew bundle cleanup --force --file=homebrew/Brewfile.installed  # or Brewfile.slim
 ```
 
 ## Verification

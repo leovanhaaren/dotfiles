@@ -5,9 +5,10 @@
 # kill-port 3000
 
 if [ -n "$1" ]; then
-  port_num="$(lsof -ti4TCP:"$1")"
-  if [ $? -eq 0 ]; then
-    kill "$port_num"
+  if port_nums="$(lsof -ti4TCP:"$1")"; then
+    # shellcheck disable=SC2086
+    set -- $port_nums
+    kill "$@"
   fi
 else
   echo >&2 Usage: kill-port port-number

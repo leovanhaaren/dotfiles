@@ -1,4 +1,39 @@
 #!/bin/bash
+set -e
+
+APPLY_DISPLAY=false
+DISABLE_SCREENSAVER_PASSWORD=false
+
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  --apply-display                 Apply personal display resolution settings"
+    echo "  --disable-screensaver-password  Disable password requirement after screensaver"
+    echo "  -h, --help                      Show this help message"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --apply-display)
+            APPLY_DISPLAY=true
+            shift
+            ;;
+        --disable-screensaver-password)
+            DISABLE_SCREENSAVER_PASSWORD=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
 
 echo "# Setting global mac configs from mac.sh"
 
@@ -208,8 +243,16 @@ defaults write com.apple.TextEdit PlainTextEncoding -int 4
 # Enable subpixel font rendering on non-Apple LCDs
 defaults write NSGlobalDomain AppleFontSmoothing -int 2
 
-# Set display resolution to 3008x1692
-sudo displayplacer "res:3008x1692"
+if [ "$APPLY_DISPLAY" = true ]; then
+    # Set display resolution to 3008x1692
+    if command -v displayplacer >/dev/null 2>&1; then
+        sudo displayplacer "res:3008x1692"
+    else
+        echo "displayplacer not installed; skipping display resolution"
+    fi
+else
+    echo "# Skipping personal display resolution; pass --apply-display to enable"
+fi
 
 # Turn display off when inactive for 1 hour (60 minutes)
 sudo pmset -a displaysleep 60
@@ -225,8 +268,12 @@ launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2> /dev/nul
 ### Security ###
 ################
 
-# Require password after screensaver never
-defaults write com.apple.screensaver askForPassword -int 0
+if [ "$DISABLE_SCREENSAVER_PASSWORD" = true ]; then
+    # Require password after screensaver never
+    defaults write com.apple.screensaver askForPassword -int 0
+else
+    echo "# Keeping screensaver password setting unchanged; pass --disable-screensaver-password to change it"
+fi
 
 ##############
 ### System ###
