@@ -27,6 +27,7 @@ alias gwr="git worktree remove"
 alias gwp="git worktree prune"
 
 # Tmux
+alias s='sesh connect $(sesh list | fzf)'
 alias ta="tmux attach -t"
 alias tad="tmux attach -d -t"
 alias tl="tmux list-sessions"
