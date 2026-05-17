@@ -10,16 +10,17 @@ config.window_decorations = "RESIZE"
 -- Font
 config.font = wezterm.font("JetBrains Mono")
 config.font_size = 12.0
+config.line_height = 1.1
 config.harfbuzz_features = { "calt=1", "clig=1", "liga=1" }
 
 -- Window
 config.initial_cols = 120
 config.initial_rows = 30
 config.window_padding = {
-	left = 24,
-	right = 24,
-	top = 24,
-	bottom = 24,
+	left = 16,
+	right = 16,
+	top = 16,
+	bottom = 16,
 }
 
 -- Pane borders

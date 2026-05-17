@@ -1,5 +1,4 @@
 # Taps
-tap "1password/tap"
 tap "alexsjones/llmfit"
 tap "anomalyco/tap"
 tap "arimxyer/tap"
@@ -16,8 +15,6 @@ tap "steipete/tap"
 # CLI Tools
 brew "aom"
 brew "asdf"
-brew "aws-vault"
-brew "awscli"
 brew "bat"
 brew "bruno-cli"
 brew "eza"
@@ -27,7 +24,6 @@ brew "fzf"
 brew "gh"
 brew "git"
 brew "git-extras"
-brew "git-filter-repo"
 brew "git-lfs"
 brew "glib"
 brew "glances"
@@ -66,8 +62,6 @@ brew "protonpass/tap/pass-cli"
 # gh extension install dlvhdr/gh-dash
 
 # Desktop Applications (Casks)
-cask "1password"
-cask "1password-cli"
 cask "bruno"
 cask "font-fira-code"
 cask "font-fira-code-nerd-font"

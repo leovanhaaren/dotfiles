@@ -1,0 +1,12 @@
+# Taps
+tap "1password/tap"
+
+# CLI Tools
+brew "aws-vault"
+brew "awscli"
+brew "git-lfs"
+
+# Desktop Applications (Casks)
+cask "1password"
+cask "1password-cli"
+cask "session-manager-plugin"
