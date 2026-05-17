@@ -1,0 +1,19 @@
+#:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
+blacklist = ["scratchpad"]
+
+cache = false
+
+[[default_session]]
+startup_command = "eza --all --git --icons --color=always {}"
+
+[[session]]
+name = "tmuxconfig"
+path = "~/dotfiles/tmux"
+startup_command = "nvim tmux.conf"
+preview_command = "bat --color=always ~/dotfiles/tmux/tmux.conf"
+
+[[session]]
+name = "dot-ai"
+path = "~/Workspaces/leovanhaaren/dot-ai"
+startup_command = "nvim ."
+
