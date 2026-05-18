@@ -145,9 +145,9 @@ else
     echo "Next steps:"
     echo "  1. source ~/.zshrc"
     if [ "$OS" = "Darwin" ]; then
-        echo "  2. ./install/brew.sh"
-        echo "  3. ./install/mac.sh"
+        echo "  2. ./scripts/brew.sh"
+        echo "  3. ./scripts/mac.sh"
     else
-        echo "  2. ./install/ubuntu.sh"
+        echo "  2. ./scripts/ubuntu.sh"
     fi
 fi

@@ -1,2 +1,6 @@
-.DS_store
+.DS_Store
+*.backup
+*.local
+
+# Secrets (machine-specific, never committed)
 /secrets

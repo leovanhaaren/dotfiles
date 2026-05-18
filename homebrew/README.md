@@ -9,48 +9,48 @@ Manages all Homebrew packages, casks, Mac App Store apps, VS Code extensions, an
 If Homebrew is not installed yet, the install script will set it up automatically. You can also run the full installation via:
 
 ```bash
-./install/brew.sh
+./scripts/brew.sh
 ```
 
 This will:
 
 1. Install Homebrew if missing
 2. Update Homebrew recipes
-3. Install all packages from the default Brewfile (`Brewfile.installed`)
+3. Install all packages from the default Brewfile (`Brewfile.base`)
 
 To install from a specific Brewfile:
 
 ```bash
-./install/brew.sh Brewfile.installed
+./scripts/brew.sh Brewfile.base
 ```
 
 ### Install directly with brew bundle
 
 ```bash
-brew bundle --file=homebrew/Brewfile.installed
+brew bundle --file=homebrew/Brewfile.base
 ```
 
 ## Usage
 
 ### Uninstall specific packages
 
-1. Remove the corresponding lines from `Brewfile.installed`
+1. Remove the corresponding lines from `Brewfile.base`
 2. Preview what will be uninstalled:
 
    ```bash
-   brew bundle cleanup --file=homebrew/Brewfile.installed
+   brew bundle cleanup --file=homebrew/Brewfile.base
    ```
 
 3. Apply the cleanup:
 
    ```bash
-   brew bundle cleanup --file=homebrew/Brewfile.installed --force
+   brew bundle cleanup --file=homebrew/Brewfile.base --force
    ```
 
 ### Check what's missing or outdated
 
 ```bash
-brew bundle check --file=homebrew/Brewfile.installed
+brew bundle check --file=homebrew/Brewfile.base
 ```
 
 ## Brewfile sections

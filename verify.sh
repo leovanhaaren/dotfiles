@@ -63,7 +63,7 @@ echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
 echo "Checking convenience symlink..."
-check_symlink "$HOME/dotfiles" "$DOTFILES" "~/dotfiles"
+check_symlink "$HOME/dotfiles" "$DOTFILES" "dotfiles convenience symlink"
 echo ""
 
 echo "Checking stow-managed dotfiles (~/)..."

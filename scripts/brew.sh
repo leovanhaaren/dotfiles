@@ -25,7 +25,7 @@ fi
 echo "Updating homebrew..."
 brew update
 
-BREWFILE="${1:-Brewfile.installed}"
+BREWFILE="${1:-Brewfile.base}"
 cd "$DOTFILES/homebrew" && brew bundle install --file="$BREWFILE"
 
 echo "Cleaning up brew"

@@ -7,7 +7,7 @@
 #   - Homebrew installed at /opt/homebrew
 #
 # Usage:
-#   sudo ./install/homebrew-ssd.sh [OPTIONS]
+#   sudo ./scripts/homebrew-ssd.sh [OPTIONS]
 #
 # Options:
 #   -c, --container   APFS container identifier (find with: diskutil apfs list)

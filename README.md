@@ -16,7 +16,7 @@ git clone git@github.com:leovanhaaren/dotfiles.git ~/Workspaces/leovanhaaren/dot
 cd ~/Workspaces/leovanhaaren/dotfiles
 ```
 
-### 2. Create Symlinks
+### 2. Create Symlinks via GNU Stow
 
 ```bash
 ./setup.sh
@@ -30,22 +30,22 @@ This detects the OS and creates the appropriate symlinks for shell config, git, 
 
 ```bash
 # Install Homebrew packages
-./install/brew.sh                    # defaults to Brewfile.installed
-./install/brew.sh Brewfile.slim      # smaller machine profile
+./scripts/brew.sh                    # defaults to Brewfile.base
+./scripts/brew.sh homebrew/Brewfile.work   # add work-specific packages
 
 # Apply macOS preferences
-./install/mac.sh
-./install/mac.sh --apply-display --disable-screensaver-password  # optional personal settings
+./scripts/mac.sh
+./scripts/mac.sh --apply-display --disable-screensaver-password  # optional personal settings
 ```
 
 #### Ubuntu Server
 
 ```bash
 # Install packages, Oh My Zsh, NVM, Bun, pnpm, Go, and set zsh as default shell
-./install/ubuntu.sh
+./scripts/ubuntu.sh
 ```
 
-This installs: bat, curl, fzf, git, jq, tmux, tree, zsh, GitHub CLI, eza, Go, yq, Oh My Zsh (with autosuggestions and syntax highlighting plugins), NVM, Bun, and pnpm.
+(Note: the Ubuntu bootstrap script exists on the `my-new-feature` branch and needs to be ported to `main`. See `scripts/install.sh` as a starting point.)
 
 ### 4. Verify
 
@@ -56,59 +56,91 @@ This installs: bat, curl, fzf, git, jq, tmux, tree, zsh, GitHub CLI, eza, Go, yq
 ## What's Included
 
 ### Shell Configuration
-- **shell/zshrc** - Zsh configuration with Oh My Zsh
-- **shell/zprofile.\*** - Environment variables and PATH setup (per platform)
-- **shell/aliases** - Shell aliases and functions
+- **.zshrc** — Zsh configuration with Oh My Zsh (stowed to `~/`)
+- **.zprofile** — Environment variables and PATH setup (stowed to `~/`)
+- **.aliases** — Shell aliases (stowed to `~/`)
+- **.functions** — Shell functions (commit, acp, git worktrees, etc.) (stowed to `~/`)
+- **.config/fish/** — Fish shell configuration (stowed to `~/.config/fish/`)
 
 ### Git
-- **git/gitconfig** - Git configuration with SSH signing via 1Password
-- **git/ksyos.gitconfig** - Conditional config for work account
-- **git/hooks/** - Git hooks for automation
+- **.gitconfig** — Git configuration with SSH signing via 1Password (stowed to `~/`)
+- **.config/git/ksyos.gitconfig** — Conditional config for work account (stowed to `~/.config/git/`)
+- **.config/git/hooks/** — Git hooks for automation (stowed to `~/.config/git/`)
 
 ### Applications
-- **homebrew/Brewfile.installed** - Full Homebrew package set
-- **homebrew/Brewfile.slim** - Smaller Homebrew package set
-- **vscode/** - VS Code editor settings and extensions list
-- **.claude/** - Claude CLI local settings
+- **homebrew/Brewfile.base** — Primary Homebrew package set
+- **homebrew/Brewfile.work** — Work-specific packages (1Password, AWS, etc.)
+- **vscode/settings.json** — VS Code editor settings (symlinked manually on each OS)
+- **vscode/extensions.list** — Documented VS Code extensions (not auto-installed)
 
-### Utilities
-- **bin/** - Custom scripts (port management, VS Code settings sync)
-- **scripts/** - Helper scripts (Brewfile sync, SSH setup)
-- **install/** - One-time setup scripts (Homebrew, macOS prefs, Ubuntu)
+### Terminal Emulators
+- **.tmux.conf** — Tmux configuration with TPM, Catppuccin theme, resurrect, floax (stowed to `~/`)
+- **.gitmux.conf** — Git status in tmux status bar (stowed to `~/`)
+- **.config/wezterm/wezterm.lua** — Wezterm configuration (stowed to `~/.config/wezterm/`)
+- **.config/ghostty/config** — Ghostty terminal configuration (stowed to `~/.config/ghostty/`)
+
+### Session Management
+- **.config/sesh/sesh.toml** — Sesh session manager configuration (stowed to `~/.config/sesh/`)
+- **.config/television/** — Television fuzzy finder configuration (stowed to `~/.config/television/`)
+- **.config/worktrunk/config.toml** — Worktrunk git worktree manager (stowed to `~/.config/worktrunk/`)
+
+### Other Tools
+- **.config/starship.toml** — Starship prompt configuration (stowed to `~/.config/`)
+- **.config/mise/config.toml** — Mise version manager config (stowed to `~/.config/mise/`)
+- **.config/zed/settings.json** — Zed editor settings (stowed to `~/.config/zed/`)
 
 ## Directory Structure
 
 ```
 dotfiles/
-├── setup.sh              # Main installer (creates symlinks)
+├── setup.sh              # Main installer (creates symlinks via GNU Stow)
 ├── uninstall.sh          # Remove symlinks
 ├── verify.sh             # Verify installation
-├── shell/                # Shell configuration
-│   ├── zshrc             # Zsh configuration
-│   ├── zshrc.macos       # macOS-specific shell config
-│   ├── zshrc.linux       # Linux-specific shell config
-│   ├── zprofile.macos    # macOS shell profile
-│   ├── zprofile.linux    # Linux shell profile
-│   └── aliases           # Shell aliases and functions
-├── homebrew/             # Homebrew package lists
-│   ├── Brewfile.installed # Full package set
-│   └── Brewfile.slim      # Smaller package set
-├── git/                  # Git configuration
-│   ├── gitconfig         # Main git config
-│   ├── ksyos.gitconfig   # Work account config
-│   └── hooks/            # Git hooks
-├── ssh/                  # SSH configuration
-├── vscode/               # VS Code settings and extensions
-├── zed/                  # Zed editor settings
-├── ghostty/              # Ghostty terminal config
-├── .claude/              # Claude CLI local settings
-├── bin/                  # Custom scripts
-├── scripts/              # Helper scripts
-├── install/              # Setup scripts
-│   ├── brew.sh           # Homebrew installation
-│   ├── mac.sh            # macOS preferences
-│   └── ubuntu.sh         # Ubuntu packages
-└── tools/                # Tools installation
+├── .stow-local-ignore    # Stow exclusion patterns
+│
+├── .zshrc                # Shell: Zsh configuration (stowed to ~/)
+├── .zprofile             # Shell: Environment setup (stowed to ~/)
+├── .aliases              # Shell: Aliases (stowed to ~/)
+├── .functions            # Shell: Custom functions (stowed to ~/)
+├── .config/              # Shell: XDG config
+│   └── fish/             #   Fish shell config
+│
+├── .gitconfig            # Git: Main config (stowed to ~/)
+├── .config/git/          # Git: Ignore, hooks, work config (stowed to ~/.config/git/)
+│
+├── .tmux.conf            # Tmux: Main config (stowed to ~/)
+├── .gitmux.conf          # Tmux: Git status (stowed to ~/)
+├── .config/sesh/         # Tmux: Sesh session config (stowed to ~/.config/sesh/)
+├── .config/television/   # Tmux: Television config (stowed to ~/.config/television/)
+│
+├── .config/wezterm/      # Terminal: Wezterm config (stowed to ~/.config/wezterm/)
+├── .config/ghostty/      # Terminal: Ghostty config (stowed to ~/.config/ghostty/)
+│
+├── .config/starship.toml # Prompt: Starship (stowed to ~/.config/)
+├── .config/mise/         # Tools: Mise version manager (stowed to ~/.config/mise/)
+├── .config/zed/          # Editor: Zed settings (stowed to ~/.config/zed/)
+├── .config/worktrunk/    # Tools: Worktrunk (stowed to ~/.config/worktrunk/)
+│
+├── homebrew/             # Homebrew package lists (not stowed)
+│   ├── Brewfile.base     #   Primary package set
+│   └── Brewfile.work     #   Work-specific packages
+│
+├── ssh/                  # SSH configuration (not stowed, linked by setup.sh)
+│   ├── config.macos      #   macOS SSH config
+│   └── config.linux      #   Linux SSH config
+│
+├── vscode/               # VS Code settings (not stowed, linked by setup.sh)
+│   ├── settings.json
+│   └── extensions.list
+│
+├── scripts/              # Setup/utility scripts (not stowed)
+│   ├── brew.sh           #   Homebrew installation
+│   ├── mac.sh            #   macOS preferences
+│   ├── install.sh        #   Meta-installer (calls brew.sh)
+│   ├── homebrew-ssd.sh   #   Move Homebrew to external SSD
+│   └── ssh-load-keys.sh  #   Load SSH keys from Proton Pass
+│
+└── .gitignore            # Git ignore rules (git only, not stowed)
 ```
 
 ## Aliases Reference
@@ -118,6 +150,7 @@ dotfiles/
 |-------|-------------|
 | `w` | Navigate to ~/Workspaces |
 | `reload` | Reload zsh configuration |
+| `h` | Launch herdr |
 
 ### Symlinks
 | Alias | Description |
@@ -144,66 +177,78 @@ dotfiles/
 | `mm` | Run Claude with minimax config |
 | `ccc` | Run Claude in container |
 
-## Custom Scripts
+### Tmux
+| Alias | Description |
+|-------|-------------|
+| `s` | Launch sesh session picker |
+| `ta` | Attach to tmux session |
+| `tad` | Attach (detaching others) |
+| `tl` | List tmux sessions |
+| `tn` | New tmux session |
+| `tna` | New or attach session |
+| `tk` | Kill tmux session |
+| `tks` | Kill tmux server |
+| `trw` | Rename tmux window |
+
+## Custom Functions
+
+### AI-Assisted Commits
+```bash
+commit        # Stage? No. Generate message from staged diff, confirm, commit
+acp           # Stage all, generate message, commit, push
+```
+
+Both use `claude -p --model haiku` to generate commit messages in Conventional Commits format.
+
+### Git Worktrees
+```bash
+gwab <branch>   # Create new branch worktree
+gwae <branch>   # Add existing branch worktree
+gwao <branch>   # Add worktree tracking origin branch
+gwcd <name>     # Navigate to worktree by name
+```
 
 ### Port Management
 ```bash
 check-port 3000    # Check if port is in use
 kill-port 3000     # Kill process on port
 ```
-
-### VS Code Settings
-```bash
-save-vscode-extensions     # Backup VS Code extensions
-install-vscode-extensions  # Install VS Code extensions
-```
+(Requires `bin/` directory — currently on `my-new-feature` branch, pending merge.)
 
 ## Local Overrides
 
 Files ending in `.local` are sourced but not tracked in git:
-- `~/.aliases.local` - Local alias overrides
-- `~/.zshrc.local` - Local zsh configuration
+- `~/.aliases.local` — Local alias overrides
+- `~/.zshrc.local` — Local zsh configuration
+- `~/.tmux.conf.local` — Local tmux configuration
 
 ## Homebrew
 
 Brewfiles are stored under `homebrew/`:
-- **Brewfile.installed** - Full package set for the primary machine
-- **Brewfile.slim** - Smaller package set for lean installs
+- **Brewfile.base** — Primary package set for the main machine
+- **Brewfile.work** — Work-specific packages (1Password, AWS CLI, etc.)
 
 ### Sync system with Brewfile
 ```bash
 # Check what's missing (dry run)
-brew bundle check --file=homebrew/Brewfile.installed
+brew bundle check --file=homebrew/Brewfile.base
 
 # Install missing packages
-brew bundle --file=homebrew/Brewfile.installed
+brew bundle --file=homebrew/Brewfile.base
 
 # See what would be installed
-brew bundle list --file=homebrew/Brewfile.installed
-```
+brew bundle list --file=homebrew/Brewfile.base
 
-Replace `Brewfile.installed` with `Brewfile.slim` for a smaller install.
+# Add work packages as well
+brew bundle --file=homebrew/Brewfile.work
+```
 
 ### Update Brewfiles from system (preserving comments)
-```bash
-# See what would change (dry run)
-./scripts/brew-update.sh -n Brewfile.installed
-
-# Add newly installed packages
-./scripts/brew-update.sh Brewfile.installed
-
-# Also remove uninstalled packages
-./scripts/brew-update.sh -r Brewfile.installed
-```
-
-The update script compares installed packages with your Brewfile and:
-- Keeps existing entries with comments intact
-- Adds new packages that you've installed
-- Optionally removes packages no longer installed (`-r` flag)
+The `brew-update.sh` script is available on the `my-new-feature` branch but not yet on `main`. For now, update manually.
 
 ### Cleanup unused packages
 ```bash
-brew bundle cleanup --force --file=homebrew/Brewfile.installed  # or Brewfile.slim
+brew bundle cleanup --force --file=homebrew/Brewfile.base
 ```
 
 ## Verification
@@ -227,7 +272,7 @@ Run the verification script to check your installation:
 ### Permission denied on scripts
 ```bash
 chmod +x setup.sh uninstall.sh verify.sh
-chmod +x bin/*
+chmod +x scripts/*
 ```
 
 ### 1Password SSH signing not working

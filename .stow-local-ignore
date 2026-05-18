@@ -41,4 +41,4 @@
 ^\.worktrees$
 
 # Brewfile symlinks (belong in repo, not ~)
-^Brewfile
+^Brewfile$
