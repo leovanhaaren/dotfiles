@@ -5,11 +5,10 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 DRY_RUN=false
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -20,17 +19,9 @@ usage() {
     exit 0
 }
 
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 remove_symlink() {
     local target="$1"
@@ -40,34 +31,31 @@ remove_symlink() {
         return 0
     fi
 
-    if [ -L "$target" ]; then
-        if [ "$DRY_RUN" = true ]; then
-            log_info "[DRY-RUN] Would remove symlink: $target"
-        else
-            rm -f "$target"
-            log_info "Removed symlink: $target"
-        fi
-    else
+    if [ ! -L "$target" ]; then
         log_warn "Not a symlink, skipping: $target"
+        return 0
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        log_info "[DRY-RUN] Would remove symlink: $target"
+    else
+        rm -f "$target"
+        log_info "Removed symlink: $target"
     fi
 }
 
-# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -n|--dry-run)
-            DRY_RUN=true
-            shift
-            ;;
-        -h|--help)
-            usage
-            ;;
-        *)
-            log_error "Unknown option: $1"
-            usage
-            ;;
+        -n|--dry-run) DRY_RUN=true; shift ;;
+        -h|--help) usage ;;
+        *) log_error "Unknown option: $1"; usage ;;
     esac
 done
+
+if ! command -v stow &>/dev/null; then
+    log_error "GNU Stow not found. Install with: brew install stow"
+    exit 1
+fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then
@@ -77,87 +65,28 @@ else
 fi
 echo ""
 
-# Shell configuration
-log_info "Removing shell configuration symlinks..."
-remove_symlink "$HOME/.zshrc"
+# Remove all stow-managed symlinks
+log_info "Removing stow-managed dotfiles..."
+STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --delete)
+[ "$DRY_RUN" = true ] && STOW_FLAGS+=(--simulate)
+stow "${STOW_FLAGS[@]}" .
+log_info "Stow-managed dotfiles removed."
+
+# Platform-specific symlinks (not managed by stow)
+log_info "Removing platform-specific symlinks..."
 remove_symlink "$HOME/.zprofile"
-remove_symlink "$HOME/.aliases"
-remove_symlink "$HOME/.functions"
-remove_symlink "$HOME/.zshrc.platform"
-
-# Git configuration
-log_info "Removing git configuration symlinks..."
-remove_symlink "$HOME/.gitconfig"
-
-# SSH configuration
-log_info "Removing SSH configuration symlinks..."
 remove_symlink "$HOME/.ssh/config"
 
-# Bin directory
-log_info "Removing bin symlinks..."
-for script in "$DOTFILES/bin/"*; do
-    if [ -f "$script" ]; then
-        scriptname=$(basename "$script")
-        remove_symlink "$HOME/bin/$scriptname"
-    fi
-done
-
-# Zed editor
-log_info "Removing Zed configuration symlinks..."
-remove_symlink "$HOME/.config/zed/settings.json"
-
-# VS Code
-log_info "Removing VS Code configuration symlinks..."
+# VS Code (non-XDG path, not managed by stow)
+log_info "Removing VS Code symlinks..."
 case "$OS" in
     Darwin) remove_symlink "$HOME/Library/Application Support/Code/User/settings.json" ;;
     Linux)  remove_symlink "$HOME/.config/Code/User/settings.json" ;;
 esac
-
-# Tmux
-log_info "Removing tmux configuration symlinks..."
-remove_symlink "$HOME/.tmux.conf"
-
-# Neovim configuration
-log_info "Removing Neovim configuration symlinks..."
-remove_symlink "$HOME/.config/nvim/init.lua"
-remove_symlink "$HOME/.config/nvim/lua"
-remove_symlink "$HOME/.config/nvim/stylua.toml"
-remove_symlink "$HOME/.config/nvim/.neoconf.json"
-
-# Starship prompt
-log_info "Removing Starship configuration symlinks..."
-remove_symlink "$HOME/.config/starship.toml"
-
-# Ghostty terminal (macOS only)
-if [ "$OS" = "Darwin" ]; then
-    log_info "Removing Ghostty configuration symlinks..."
-    remove_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-fi
-
-# WezTerm terminal
-log_info "Removing WezTerm configuration symlinks..."
-remove_symlink "$HOME/.config/wezterm/wezterm.lua"
-
-# Fish shell
-log_info "Removing Fish configuration symlinks..."
-remove_symlink "$HOME/.config/fish/config.fish"
-for conf in "$DOTFILES/fish/conf.d/"*.fish; do
-    if [ -f "$conf" ]; then
-        remove_symlink "$HOME/.config/fish/conf.d/$(basename "$conf")"
-    fi
-done
-for func in "$DOTFILES/fish/functions/"*.fish; do
-    if [ -f "$func" ]; then
-        remove_symlink "$HOME/.config/fish/functions/$(basename "$func")"
-    fi
-done
 
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="
 else
     echo "=== Symlinks removed ==="
-    echo ""
-    echo "Note: Backup files (*.backup) were not removed."
-    echo "To restore from backup: mv ~/.zshrc.backup ~/.zshrc"
 fi

@@ -42,6 +42,21 @@ export GOPRIVATE=github.com/leovanhaaren/*
 # Editor
 export EDITOR="code --wait"
 
+# 1Password SSH Agent
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+# pnpm
+export PNPM_HOME="$HOME/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+# Home Assistant CLI
+command -v hass-cli &>/dev/null && source <(_HASS_CLI_COMPLETE=zsh_source hass-cli)
+export HASS_SERVER=pass://Development/hass-cli/HASS_SERVER
+export HASS_TOKEN=pass://Development/hass-cli/HASS_TOKEN
+
 # Tmux
 [[ -f ~/.tmux.conf ]] && export TMUX_CONF="$HOME/.tmux.conf"
 

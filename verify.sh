@@ -3,27 +3,24 @@
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 
-# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 ERRORS=0
 WARNINGS=0
 
-log_ok() {
-    echo -e "${GREEN}[OK]${NC} $1"
-}
+log_ok() { echo -e "${GREEN}[OK]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; ((WARNINGS++)); }
+log_error() { echo -e "${RED}[FAIL]${NC} $1"; ((ERRORS++)); }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-    ((WARNINGS++))
-}
-
-log_error() {
-    echo -e "${RED}[FAIL]${NC} $1"
-    ((ERRORS++))
+resolve_path() {
+    if command -v realpath &>/dev/null; then
+        realpath "$1" 2>/dev/null
+    else
+        python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$1" 2>/dev/null
+    fi
 }
 
 check_symlink() {
@@ -32,35 +29,21 @@ check_symlink() {
     local description="$3"
 
     if [ ! -e "$target" ] && [ ! -L "$target" ]; then
-        log_error "$description: Missing ($target)"
+        log_error "$description: missing ($target)"
         return 1
     fi
 
     if [ ! -L "$target" ]; then
-        log_warn "$description: Exists but not a symlink ($target)"
+        log_warn "$description: exists but not a symlink ($target)"
         return 1
     fi
 
-    local actual_source
-    actual_source=$(readlink "$target")
-    if [ "$actual_source" = "$expected_source" ]; then
+    local resolved
+    resolved=$(resolve_path "$target")
+    if [ "$resolved" = "$expected_source" ]; then
         log_ok "$description"
-        return 0
     else
-        log_warn "$description: Points to wrong location ($actual_source instead of $expected_source)"
-        return 1
-    fi
-}
-
-check_directory() {
-    local dir="$1"
-    local description="$2"
-
-    if [ -d "$dir" ]; then
-        log_ok "$description"
-        return 0
-    else
-        log_error "$description: Missing ($dir)"
+        log_warn "$description: resolves to $resolved, expected $expected_source"
         return 1
     fi
 }
@@ -68,26 +51,10 @@ check_directory() {
 check_command() {
     local cmd="$1"
     local description="$2"
-
-    if command -v "$cmd" &> /dev/null; then
+    if command -v "$cmd" &>/dev/null; then
         log_ok "$description"
-        return 0
     else
-        log_warn "$description: Not installed"
-        return 1
-    fi
-}
-
-check_file_executable() {
-    local file="$1"
-    local description="$2"
-
-    if [ -x "$file" ]; then
-        log_ok "$description"
-        return 0
-    else
-        log_warn "$description: Not executable ($file)"
-        return 1
+        log_warn "$description: not installed"
     fi
 }
 
@@ -95,42 +62,32 @@ echo ""
 echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
-# Check dotfiles directory
-echo "Checking dotfiles directory..."
-check_directory "$DOTFILES" "Dotfiles directory"
+echo "Checking stow-managed dotfiles (~/)..."
+check_symlink "$HOME/.zshrc"      "$DOTFILES/.zshrc"      "zshrc"
+check_symlink "$HOME/.zprofile"   "$DOTFILES/.zprofile"   "zprofile"
+check_symlink "$HOME/.aliases"    "$DOTFILES/.aliases"    "aliases"
+check_symlink "$HOME/.functions"  "$DOTFILES/.functions"  "functions"
+check_symlink "$HOME/.gitconfig"  "$DOTFILES/.gitconfig"  "gitconfig"
+check_symlink "$HOME/.tmux.conf"  "$DOTFILES/.tmux.conf"  "tmux.conf"
+check_symlink "$HOME/.gitmux.conf" "$DOTFILES/.gitmux.conf" "gitmux.conf"
 echo ""
 
-# Check shell symlinks
-echo "Checking shell configuration..."
-check_symlink "$HOME/.zshrc" "$DOTFILES/shell/zshrc" "zshrc"
-case "$OS" in
-    Darwin) check_symlink "$HOME/.zprofile" "$DOTFILES/shell/zprofile.macos" "zprofile" ;;
-    Linux)  check_symlink "$HOME/.zprofile" "$DOTFILES/shell/zprofile.linux" "zprofile" ;;
-esac
-check_symlink "$HOME/.aliases" "$DOTFILES/shell/aliases" "aliases"
-check_symlink "$HOME/.functions" "$DOTFILES/shell/functions" "functions"
-case "$OS" in
-    Darwin) check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.macos" "zshrc.platform" ;;
-    Linux)  check_symlink "$HOME/.zshrc.platform" "$DOTFILES/shell/zshrc.linux" "zshrc.platform" ;;
-esac
+echo "Checking stow-managed XDG config (~/.config/)..."
+check_symlink "$HOME/.config/starship.toml"             "$DOTFILES/.config/starship.toml"             "starship.toml"
+check_symlink "$HOME/.config/ghostty"                   "$DOTFILES/.config/ghostty"                   "ghostty"
+check_symlink "$HOME/.config/fish/config.fish"          "$DOTFILES/.config/fish/config.fish"          "fish/config.fish"
+check_symlink "$HOME/.config/fish/functions/wt.fish"    "$DOTFILES/.config/fish/functions/wt.fish"    "fish/functions/wt.fish"
+check_symlink "$HOME/.config/nvim/init.lua"             "$DOTFILES/.config/nvim/init.lua"             "nvim/init.lua"
+check_symlink "$HOME/.config/nvim/lua"                  "$DOTFILES/.config/nvim/lua"                  "nvim/lua"
+check_symlink "$HOME/.config/wezterm/wezterm.lua"       "$DOTFILES/.config/wezterm/wezterm.lua"       "wezterm/wezterm.lua"
+check_symlink "$HOME/.config/zed/settings.json"         "$DOTFILES/.config/zed/settings.json"         "zed/settings.json"
+check_symlink "$HOME/.config/sesh/sesh.toml"            "$DOTFILES/.config/sesh/sesh.toml"            "sesh/sesh.toml"
+check_symlink "$HOME/.config/television/config.toml"    "$DOTFILES/.config/television/config.toml"    "television/config.toml"
+check_symlink "$HOME/.config/television/cable/sesh.toml" "$DOTFILES/.config/television/cable/sesh.toml" "television/cable/sesh.toml"
+check_symlink "$HOME/.config/worktrunk/config.toml"     "$DOTFILES/.config/worktrunk/config.toml"     "worktrunk/config.toml"
 echo ""
 
-# Check git configuration
-echo "Checking git configuration..."
-check_symlink "$HOME/.gitconfig" "$DOTFILES/git/gitconfig" "gitconfig"
-echo ""
-
-# Check SSH configuration
-echo "Checking SSH configuration..."
-case "$OS" in
-    Darwin) check_symlink "$HOME/.ssh/config" "$DOTFILES/ssh/config.macos" "ssh/config" ;;
-    Linux)  check_symlink "$HOME/.ssh/config" "$DOTFILES/ssh/config.linux" "ssh/config" ;;
-esac
-echo ""
-
-# Check bin directory
-echo "Checking bin scripts..."
-check_directory "$HOME/bin" "Bin directory"
+echo "Checking stow-managed bin scripts (~/bin/)..."
 for script in "$DOTFILES/bin/"*; do
     if [ -f "$script" ]; then
         scriptname=$(basename "$script")
@@ -139,17 +96,11 @@ for script in "$DOTFILES/bin/"*; do
 done
 echo ""
 
-# Check Ghostty configuration (macOS only)
-if [ "$OS" = "Darwin" ]; then
-    echo "Checking Ghostty configuration..."
-    check_symlink "$HOME/Library/Application Support/com.mitchellh.ghostty/config" \
-        "$DOTFILES/ghostty/config" "ghostty/config"
-    echo ""
-fi
-
-# Check editor configuration
-echo "Checking editor configuration..."
-check_symlink "$HOME/.config/zed/settings.json" "$DOTFILES/zed/settings.json" "zed/settings.json"
+echo "Checking platform-specific configuration (manually linked)..."
+case "$OS" in
+    Darwin) check_symlink "$HOME/.ssh/config"  "$DOTFILES/ssh/config.macos" "ssh/config" ;;
+    Linux)  check_symlink "$HOME/.ssh/config"  "$DOTFILES/ssh/config.linux" "ssh/config" ;;
+esac
 case "$OS" in
     Darwin)
         check_symlink "$HOME/Library/Application Support/Code/User/settings.json" \
@@ -162,61 +113,15 @@ case "$OS" in
 esac
 echo ""
 
-# Check terminal configuration
-echo "Checking terminal configuration..."
-check_symlink "$HOME/.tmux.conf" "$DOTFILES/tmux/tmux.conf" "tmux/tmux.conf"
-check_symlink "$HOME/.config/wezterm/wezterm.lua" "$DOTFILES/wezterm/wezterm.lua" "wezterm/wezterm.lua"
-echo ""
-
-# Check Starship configuration
-echo "Checking Starship configuration..."
-check_symlink "$HOME/.config/starship.toml" "$DOTFILES/starship/starship.toml" "starship/starship.toml"
+echo "Checking tools..."
+check_command "stow"     "GNU Stow"
+check_command "git"      "Git"
+check_command "zsh"      "Zsh"
+check_command "nvim"     "Neovim"
 check_command "starship" "Starship"
+[ "$OS" = "Darwin" ] && check_command "brew" "Homebrew"
 echo ""
 
-# Check Neovim configuration
-echo "Checking Neovim configuration..."
-check_symlink "$HOME/.config/nvim/init.lua" "$DOTFILES/nvim/init.lua" "nvim/init.lua"
-check_symlink "$HOME/.config/nvim/lua" "$DOTFILES/nvim/lua" "nvim/lua"
-check_symlink "$HOME/.config/nvim/stylua.toml" "$DOTFILES/nvim/stylua.toml" "nvim/stylua.toml"
-check_symlink "$HOME/.config/nvim/.neoconf.json" "$DOTFILES/nvim/.neoconf.json" "nvim/.neoconf.json"
-check_command "nvim" "Neovim"
-echo ""
-
-# Check Fish configuration
-echo "Checking Fish configuration..."
-check_symlink "$HOME/.config/fish/config.fish" "$DOTFILES/fish/config.fish" "fish/config.fish"
-for conf in "$DOTFILES/fish/conf.d/"*.fish; do
-    if [ -f "$conf" ]; then
-        confname=$(basename "$conf")
-        check_symlink "$HOME/.config/fish/conf.d/$confname" "$conf" "fish/conf.d/$confname"
-    fi
-done
-for func in "$DOTFILES/fish/functions/"*.fish; do
-    if [ -f "$func" ]; then
-        funcname=$(basename "$func")
-        check_symlink "$HOME/.config/fish/functions/$funcname" "$func" "fish/functions/$funcname"
-    fi
-done
-echo ""
-
-# Check key dependencies
-echo "Checking dependencies..."
-check_command "git" "Git"
-check_command "zsh" "Zsh"
-if [ "$OS" = "Darwin" ]; then
-    check_command "brew" "Homebrew"
-fi
-echo ""
-
-# Check script permissions
-echo "Checking script permissions..."
-check_file_executable "$DOTFILES/setup.sh" "setup.sh"
-check_file_executable "$DOTFILES/uninstall.sh" "uninstall.sh"
-check_file_executable "$DOTFILES/verify.sh" "verify.sh"
-echo ""
-
-# Summary
 echo "=== Verification Summary ==="
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo -e "${GREEN}All checks passed!${NC}"
@@ -227,6 +132,6 @@ elif [ $ERRORS -eq 0 ]; then
 else
     echo -e "${RED}Failed with $ERRORS error(s) and $WARNINGS warning(s)${NC}"
     echo ""
-    echo "To fix errors, run: ./setup.sh"
+    echo "To fix: ./setup.sh"
     exit 1
 fi
