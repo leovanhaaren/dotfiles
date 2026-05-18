@@ -107,7 +107,7 @@ vscode "yoavbls.pretty-ts-errors"
 vscode "yzhang.markdown-all-in-one"
 
 # Go Packages
-go "github.com/cosmtrek/air"
+go " github.com/air-verse/air"
 go "github.com/golang-migrate/migrate/v4/cmd/migrate"
 go "github.com/golangci/golangci-lint/cmd/golangci-lint"
 go "honnef.co/go/tools/cmd/staticcheck"
