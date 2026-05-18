@@ -22,6 +22,7 @@ startup_command = "ls"
 [[session]]
 name = "dotfiles"
 path = "~/dotfiles"
+windows = [ "tmuxconfig", "wezterm config", "neovim config", "aerospace config", "dot-ai" ]
 
 [[session]]
 name = "tmuxconfig"
