@@ -7,9 +7,6 @@ fish_add_path $HOME/bin
 set -gx BUN_INSTALL $HOME/.bun
 fish_add_path $BUN_INSTALL/bin
 
-# NVM (via nvm.fish plugin or manual)
-set -gx NVM_DIR $HOME/.nvm
-
 # Go
 if command -q go
     fish_add_path (go env GOPATH)/bin
