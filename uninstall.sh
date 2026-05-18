@@ -74,6 +74,7 @@ log_info "Stow-managed dotfiles removed."
 
 # Platform-specific symlinks (not managed by stow)
 log_info "Removing platform-specific symlinks..."
+remove_symlink "$HOME/dotfiles"
 remove_symlink "$HOME/.zprofile"
 remove_symlink "$HOME/.ssh/config"
 

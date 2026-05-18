@@ -62,6 +62,10 @@ echo ""
 echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
+echo "Checking convenience symlink..."
+check_symlink "$HOME/dotfiles" "$DOTFILES" "~/dotfiles"
+echo ""
+
 echo "Checking stow-managed dotfiles (~/)..."
 check_symlink "$HOME/.zshrc"      "$DOTFILES/.zshrc"      "zshrc"
 check_symlink "$HOME/.zprofile"   "$DOTFILES/.zprofile"   "zprofile"

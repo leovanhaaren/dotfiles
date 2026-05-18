@@ -66,38 +66,6 @@ create_directory() {
     fi
 }
 
-export_ssh_pubkey() {
-    local item="$1"
-    local account="$2"
-    local target="$3"
-
-    if [ -f "$target" ]; then
-        log_info "Already exists: $target"
-        return 0
-    fi
-
-    if ! command -v op &>/dev/null; then
-        log_warn "1Password CLI (op) not found - skipping $target"
-        return 1
-    fi
-
-    if [ "$DRY_RUN" = true ]; then
-        log_info "[DRY-RUN] Would export public key from 1Password: $item -> $target"
-        return 0
-    fi
-
-    local pubkey
-    pubkey=$(op item get "$item" --account "$account" --fields "public key" 2>/dev/null)
-    if [ -z "$pubkey" ]; then
-        log_error "Failed to read public key from 1Password: $item ($account)"
-        return 1
-    fi
-
-    echo "$pubkey" > "$target"
-    chmod 600 "$target"
-    log_info "Exported public key: $item -> $target"
-}
-
 while [[ $# -gt 0 ]]; do
     case $1 in
         -n|--dry-run) DRY_RUN=true; shift ;;
@@ -119,6 +87,12 @@ else
 fi
 echo ""
 
+# Convenience symlink: ~/dotfiles -> repo root
+if [ "$DOTFILES" != "$HOME/dotfiles" ]; then
+    log_info "Setting up ~/dotfiles convenience symlink..."
+    create_symlink "$DOTFILES" "$HOME/dotfiles"
+fi
+
 # Stow all XDG-compatible dotfiles
 log_info "Stowing dotfiles..."
 STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow)
@@ -134,13 +108,6 @@ case "$OS" in
     Darwin) create_symlink "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" ;;
     Linux)  create_symlink "$DOTFILES/ssh/config.linux" "$HOME/.ssh/config" ;;
 esac
-
-# SSH public keys from 1Password (macOS only)
-if [ "$OS" = "Darwin" ]; then
-    log_info "Exporting SSH public keys from 1Password..."
-    export_ssh_pubkey "SSH Key leovhaaren@gmail.com" "my.1password.eu" "$HOME/.ssh/id_leovanhaaren.pub" || true
-    export_ssh_pubkey "Github Authentication key" "ksyos.1password.com" "$HOME/.ssh/id_leo_ksyos.pub" || true
-fi
 
 # VS Code (non-XDG path on macOS, not stow-able)
 log_info "Setting up VS Code configuration..."
