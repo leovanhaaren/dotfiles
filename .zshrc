@@ -42,9 +42,6 @@ export GOPRIVATE=github.com/leovanhaaren/*
 # Editor
 export EDITOR="code --wait"
 
-# 1Password SSH Agent
-export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
