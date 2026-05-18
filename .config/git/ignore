@@ -1,0 +1,6 @@
+.DS_Store
+.flow
+.docs
+.tasks
+.worktrees
+**/.claude/settings.local.json

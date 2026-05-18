@@ -1,0 +1,23 @@
+# Files and dirs that should not be symlinked into ~
+
+# Stow infrastructure
+^\.git$
+^\.gitignore$
+^\.stow-local-ignore$
+
+# Docs and repo metadata
+^README\.md$
+
+# Setup / management scripts
+^setup\.sh$
+^uninstall\.sh$
+^verify\.sh$
+
+# Non-config directories (handled by setup.sh or not meant for ~)
+^install$
+^scripts$
+^homebrew$
+^vscode$
+^ghostty$
+^ssh$
+^shell$

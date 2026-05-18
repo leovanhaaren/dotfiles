@@ -1,5 +1,4 @@
 [core]
-    excludesfile = ~/Workspaces/leovanhaaren/dotfiles/git/gitignore
 
 [init]
     defaultBranch = main
@@ -21,7 +20,7 @@
 
 # Override for user and signing config for ksyos
 [includeIf "hasconfig:remote.*.url:git@github.com-ksyos:Ksyos/**"]
-    path = ~/Workspaces/leovanhaaren/dotfiles/git/ksyos.gitconfig
+    path = ~/.config/git/ksyos.gitconfig
 
 [credential "https://gist.github.com"]
 	helper = 
