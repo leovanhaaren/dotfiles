@@ -30,11 +30,6 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 # Bun completions
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
-# NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 # Go
 command -v go &>/dev/null && export PATH="$PATH:$(go env GOPATH)/bin"
 export GOPRIVATE=github.com/leovanhaaren/*
