@@ -260,13 +260,6 @@ log_info "Setting up Starship configuration..."
 create_directory "$HOME/.config"
 create_symlink "$DOTFILES/starship/starship.toml" "$HOME/.config/starship.toml"
 
-# Ghostty terminal (macOS only)
-if [ "$OS" = "Darwin" ]; then
-    log_info "Setting up Ghostty configuration..."
-    create_directory "$HOME/Library/Application Support/com.mitchellh.ghostty"
-    create_symlink "$DOTFILES/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-fi
-
 # WezTerm terminal
 log_info "Setting up WezTerm configuration..."
 create_directory "$HOME/.config/wezterm"
