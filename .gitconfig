@@ -14,6 +14,9 @@
 [commit]
     gpgsign = true
 
+[pull]
+    rebase = true
+
 # Rewrite HTTPS GitHub URLs to use SSH
 [url "git@github.com:"]
     insteadOf = https://github.com/
