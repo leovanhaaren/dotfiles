@@ -182,7 +182,12 @@ session () {
   SESSION="$(basename "$WORK_DIR")-team"
 
   local NAMES=(truus sjaak henk greet kees mien bep dirk ria wim)
-  local name_for_pane() { echo "${NAMES[RANDOM % ${#NAMES[@]} + 1]}"; }
+  local name_for_pane() {
+    local idx=$((RANDOM % ${#NAMES[@]} + 1))
+    local name="${NAMES[idx]}"
+    NAMES[idx]=()
+    echo "$name"
+  }
 
   tmux kill-session -t $SESSION
   tmux new-session -d -s $SESSION
