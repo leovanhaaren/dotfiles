@@ -89,6 +89,7 @@ check_symlink "$HOME/.config/sesh/sesh.toml"            "$DOTFILES/.config/sesh/
 check_symlink "$HOME/.config/television/config.toml"    "$DOTFILES/.config/television/config.toml"    "television/config.toml"
 check_symlink "$HOME/.config/television/cable/sesh.toml" "$DOTFILES/.config/television/cable/sesh.toml" "television/cable/sesh.toml"
 check_symlink "$HOME/.config/worktrunk/config.toml"     "$DOTFILES/.config/worktrunk/config.toml"     "worktrunk/config.toml"
+check_symlink "$HOME/.config/mise/config.toml"          "$DOTFILES/.config/mise/config.toml"          "mise/config.toml"
 echo ""
 
 echo "Checking stow-managed bin scripts (~/bin/)..."
