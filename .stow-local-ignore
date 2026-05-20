@@ -7,11 +7,24 @@
 
 # Docs and repo metadata
 ^README\.md$
+^LICENSE$
+^CHANGELOG.*$
+^CONTRIBUTING.*$
+
+# macOS metadata
+^\.DS_Store$
+
+# Editor artifacts
+~$
+\.swp$
+\.swo$
 
 # Setup / management scripts
 ^setup\.sh$
 ^uninstall\.sh$
 ^verify\.sh$
+^Makefile$
+^[Jj]ustfile$
 
 # Non-config directories (handled by setup.sh or not meant for ~)
 ^install$
@@ -20,4 +33,12 @@
 ^vscode$
 ^ssh$
 
-^.DS_Store
+# Repo-specific directories not meant for ~
+^ai-providers$
+^config$
+^secrets$
+^shell$
+^\.worktrees$
+
+# Brewfile symlinks (belong in repo, not ~)
+^Brewfile
