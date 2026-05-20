@@ -1,10 +1,9 @@
 # Productivity
 alias w="cd ~/Workspaces"
-alias c="cd ~/Workspaces/claude"
-alias oc="cd ~/Workspaces/opencode"
+alias c="code ."
 alias reload="exec zsh"
-alias zshlocal="code ~/.zshrc.local"
-alias aliaseslocal="code ~/.aliases.local"
+alias zl="code ~/.zshrc.local"
+alias al="code ~/.aliases.local"
 alias dotfiles="code $DOTFILES_DIR"
 alias dotai="code ~/Workspaces/leovanhaaren/dot-ai"
 alias claudedir="code ~/.claude"
