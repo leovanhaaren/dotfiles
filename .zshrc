@@ -13,6 +13,7 @@ source "$ZSH/oh-my-zsh.sh"
 
 export DOTFILES_DIR="$HOME/Workspaces/leovanhaaren/dotfiles"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
+export OBSIDIAN_VAULT="~/Obsidian/Personal/"
 
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
