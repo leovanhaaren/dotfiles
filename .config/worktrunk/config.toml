@@ -41,7 +41,7 @@
 #
 # Centralized worktrees directory (`~/worktrees/myproject/feature-auth`):
 #
-# worktree-path = "~/worktrees/{{ repo }}/{{ branch | sanitize }}"
+worktree-path = "~/Workspaces/worktrees/{{ repo }}/{{ branch | sanitize }}"
 #
 # By remote owner path (`~/development/max-sixty/myproject/feature/auth`):
 #
@@ -56,6 +56,11 @@
 # ## LLM commit messages
 #
 # Generate commit messages automatically during merge. Requires an external CLI tool.
+#
+# ### Pi
+#
+[commit.generation]
+command = "pi -p --provider github-copilot --model claude-haiku-4.5"
 #
 # ### Claude Code
 #

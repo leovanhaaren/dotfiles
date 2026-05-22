@@ -17,7 +17,7 @@ function acp -d "Auto stage, generate AI commit message, and push"
     echo
     set_color blue; echo "=> Generating commit message..."; set_color normal
 
-    set -l msg (git diff --cached | claude -p --model haiku "Write a commit message in the Conventional Commits format. Use the structure:
+    set -l msg (git diff --cached | pi -p --provider github-copilot --model claude-haiku-4.5 "Write a commit message in the Conventional Commits format. Use the structure:
     <type>(<optional scope>): <short description>
 
     <optional body>

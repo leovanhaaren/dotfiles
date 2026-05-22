@@ -1,10 +1,12 @@
 # Taps
 tap "1password/tap"
+tap "ankitpokhrel/jira-cli"
 
 # CLI Tools
 brew "aws-vault"
 brew "awscli"
 brew "git-lfs"
+brew "jira-cli"
 
 # Desktop Applications (Casks)
 cask "1password"
