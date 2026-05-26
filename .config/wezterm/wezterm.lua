@@ -3,7 +3,7 @@ local config = wezterm.config_builder()
 
 -- Appearance
 config.color_scheme = "Catppuccin Frappe"
-config.window_background_opacity = 1
+config.window_background_opacity = 0.95
 config.macos_window_background_blur = 20
 config.window_decorations = "RESIZE"
 
@@ -30,6 +30,49 @@ config.window_padding = {
 -- Tab bar
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = true
+config.tab_bar_at_bottom = false
+config.show_new_tab_button_in_tab_bar = false
+config.tab_max_width = 32
+config.window_frame = {
+	font = wezterm.font({ family = "JetBrains Mono", weight = "Regular" }),
+	font_size = 14.0,
+	active_titlebar_bg = "#292c3c",
+	inactive_titlebar_bg = "#292c3c",
+	border_left_width = "1px",
+	border_right_width = "1px",
+	border_top_height = "1px",
+	border_bottom_height = "1px",
+	border_left_color = "#51576d",
+	border_right_color = "#51576d",
+	border_top_color = "#51576d",
+	border_bottom_color = "#51576d",
+}
+config.colors = {
+	tab_bar = {
+		background = "#292c3c",
+		active_tab = {
+			bg_color = "#303446",
+			fg_color = "#c6d0f5",
+			intensity = "Bold",
+		},
+		inactive_tab = {
+			bg_color = "#292c3c",
+			fg_color = "#737994",
+		},
+		inactive_tab_hover = {
+			bg_color = "#414559",
+			fg_color = "#c6d0f5",
+		},
+		new_tab = {
+			bg_color = "#292c3c",
+			fg_color = "#737994",
+		},
+		new_tab_hover = {
+			bg_color = "#414559",
+			fg_color = "#c6d0f5",
+		},
+	},
+}
 
 -- Cursor
 config.default_cursor_style = "BlinkingBar"
