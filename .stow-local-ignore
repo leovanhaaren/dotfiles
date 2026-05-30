@@ -32,6 +32,7 @@
 ^homebrew$
 ^vscode$
 ^ssh$
+^rtk$
 
 # Repo-specific directories not meant for ~
 ^ai-providers$

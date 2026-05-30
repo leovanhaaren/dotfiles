@@ -85,6 +85,13 @@ case "$OS" in
     Linux)  remove_symlink "$HOME/.config/Code/User/settings.json" ;;
 esac
 
+# rtk (non-XDG path, not managed by stow)
+log_info "Removing rtk symlinks..."
+case "$OS" in
+    Darwin) remove_symlink "$HOME/Library/Application Support/rtk/config.toml" ;;
+    Linux)  remove_symlink "$HOME/.config/rtk/config.toml" ;;
+esac
+
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Run without -n to apply changes ==="

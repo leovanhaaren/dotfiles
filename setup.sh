@@ -122,6 +122,19 @@ case "$OS" in
         ;;
 esac
 
+# rtk (non-XDG path on macOS, not stow-able)
+log_info "Setting up rtk configuration..."
+case "$OS" in
+    Darwin)
+        create_directory "$HOME/Library/Application Support/rtk"
+        create_symlink "$DOTFILES/rtk/config.toml" "$HOME/Library/Application Support/rtk/config.toml"
+        ;;
+    Linux)
+        create_directory "$HOME/.config/rtk"
+        create_symlink "$DOTFILES/rtk/config.toml" "$HOME/.config/rtk/config.toml"
+        ;;
+esac
+
 # Tmux Plugin Manager
 log_info "Setting up Tmux Plugin Manager..."
 TPM_DIR="$HOME/.tmux/plugins/tpm"

@@ -4,8 +4,8 @@
     defaultBranch = main
 
 [user]
-    name = Leo van Haaren
-    email = 814676+leovanhaaren@users.noreply.github.com
+	name = Leo van Haaren
+	email = 814676+leovanhaaren@users.noreply.github.com
     signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH8BGFzcwWi5fjHXzZhz0lADQDk2I4sG9d8/+SGj1tRD
 
 [gpg]
@@ -28,3 +28,31 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/opt/homebrew/bin/gh auth git-credential
+[safe]
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test

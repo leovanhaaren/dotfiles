@@ -10,6 +10,7 @@ tap "manaflow-ai/cmux"
 tap "nguyenphutrong/tap"
 tap "oven-sh/bun"
 tap "protonpass/tap"
+tap "rtk-ai/tap"
 tap "steipete/tap"
 
 # CLI Tools
@@ -55,6 +56,7 @@ brew "zsh-syntax-highlighting"
 brew "arimxyer/tap/models"
 brew "gromgit/brewtils/taproom"
 brew "protonpass/tap/pass-cli"
+brew "rtk-ai/tap/rtk"
 # GH Extensions (install manually: gh extension install <repo>)
 # gh extension install dlvhdr/gh-dash
 
