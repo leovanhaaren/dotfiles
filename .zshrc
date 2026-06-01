@@ -69,3 +69,6 @@ export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # opencode
 export PATH=/Volumes/SSD/leo/.opencode/bin:$PATH
+
+# opencode
+export PATH=/Users/leo/.opencode/bin:$PATH
