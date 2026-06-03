@@ -48,7 +48,7 @@
     "markdown": true,
     "scminput": false,
     "svelte": true,
-    "shellscript": true
+    "shellscript": true,
   },
   "github.copilot.nextEditSuggestions.enabled": false,
   "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
@@ -116,4 +116,5 @@
   },
   "gitlens.ai.model": "vscode",
   "gitlens.ai.vscode.model": "copilot:gpt-4.1",
+  "chat.agent.enabled": false,
 }
