@@ -50,3 +50,7 @@ name = "dot-ai"
 path = "~/Workspaces/leovanhaaren/dot-ai"
 startup_command = "nvim ."
 
+[[window]]
+name = "pi4"
+startup_script = "zsh -lc 'source ~/.functions; pi4_here'"
+

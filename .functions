@@ -200,3 +200,130 @@ session () {
   tmux send-keys -t $SESSION:1.3 "cd $WORK_DIR && clear && pi $EXTENSIONS --name ${NAMES[3]} --model $WORKER_MODEL" Enter
   tmux attach-session -t $SESSION
 }
+
+_pi_tmux_quote_args() {
+  local -a quoted
+  local arg
+
+  for arg in "$@"; do
+    quoted+=("${(q)arg}")
+  done
+
+  print -r -- "${(j: :)quoted}"
+}
+
+_pi4_command() {
+  local work_dir="$1"
+  local pane_number="$2"
+  shift 2
+
+  local -a args
+  args=("$@")
+
+  local pane_args_var="PI4_PANE_${pane_number}_ARGS"
+  local pane_args_value="${(P)pane_args_var}"
+  if [[ -n "$pane_args_value" ]]; then
+    args+=(${(z)pane_args_value})
+  fi
+
+  local quoted_work_dir="$(_pi_tmux_quote_args "$work_dir")"
+  local quoted_args="$(_pi_tmux_quote_args "${args[@]}")"
+  local command="cd $quoted_work_dir && clear && pi"
+  [[ -n "$quoted_args" ]] && command+=" $quoted_args"
+
+  print -r -- "$command"
+}
+
+# Split the current tmux window into 4 panes and run pi in each pane.
+# Uses the same args/env as pi4: function args, PI4_ARGS, and PI4_PANE_N_ARGS.
+# Falls back to pi4 when called outside tmux.
+pi4_here() {
+  local work_dir="$PWD"
+  local -a base_args
+
+  if (( $# > 0 )); then
+    base_args=("$@")
+  elif [[ -n "$PI4_ARGS" ]]; then
+    base_args=(${(z)PI4_ARGS})
+  else
+    base_args=()
+  fi
+
+  if [[ -z "$TMUX" ]]; then
+    pi4 "${base_args[@]}"
+    return
+  fi
+
+  local pane1 pane2 pane3 pane4 window
+  pane1="$(tmux display-message -p '#{pane_id}')"
+  window="$(tmux display-message -p '#{window_id}')"
+  pane2="$(tmux split-window -h -P -F '#{pane_id}' -t "$pane1" -c "$work_dir")"
+  pane3="$(tmux split-window -v -P -F '#{pane_id}' -t "$pane1" -c "$work_dir")"
+  pane4="$(tmux split-window -v -P -F '#{pane_id}' -t "$pane2" -c "$work_dir")"
+  tmux select-layout -t "$window" tiled >/dev/null
+
+  local -a panes
+  panes=("$pane1" "$pane2" "$pane3" "$pane4")
+
+  local i command
+  for i in {1..4}; do
+    command="$(_pi4_command "$work_dir" "$i" "${base_args[@]}")"
+    tmux send-keys -t "${panes[i]}" "$command" Enter
+  done
+
+  tmux select-pane -t "$pane1"
+}
+
+# Start a 4-pane tmux session in the current directory and run pi in each pane.
+# Usage:
+#   pi4 --model openai-codex/gpt-5.5:xhigh
+#   PI4_ARGS="--provider github-copilot --model claude-haiku-4.5" pi4
+#   PI4_PANE_1_ARGS="--name truus" PI4_PANE_2_ARGS="--name sjaak" pi4
+# Env:
+#   PI4_SESSION=<name>      override tmux session name (default: <cwd>-pi4)
+#   PI4_ARGS=<args>         base pi args used when no function args are passed
+#   PI4_PANE_N_ARGS=<args>  extra pi args for pane N (1-4)
+#   PI4_REPLACE=1          kill and recreate an existing session with same name
+pi4() {
+  local work_dir="$PWD"
+  local session="${PI4_SESSION:-$(basename "$work_dir")-pi4}"
+  local -a base_args
+
+  if (( $# > 0 )); then
+    base_args=("$@")
+  elif [[ -n "$PI4_ARGS" ]]; then
+    base_args=(${(z)PI4_ARGS})
+  else
+    base_args=()
+  fi
+
+  if tmux has-session -t "$session" 2>/dev/null; then
+    if [[ "$PI4_REPLACE" == "1" ]]; then
+      tmux kill-session -t "$session"
+    else
+      tmux attach-session -t "$session"
+      return
+    fi
+  fi
+
+  tmux new-session -d -s "$session" -n pi -c "$work_dir"
+
+  local pane1 pane2 pane3 pane4
+  pane1="$(tmux display-message -p -t "$session:pi" '#{pane_id}')"
+  pane2="$(tmux split-window -h -P -F '#{pane_id}' -t "$pane1" -c "$work_dir")"
+  pane3="$(tmux split-window -v -P -F '#{pane_id}' -t "$pane1" -c "$work_dir")"
+  pane4="$(tmux split-window -v -P -F '#{pane_id}' -t "$pane2" -c "$work_dir")"
+  tmux select-layout -t "$session:pi" tiled >/dev/null
+
+  local -a panes
+  panes=("$pane1" "$pane2" "$pane3" "$pane4")
+
+  local i command
+  for i in {1..4}; do
+    command="$(_pi4_command "$work_dir" "$i" "${base_args[@]}")"
+    tmux send-keys -t "${panes[i]}" "$command" Enter
+  done
+
+  tmux select-pane -t "$pane1"
+  tmux attach-session -t "$session"
+}

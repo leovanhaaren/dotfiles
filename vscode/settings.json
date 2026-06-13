@@ -117,5 +117,6 @@
   "gitlens.ai.model": "vscode",
   "gitlens.ai.vscode.model": "copilot:gpt-4.1",
   "chat.agent.enabled": false,
-  "chat.viewSessions.enabled": false
+  "chat.viewSessions.enabled": false,
+  "workbench.secondarySideBar.defaultVisibility": "hidden"
 }
