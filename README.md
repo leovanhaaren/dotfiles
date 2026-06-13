@@ -79,6 +79,10 @@ This detects the OS and creates the appropriate symlinks for shell config, git, 
 - **.config/wezterm/wezterm.lua** — Wezterm configuration (stowed to `~/.config/wezterm/`)
 - **.config/ghostty/config** — Ghostty terminal configuration (stowed to `~/.config/ghostty/`)
 
+### Window Management
+- **.config/aerospace/aerospace.toml** — AeroSpace window manager configuration (stowed to `~/.config/aerospace/`)
+  - Do not also create `~/.aerospace.toml`; AeroSpace errors when both config locations exist.
+
 ### Session Management
 - **.config/sesh/sesh.toml** — Sesh session manager configuration (stowed to `~/.config/sesh/`)
 - **.config/television/** — Television fuzzy finder configuration (stowed to `~/.config/television/`)
@@ -115,6 +119,8 @@ dotfiles/
 │
 ├── .config/wezterm/      # Terminal: Wezterm config (stowed to ~/.config/wezterm/)
 ├── .config/ghostty/      # Terminal: Ghostty config (stowed to ~/.config/ghostty/)
+│
+├── .config/aerospace/    # Window manager: AeroSpace config (stowed to ~/.config/aerospace/)
 │
 ├── .config/starship.toml # Prompt: Starship (stowed to ~/.config/)
 ├── .config/mise/         # Tools: Mise version manager (stowed to ~/.config/mise/)

@@ -14,6 +14,10 @@
 # macOS metadata
 ^\.DS_Store$
 
+# Legacy duplicate config paths
+# AeroSpace errors if both ~/.aerospace.toml and ~/.config/aerospace/aerospace.toml exist.
+^\.aerospace\.toml$
+
 # Editor artifacts
 ~$
 \.swp$
