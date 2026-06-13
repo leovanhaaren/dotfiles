@@ -10,9 +10,9 @@ dir_length = 3
 preview_command = "eza --all --git --icons --color=always {}"
 
 [[session]]
-name = "second brain"
-path = "~/c/second-brain"
-startup_command = "nvim +ObsidianToday"
+name = "Obsidian 🗒 ️"
+path = "~/Obsidian"
+startup_command = "nvim ."
 
 [[session]]
 name = "Downloads 📥"
@@ -20,35 +20,38 @@ path = "~/Downloads"
 startup_command = "ls"
 
 [[session]]
-name = "dotfiles"
+name = "dotfiles 💻"
 path = "~/dotfiles"
 windows = [ "tmuxconfig", "wezterm config", "neovim config", "aerospace config", "dot-ai" ]
 
 [[session]]
-name = "tmuxconfig"
-path = "~/dotfiles/tmux"
-startup_command = "nvim tmux.conf"
-preview_command = "bat --color=always ~/dotfiles/tmux/tmux.conf"
+name = "dot-ai 🤖"
+path = "~/Workspaces/leovanhaaren/dot-ai"
+startup_command = "nvim ."
 
-[[session]]
+[[window]]
+name = "tmuxconfig"
+path = "~/dotfiles"
+startup_script = "nvim .tmux.conf"
+
+[[window]]
 name = "wezterm config"
 path = "~/dotfiles/.config/wezterm"
-startup_command = "nvim wezterm.lua"
+startup_script = "nvim wezterm.lua"
 
-[[session]]
+[[window]]
 name = "neovim config"
 path = "~/dotfiles/.config/nvim"
 
-[[session]]
+[[window]]
 name = "aerospace config"
 path = "~/dotfiles/.config/aerospace"
-startup_command = "nvim aerospace.toml"
-preview_command = "bat --language=bash --style=snip --color=always ~/dotfiles/.config/aerospace/aerospace.toml"
+startup_script = "nvim aerospace.toml"
 
-[[session]]
+[[window]]
 name = "dot-ai"
 path = "~/Workspaces/leovanhaaren/dot-ai"
-startup_command = "nvim ."
+startup_script = "nvim ."
 
 [[window]]
 name = "pi4"
