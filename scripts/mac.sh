@@ -122,6 +122,9 @@ defaults write com.apple.dock show-recents -bool false
 # Don't rearrange spaces based on recent use
 defaults write com.apple.dock mru-spaces -bool false
 
+# Let Spaces span all displays
+defaults write com.apple.spaces spans-displays -bool true
+
 ################
 ### Trackpad ###
 ################
