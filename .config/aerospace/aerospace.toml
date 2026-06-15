@@ -62,6 +62,7 @@ run = 'layout floating'
 [gaps]
 # inner.vertical =   500
 inner.horizontal = [{ monitor."^built-in retina display$" = 20 }, { monitor.main = 40 }, 10]
+inner.vertical =   [{ monitor."^built-in retina display$" = 20 }, { monitor.main = 40 }, 10]
 outer.left =       [{ monitor."^built-in retina display$" = 100 }, { monitor.main = 250 }, 20]
 outer.right =      [{ monitor."^built-in retina display$" = 100 }, { monitor.main = 250 }, 20]
 outer.bottom =     [{ monitor."^built-in retina display$" = 40 }, { monitor.main = 100 }, 10]
