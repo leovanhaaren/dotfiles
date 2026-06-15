@@ -1,6 +1,11 @@
+[settings]
+minimum_release_age = "7d"
+idiomatic_version_file_enable_tools = ["node"]
+
 [tools]
 bun = "latest"
 node = "lts"
 
-[settings]
-idiomatic_version_file_enable_tools = ["node"]
+[tools.trivy]
+version = "latest"
+minimum_release_age = "1d"
