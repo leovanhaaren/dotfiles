@@ -1,12 +1,14 @@
 # Taps
 tap "1password/tap"
 tap "ankitpokhrel/jira-cli"
+tap "datadog-labs/pack"
 
 # CLI Tools
 brew "aws-vault"
 brew "awscli"
 brew "git-lfs"
 brew "jira-cli"
+brew "datadog-labs/pack/pup"
 
 # Desktop Applications (Casks)
 cask "1password"
