@@ -58,6 +58,7 @@ brew "zsh-syntax-highlighting"
 brew "arimxyer/tap/models"
 brew "gromgit/brewtils/taproom"
 brew "protonpass/tap/pass-cli"
+brew "railway"
 brew "rtk-ai/tap/rtk"
 # GH Extensions (install manually: gh extension install <repo>)
 # gh extension install dlvhdr/gh-dash
