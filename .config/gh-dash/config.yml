@@ -76,7 +76,18 @@ defaults:
                 width: 20
                 hidden: true
     refetchIntervalMinutes: 30
-keybindings: {}
+keybindings:
+  universal:
+    - key: g
+      name: lazygit
+      command: >
+        cd {{.RepoPath}} && lazygit
+    - key: R
+      name: Review
+      command: >
+        wt -w {{.RepoPath}}
+    - key: s
+      builtin: search
 repoPaths: {}
 theme:
     ui:

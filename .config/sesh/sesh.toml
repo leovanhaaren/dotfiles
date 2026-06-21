@@ -22,12 +22,33 @@ startup_command = "ls"
 [[session]]
 name = "dotfiles 💻"
 path = "~/dotfiles"
-windows = [ "tmuxconfig", "wezterm config", "neovim config", "aerospace config", "dot-ai" ]
+windows = [
+  "tmuxconfig",
+  "wezterm config",
+  "neovim config",
+  "aerospace config",
+  "dot-ai",
+]
 
 [[session]]
 name = "dot-ai 🤖"
 path = "~/Workspaces/leovanhaaren/dot-ai"
 startup_command = "nvim ."
+
+[[session]]
+name = "pi4 🖥️"
+path = "~/Workspaces/leovanhaaren/pi4"
+windows = ["pi4"]
+
+[[session]]
+name = "CSW"
+path = "~/Workspaces/ksyos/ClientSafeWeb"
+startup_command = "wt list"
+windows = ["gh dash", "pi4"]
+
+[[session]]
+
+# General related sessions
 
 [[window]]
 name = "tmuxconfig"
@@ -57,3 +78,8 @@ startup_script = "nvim ."
 name = "pi4"
 startup_script = "zsh -lc 'source ~/.functions; pi4_here'"
 
+# Work related windows
+
+[[window]]
+name = "gh dash"
+startup_script = "gh dash"
