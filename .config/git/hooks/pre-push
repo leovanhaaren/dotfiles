@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Refuse to push commits that carry no signature.
+# %G? returns: G/U/E => a signature exists (verifiable or not); N => no signature.
+# Only N is rejected, so a missing allowedSignersFile (=> E) does not block.
+set -euo pipefail
+
+unsigned=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # All-zero local sha = branch deletion; nothing to check.
+  [ -z "${local_sha//0/}" ] && continue
+
+  if [ -z "${remote_sha//0/}" ]; then
+    # New remote branch: check commits not already on any remote.
+    range=$(git rev-list "$local_sha" --not --remotes)
+  else
+    range=$(git rev-list "${remote_sha}..${local_sha}")
+  fi
+
+  for c in $range; do
+    case "$(git show --no-patch --format='%G?' "$c")" in
+      N|"") unsigned="$unsigned $c" ;;
+    esac
+  done
+done
+
+if [ -n "$unsigned" ]; then
+  echo "pre-push: REFUSED — unsigned commit(s):" >&2
+  for c in $unsigned; do git show --no-patch --format='  %h %s' "$c" >&2; done
+  echo >&2
+  echo "Ensure the signing key is loaded (ssh-add -l), then re-sign, e.g.:" >&2
+  echo "  git rebase --exec 'git commit --amend --no-edit -S' <base>" >&2
+  echo "Do NOT bypass with --no-gpg-sign." >&2
+  exit 1
+fi
