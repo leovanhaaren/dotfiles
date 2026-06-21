@@ -15,6 +15,9 @@
 [commit]
     gpgsign = true
 
+[tag]
+    gpgsign = true
+
 [pull]
     rebase = true
 
@@ -29,33 +32,6 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !/opt/homebrew/bin/gh auth git-credential
-[safe]
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-1
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-2
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-3
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-4
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test/.sandcastle/worktrees/sandcastle-issue-5
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
-	directory = /Volumes/SSD/leo/Workspaces/sandcastle-test
+
 [gpg "ssh"]
 	allowedSignersFile = ~/.config/git/allowed_signers
