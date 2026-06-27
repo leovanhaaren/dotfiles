@@ -95,7 +95,7 @@ fi
 
 # Stow all XDG-compatible dotfiles
 log_info "Stowing dotfiles..."
-STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow)
+STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow --adopt)
 [ "$DRY_RUN" = true ] && STOW_FLAGS+=(--simulate)
 stow "${STOW_FLAGS[@]}" .
 log_info "Dotfiles stowed."
