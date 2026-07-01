@@ -43,10 +43,17 @@ windows = ["pi4"]
 [[session]]
 name = "CSW"
 path = "~/Workspaces/ksyos/ClientSafeWeb"
-startup_command = "wt list"
-windows = ["gh dash", "pi4"]
+windows = ["wt list", "pi4", "gh dash" , "lazygit"]
 
 [[session]]
+name = "sidekick 🦾"
+path = "~/Workspaces/leo-ksyos/sidekick"
+windows = ["wt list", "pi4", "gh dash" , "lazygit"]
+
+[[session]]
+name = "automation ⚙️"
+path = "~/Workspaces/leo-ksyos/sidekick"
+startup_command = "just scheduled-prompts"
 
 # General related sessions
 
@@ -81,5 +88,13 @@ startup_script = "zsh -lc 'source ~/.functions; pi4_here'"
 # Work related windows
 
 [[window]]
+name = "wt list"
+startup_script = "wt list"
+
+[[window]]
 name = "gh dash"
 startup_script = "gh dash"
+
+[[window]]
+name = "lazygit"
+startup_script = "lazygit"
