@@ -20,6 +20,13 @@ export OBSIDIAN_VAULT="~/Obsidian/Personal/"
 [[ -f ~/.aliases ]] && source ~/.aliases
 [[ -f ~/.functions ]] && source ~/.functions
 
+# SSH keys
+if [[ -x "$DOTFILES_DIR/scripts/ssh-load-keys.sh" ]] && \
+  command -v pass-cli >/dev/null 2>&1 && \
+  command -v ssh-add >/dev/null 2>&1; then
+  "$DOTFILES_DIR/scripts/ssh-load-keys.sh" --if-empty --quiet </dev/null >/dev/null 2>&1 || true
+fi
+
 # Path
 export PATH="$HOME/.local/bin:$PATH"
 
