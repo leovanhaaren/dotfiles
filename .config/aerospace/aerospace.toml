@@ -6,7 +6,7 @@ start-at-login = false
 config-version = 2
 
 after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=0'
+  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=2.0'
 ]
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
