@@ -290,6 +290,7 @@ Run installation checks and the agent-session tests:
 ```bash
 ./verify.sh
 bun test scripts/tests/agent-sessions.test.ts
+scripts/tests/tmux-bindings.sh
 agent-sessions list | head
 ```
 
