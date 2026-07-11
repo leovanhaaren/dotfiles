@@ -84,9 +84,10 @@ This detects the OS and creates the appropriate symlinks for shell config, git, 
   - Do not also create `~/.aerospace.toml`; AeroSpace errors when both config locations exist.
 
 ### Session Management
-- **.config/sesh/sesh.toml** — Sesh session manager configuration (stowed to `~/.config/sesh/`)
-- **.config/television/** — Television fuzzy finder configuration (stowed to `~/.config/television/`)
-- **.config/worktrunk/config.toml** — Worktrunk git worktree manager (stowed to `~/.config/worktrunk/`)
+- **.config/sesh/sesh.toml** - Sesh session manager configuration (stowed to `~/.config/sesh/`)
+- **.config/television/** - Television fuzzy finder and agent session channels (stowed to `~/.config/television/`)
+- **bin/agent-sessions** - Lists, previews, and resumes local Claude, Codex, OpenCode, and Pi sessions
+- **.config/worktrunk/config.toml** - Worktrunk git worktree manager (stowed to `~/.config/worktrunk/`)
 
 ### Other Tools
 - **.config/starship.toml** — Starship prompt configuration (stowed to `~/.config/`)
@@ -116,6 +117,8 @@ dotfiles/
 ├── .gitmux.conf          # Tmux: Git status (stowed to ~/)
 ├── .config/sesh/         # Tmux: Sesh session config (stowed to ~/.config/sesh/)
 ├── .config/television/   # Tmux: Television config (stowed to ~/.config/television/)
+├── bin/                  # Commands stowed to ~/bin/
+│   └── agent-sessions    #   Browse and resume coding-agent sessions
 │
 ├── .config/wezterm/      # Terminal: Wezterm config (stowed to ~/.config/wezterm/)
 ├── .config/ghostty/      # Terminal: Ghostty config (stowed to ~/.config/ghostty/)
@@ -187,6 +190,7 @@ dotfiles/
 | Alias | Description |
 |-------|-------------|
 | `s` | Launch sesh session picker |
+| `ais` | Launch agent session picker |
 | `ta` | Attach to tmux session |
 | `tad` | Attach (detaching others) |
 | `tl` | List tmux sessions |
@@ -195,6 +199,28 @@ dotfiles/
 | `tk` | Kill tmux session |
 | `tks` | Kill tmux server |
 | `trw` | Rename tmux window |
+
+### Agent Session Picker
+
+Run `tv agent-sessions`, or press prefix then `A` in tmux, to browse sessions from all four coding harnesses.
+
+| Harness | Resume command |
+|---------|----------------|
+| Claude | `claude --resume <id>` |
+| Codex | `codex resume <id> -C <cwd>` |
+| OpenCode | `opencode --session <id>` |
+| Pi | `pi --session <file>` |
+
+The picker reads Claude, Codex, and Pi session metadata from their JSONL stores.
+It obtains OpenCode sessions through `opencode session list`, grouped by projects reported by `opencode debug scrap`.
+Session previews stay local and show only the selected transcript.
+
+### Decisions
+
+- Agent conversations use a separate Television channel instead of overloading Sesh's connect action.
+- Picker selections carry an opaque encoded record so session titles cannot alter shell commands.
+- Resume defaults to a dry run in `agent-sessions`; the Television action passes `--apply` explicitly.
+- Missing or malformed session files are skipped so one dirty history cannot break the picker.
 
 ## Custom Functions
 
@@ -259,10 +285,15 @@ brew bundle cleanup --force --file=homebrew/Brewfile.base
 
 ## Verification
 
-Run the verification script to check your installation:
+Run installation checks and the agent-session tests:
+
 ```bash
 ./verify.sh
+bun test scripts/tests/agent-sessions.test.ts
+agent-sessions list | head
 ```
+
+`tv list-channels` should include `agent-sessions` after setup.
 
 ## Troubleshooting
 

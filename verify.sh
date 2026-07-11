@@ -87,6 +87,7 @@ check_symlink "$HOME/.config/wezterm/wezterm.lua"       "$DOTFILES/.config/wezte
 check_symlink "$HOME/.config/zed/settings.json"         "$DOTFILES/.config/zed/settings.json"         "zed/settings.json"
 check_symlink "$HOME/.config/sesh/sesh.toml"            "$DOTFILES/.config/sesh/sesh.toml"            "sesh/sesh.toml"
 check_symlink "$HOME/.config/television/config.toml"    "$DOTFILES/.config/television/config.toml"    "television/config.toml"
+check_symlink "$HOME/.config/television/cable/agent-sessions.toml" "$DOTFILES/.config/television/cable/agent-sessions.toml" "television/cable/agent-sessions.toml"
 check_symlink "$HOME/.config/television/cable/sesh.toml" "$DOTFILES/.config/television/cable/sesh.toml" "television/cable/sesh.toml"
 check_symlink "$HOME/.config/worktrunk/config.toml"     "$DOTFILES/.config/worktrunk/config.toml"     "worktrunk/config.toml"
 check_symlink "$HOME/.config/mise/config.toml"          "$DOTFILES/.config/mise/config.toml"          "mise/config.toml"

@@ -1,0 +1,484 @@
+#!/usr/bin/env bun
+
+import { closeSync, existsSync, openSync, readFileSync, readSync, readdirSync, statSync } from "node:fs";
+import { basename } from "node:path";
+
+export type AgentTool = "claude" | "codex" | "opencode" | "pi";
+
+export interface SessionRecord {
+  version: 1;
+  tool: AgentTool;
+  id: string;
+  title: string;
+  cwd: string;
+  path?: string;
+  projectRoot?: string;
+  created: number;
+  updated: number;
+}
+
+type JsonObject = Record<string, unknown>;
+type TranscriptMessage = { role: string; text: string };
+
+const TOOL_LABELS: Record<AgentTool, string> = {
+  claude: "Claude",
+  codex: "Codex",
+  opencode: "OpenCode",
+  pi: "Pi",
+};
+
+function isAgentTool(value: string): value is AgentTool {
+  return value === "claude" || value === "codex" || value === "opencode" || value === "pi";
+}
+
+const home = process.env.HOME ?? "";
+const stores = {
+  claude: `${home}/.claude/projects`,
+  codex: `${home}/.codex/sessions`,
+  codexIndex: `${home}/.codex/session_index.jsonl`,
+  pi: `${home}/.pi/agent/sessions`,
+};
+
+function object(value: unknown): JsonObject | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as JsonObject)
+    : undefined;
+}
+
+function string(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function number(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function timestamp(value: unknown, fallback: number): number {
+  const numeric = number(value);
+  if (numeric !== undefined) return numeric;
+  const text = string(value);
+  if (!text) return fallback;
+  const parsed = Date.parse(text);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function nested(value: unknown, ...keys: string[]): unknown {
+  let current: unknown = value;
+  for (const key of keys) {
+    current = object(current)?.[key];
+  }
+  return current;
+}
+
+function parseJsonLines(text: string): JsonObject[] {
+  const entries: JsonObject[] = [];
+  for (const line of text.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = object(JSON.parse(line));
+      if (entry) entries.push(entry);
+    } catch {
+      // Dirty or partially written session lines are skipped.
+    }
+  }
+  return entries;
+}
+
+function readHeadAndTail(path: string, chunkSize = 256 * 1024): JsonObject[] {
+  const size = statSync(path).size;
+  const fd = openSync(path, "r");
+  try {
+    const headLength = Math.min(size, chunkSize);
+    const headBuffer = Buffer.alloc(headLength);
+    readSync(fd, headBuffer, 0, headLength, 0);
+    if (size <= chunkSize) return parseJsonLines(headBuffer.toString("utf8"));
+
+    const tailStart = Math.max(0, size - chunkSize);
+    const tailBuffer = Buffer.alloc(size - tailStart);
+    readSync(fd, tailBuffer, 0, tailBuffer.length, tailStart);
+    const tailText = tailBuffer.toString("utf8");
+    const firstNewline = tailText.indexOf("\n");
+    const completeTail = firstNewline >= 0 ? tailText.slice(firstNewline + 1) : "";
+    return [...parseJsonLines(headBuffer.toString("utf8")), ...parseJsonLines(completeTail)];
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function walkJsonl(root: string, maxDirectoryDepth = Number.POSITIVE_INFINITY): string[] {
+  if (!existsSync(root)) return [];
+  const files: string[] = [];
+  const visit = (directory: string, depth: number): void => {
+    let entries;
+    try {
+      entries = readdirSync(directory, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const path = `${directory}/${entry.name}`;
+      if (entry.isFile() && entry.name.endsWith(".jsonl")) files.push(path);
+      if (entry.isDirectory() && depth < maxDirectoryDepth) visit(path, depth + 1);
+    }
+  };
+  visit(root, 0);
+  return files;
+}
+
+function textContent(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (!Array.isArray(value)) return "";
+  return value
+    .map((part) => {
+      if (typeof part === "string") return part;
+      const item = object(part);
+      return string(item?.text) ?? string(item?.content) ?? "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function cleanText(value: string, limit = 120): string {
+  const cleaned = value.replace(/<skill[\s\S]*?<\/skill>/g, " ").replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!cleaned) return "Untitled session";
+  return cleaned.length > limit ? `${cleaned.slice(0, limit - 1)}…` : cleaned;
+}
+
+function firstMessage(entries: JsonObject[], role: string, contentPath: string[]): string | undefined {
+  for (const entry of entries) {
+    if (nested(entry, "message", "role") !== role) continue;
+    const content = textContent(nested(entry, ...contentPath));
+    if (content.trim()) return content;
+  }
+  return undefined;
+}
+
+export function parseClaudeMetadata(path: string, entries: JsonObject[], modified: number): SessionRecord | undefined {
+  const messageEntry = entries.find((entry) => string(entry.cwd));
+  const id = entries.map((entry) => string(entry.sessionId)).find(Boolean) ?? basename(path, ".jsonl");
+  const cwd = string(messageEntry?.cwd);
+  if (!id || !cwd) return undefined;
+
+  const aiTitles = entries.filter((entry) => entry.type === "ai-title").map((entry) => string(entry.aiTitle)).filter(Boolean);
+  const prompts = entries.filter((entry) => entry.type === "last-prompt").map((entry) => string(entry.lastPrompt)).filter(Boolean);
+  const title = aiTitles.at(-1) ?? prompts.at(-1) ?? firstMessage(entries, "user", ["message", "content"]) ?? "Untitled session";
+  const createdEntry = entries.find((entry) => string(entry.timestamp));
+
+  return {
+    version: 1,
+    tool: "claude",
+    id,
+    title: cleanText(title),
+    cwd,
+    path,
+    created: timestamp(createdEntry?.timestamp, modified),
+    updated: modified,
+  };
+}
+
+export function parseCodexMetadata(path: string, entries: JsonObject[], modified: number, titles: Map<string, { title: string; updated: number }>): SessionRecord | undefined {
+  const metadata = entries.find((entry) => entry.type === "session_meta");
+  const payload = object(metadata?.payload);
+  const id = string(payload?.id) ?? basename(path, ".jsonl").match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0];
+  const cwd = string(payload?.cwd);
+  if (!id || !cwd) return undefined;
+
+  const indexed = titles.get(id);
+  const userEvent = entries.find((entry) => nested(entry, "payload", "type") === "user_message");
+  const firstPrompt = string(nested(userEvent, "payload", "message"));
+  return {
+    version: 1,
+    tool: "codex",
+    id,
+    title: cleanText(indexed?.title ?? firstPrompt ?? "Untitled session"),
+    cwd,
+    path,
+    created: timestamp(payload?.timestamp ?? metadata?.timestamp, modified),
+    updated: indexed?.updated ? indexed.updated : modified,
+  };
+}
+
+export function parsePiMetadata(path: string, entries: JsonObject[], modified: number): SessionRecord | undefined {
+  const header = entries.find((entry) => entry.type === "session");
+  const id = string(header?.id) ?? basename(path, ".jsonl").match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0];
+  const cwd = string(header?.cwd);
+  if (!id || !cwd) return undefined;
+
+  const names = entries.filter((entry) => entry.type === "session_info").map((entry) => string(entry.name)).filter(Boolean);
+  const title = names.at(-1) ?? firstMessage(entries, "user", ["message", "content"]) ?? "Untitled session";
+  return {
+    version: 1,
+    tool: "pi",
+    id,
+    title: cleanText(title),
+    cwd,
+    path,
+    created: timestamp(header?.timestamp, modified),
+    updated: modified,
+  };
+}
+
+function codexTitles(): Map<string, { title: string; updated: number }> {
+  const result = new Map<string, { title: string; updated: number }>();
+  if (!existsSync(stores.codexIndex)) return result;
+  try {
+    for (const entry of parseJsonLines(readFileSync(stores.codexIndex, "utf8"))) {
+      const id = string(entry.id);
+      const title = string(entry.thread_name);
+      if (id && title) result.set(id, { title, updated: timestamp(entry.updated_at, 0) });
+    }
+  } catch {
+    // Missing or dirty index falls back to first prompt and file mtime.
+  }
+  return result;
+}
+
+async function localSessions(): Promise<SessionRecord[]> {
+  const titles = codexTitles();
+  const specifications: Array<[AgentTool, string, number]> = [
+    ["claude", stores.claude, 1],
+    ["codex", stores.codex, Number.POSITIVE_INFINITY],
+    ["pi", stores.pi, 1],
+  ];
+  const records: SessionRecord[] = [];
+
+  for (const [tool, root, depth] of specifications) {
+    for (const path of walkJsonl(root, depth)) {
+      try {
+        const modified = statSync(path).mtimeMs;
+        const entries = readHeadAndTail(path);
+        const record = tool === "claude"
+          ? parseClaudeMetadata(path, entries, modified)
+          : tool === "codex"
+            ? parseCodexMetadata(path, entries, modified, titles)
+            : parsePiMetadata(path, entries, modified);
+        if (record) records.push(record);
+      } catch {
+        // A concurrently changed or malformed session must not break the picker.
+      }
+    }
+  }
+  return records;
+}
+
+async function runJson(command: string[], cwd?: string): Promise<unknown> {
+  const process = Bun.spawn(command, { cwd, stdout: "pipe", stderr: "pipe" });
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
+    process.exited,
+  ]);
+  if (exitCode !== 0) throw new Error(stderr.trim() || `${command[0]} exited ${exitCode}`);
+  return JSON.parse(stdout);
+}
+
+async function openCodeSessions(): Promise<SessionRecord[]> {
+  if (!Bun.which("opencode")) return [];
+  try {
+    const projectsValue = await runJson(["opencode", "--pure", "debug", "scrap"]);
+    const projects = Array.isArray(projectsValue) ? projectsValue.map(object).filter(Boolean) : [];
+    const roots = [...new Set(projects.map((project) => string(project?.worktree)).filter((path): path is string => Boolean(path && existsSync(path))))];
+    const sessionLists = await Promise.all(roots.map(async (root) => {
+      try {
+        return { root, value: await runJson(["opencode", "--pure", "session", "list", "--format", "json"], root) };
+      } catch {
+        return { root, value: [] };
+      }
+    }));
+
+    const records = new Map<string, SessionRecord>();
+    for (const { root, value } of sessionLists) {
+      if (!Array.isArray(value)) continue;
+      for (const raw of value) {
+        const item = object(raw);
+        const id = string(item?.id);
+        const cwd = string(item?.directory) ?? root;
+        if (!id) continue;
+        records.set(id, {
+          version: 1,
+          tool: "opencode",
+          id,
+          title: cleanText(string(item?.title) ?? "Untitled session"),
+          cwd,
+          projectRoot: root,
+          created: timestamp(item?.created, 0),
+          updated: timestamp(item?.updated, 0),
+        });
+      }
+    }
+    return [...records.values()];
+  } catch (error) {
+    console.error(`agent-sessions: OpenCode listing unavailable: ${error instanceof Error ? error.message : String(error)}`);
+    return [];
+  }
+}
+
+export function encodeRecord(record: SessionRecord): string {
+  return Buffer.from(JSON.stringify(record), "utf8").toString("base64url");
+}
+
+export function decodeRecord(tokenOrEntry: string): SessionRecord {
+  const token = tokenOrEntry.includes("\t") ? tokenOrEntry.slice(tokenOrEntry.lastIndexOf("\t") + 1) : tokenOrEntry;
+  const value = object(JSON.parse(Buffer.from(token.trim(), "base64url").toString("utf8")));
+  const tool = string(value?.tool);
+  const id = string(value?.id);
+  const cwd = string(value?.cwd);
+  if (value?.version !== 1 || !tool || !isAgentTool(tool) || !id || !cwd) {
+    throw new Error("Invalid session selection");
+  }
+  return {
+    version: 1,
+    tool,
+    id,
+    title: string(value?.title) ?? "Untitled session",
+    cwd,
+    path: string(value?.path),
+    projectRoot: string(value?.projectRoot),
+    created: number(value?.created) ?? 0,
+    updated: number(value?.updated) ?? 0,
+  };
+}
+
+function formatUpdated(value: number): string {
+  if (!value) return "unknown";
+  const date = new Date(value);
+  const pad = (part: number): string => String(part).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function display(record: SessionRecord): string {
+  const project = record.cwd === "/" ? "/" : basename(record.cwd);
+  return `${TOOL_LABELS[record.tool].padEnd(8)} | ${cleanText(project, 36)} | ${formatUpdated(record.updated)} | ${cleanText(record.title, 100)}`;
+}
+
+async function list(): Promise<void> {
+  const records = [...await localSessions(), ...await openCodeSessions()]
+    .sort((left, right) => right.updated - left.updated);
+  for (const record of records) console.log(`${display(record)}\t${encodeRecord(record)}`);
+}
+
+function transcriptFromEntries(tool: Exclude<AgentTool, "opencode">, entries: JsonObject[]): TranscriptMessage[] {
+  const messages: TranscriptMessage[] = [];
+  for (const entry of entries) {
+    if (tool === "codex") {
+      const payload = object(entry.payload);
+      if (entry.type === "event_msg" && payload?.type === "user_message") {
+        const text = string(payload.message);
+        if (text) messages.push({ role: "user", text });
+      } else if (entry.type === "event_msg" && payload?.type === "agent_message") {
+        const text = string(payload.message);
+        if (text) messages.push({ role: "assistant", text });
+      }
+      continue;
+    }
+
+    const role = string(nested(entry, "message", "role"));
+    if (role !== "user" && role !== "assistant") continue;
+    const text = textContent(nested(entry, "message", "content"));
+    if (text.trim()) messages.push({ role, text });
+  }
+  return messages;
+}
+
+function renderPreview(record: SessionRecord, messages: TranscriptMessage[]): void {
+  console.log(`${TOOL_LABELS[record.tool]} session`);
+  console.log(`Title:   ${record.title}`);
+  console.log(`Project: ${record.cwd}`);
+  console.log(`Updated: ${formatUpdated(record.updated)}`);
+  console.log(`ID:      ${record.id}`);
+  if (record.cwd && !existsSync(record.cwd)) console.log("Status:  project directory is missing");
+  console.log("\nRecent conversation\n");
+  for (const message of messages.slice(-10)) {
+    console.log(`${message.role === "user" ? "USER" : "ASSISTANT"}\n${cleanText(message.text, 1200)}\n`);
+  }
+  if (!messages.length) console.log("No transcript preview available.");
+}
+
+async function preview(token: string): Promise<void> {
+  const record = decodeRecord(token);
+  if (record.tool === "opencode") {
+    try {
+      const cwd = [record.cwd, record.projectRoot].find((path) => path && existsSync(path));
+      const exported = object(await runJson(["opencode", "--pure", "export", record.id], cwd));
+      const rawMessages = Array.isArray(exported?.messages) ? exported.messages : [];
+      const messages = rawMessages.map(object).filter(Boolean).flatMap((message): TranscriptMessage[] => {
+        const role = string(nested(message, "info", "role"));
+        if (role !== "user" && role !== "assistant") return [];
+        const parts = Array.isArray(message?.parts) ? message.parts : [];
+        const text = parts.map((part) => string(object(part)?.text) ?? "").filter(Boolean).join("\n");
+        return text ? [{ role, text }] : [];
+      });
+      renderPreview(record, messages);
+    } catch {
+      renderPreview(record, []);
+    }
+    return;
+  }
+
+  if (!record.path || !existsSync(record.path)) {
+    renderPreview(record, []);
+    return;
+  }
+  try {
+    const entries = parseJsonLines(await Bun.file(record.path).text());
+    renderPreview(record, transcriptFromEntries(record.tool, entries));
+  } catch {
+    renderPreview(record, []);
+  }
+}
+
+export function resumeInvocation(record: SessionRecord): { command: string[]; cwd: string } {
+  switch (record.tool) {
+    case "claude": return { command: ["claude", "--resume", record.id], cwd: record.cwd };
+    case "codex": return { command: ["codex", "resume", record.id, "-C", record.cwd], cwd: record.cwd };
+    case "opencode": return { command: ["opencode", "--session", record.id], cwd: record.cwd };
+    case "pi": return { command: ["pi", "--session", record.path ?? record.id], cwd: record.cwd };
+  }
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+async function resume(token: string, apply: boolean): Promise<void> {
+  const record = decodeRecord(token);
+  const invocation = resumeInvocation(record);
+  const executable = invocation.command[0];
+  if (!Bun.which(executable)) throw new Error(`${executable} is not installed`);
+  if (!existsSync(invocation.cwd)) throw new Error(`Project directory no longer exists: ${invocation.cwd}`);
+
+  const printable = `cd ${shellQuote(invocation.cwd)} && ${invocation.command.map(shellQuote).join(" ")}`;
+  if (!apply) {
+    console.log(`[dry-run] ${printable}`);
+    return;
+  }
+
+  const child = Bun.spawn(invocation.command, {
+    cwd: invocation.cwd,
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  const exitCode = await child.exited;
+  process.exitCode = exitCode;
+}
+
+function usage(): never {
+  console.error("Usage: agent-sessions list | preview <selection> | resume <selection> [--apply]");
+  process.exit(2);
+}
+
+async function main(): Promise<void> {
+  const [command, selection, ...flags] = process.argv.slice(2);
+  try {
+    if (command === "list") return await list();
+    if (command === "preview" && selection) return await preview(selection);
+    if (command === "resume" && selection) return await resume(selection, flags.includes("--apply"));
+    usage();
+  } catch (error) {
+    console.error(`agent-sessions: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
+}
+
+if (import.meta.main) await main();
