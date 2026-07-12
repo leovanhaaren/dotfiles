@@ -6,6 +6,7 @@ import {
   parseCodexMetadata,
   parsePiMetadata,
   resumeInvocation,
+  searchTextFromEntries,
   type SessionRecord,
 } from "../../bin/agent-sessions";
 
@@ -43,6 +44,28 @@ describe("session metadata", () => {
   });
 });
 
+describe("conversation search", () => {
+  test("indexes user and assistant text as one safe source field", () => {
+    const text = searchTextFromEntries("pi", [
+      { type: "message", message: { role: "user", content: "find\tthis phrase" } },
+      { type: "message", message: { role: "assistant", content: [{ type: "text", text: "across\nlines" }] } },
+      { type: "message", message: { role: "tool", content: "not searchable" } },
+    ]);
+
+    expect(text).toBe("find this phrase across lines");
+  });
+
+  test("keeps the beginning and recent text within a bounded index", () => {
+    const text = searchTextFromEntries("codex", [
+      { type: "event_msg", payload: { type: "user_message", message: `START${"a".repeat(39_000)}END` } },
+    ]);
+
+    expect(text.length).toBe(32_001);
+    expect(text.startsWith("START")).toBeTrue();
+    expect(text.endsWith("END")).toBeTrue();
+  });
+});
+
 describe("picker selection", () => {
   const record: SessionRecord = {
     version: 1,
@@ -59,6 +82,7 @@ describe("picker selection", () => {
     const token = encodeRecord(record);
     expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(decodeRecord(`display text\t${token}`)).toEqual(record);
+    expect(decodeRecord(`display text\t${token}\tsearchable conversation`)).toEqual(record);
   });
 
   test.each([

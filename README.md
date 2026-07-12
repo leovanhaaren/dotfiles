@@ -212,7 +212,9 @@ Run `tv agent-sessions`, or press prefix then `A` in tmux, to browse sessions fr
 | Pi | `pi --session <file>` |
 
 The picker reads Claude, Codex, and Pi session metadata from their JSONL stores.
+Its fuzzy search also indexes bounded conversation text from those local transcripts without displaying it in the results list.
 It obtains OpenCode sessions through `opencode session list`, grouped by projects reported by `opencode debug scrap`.
+OpenCode search is limited to session metadata because exporting every transcript would make the picker slow.
 Session previews stay local and show only the selected transcript.
 
 ### Decisions

@@ -4,15 +4,15 @@ description = "Browse and resume Claude, Codex, OpenCode, and Pi sessions"
 requirements = ["agent-sessions", "bun"]
 
 [source]
-command = "agent-sessions list"
-display = "{split:\t:0}"
-output = "{split:\t:0}"
+command = "agent-sessions list --searchable"
+output = "{strip_ansi|split:\t:0}"
+ansi = true
 frecency = false
 no_sort = true
 
 [preview]
 command = "agent-sessions preview '{split:\t:1}'"
-header = "{split:\t:0}"
+header = "{strip_ansi|split:\t:0}"
 
 [keybindings]
 enter = "actions:resume"

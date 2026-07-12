@@ -19,6 +19,7 @@ export interface SessionRecord {
 
 type JsonObject = Record<string, unknown>;
 type TranscriptMessage = { role: string; text: string };
+type IndexedSession = { record: SessionRecord; searchText: string };
 
 const TOOL_LABELS: Record<AgentTool, string> = {
   claude: "Claude",
@@ -233,14 +234,14 @@ function codexTitles(): Map<string, { title: string; updated: number }> {
   return result;
 }
 
-async function localSessions(): Promise<SessionRecord[]> {
+async function localSessions(): Promise<IndexedSession[]> {
   const titles = codexTitles();
-  const specifications: Array<[AgentTool, string, number]> = [
+  const specifications: Array<[Exclude<AgentTool, "opencode">, string, number]> = [
     ["claude", stores.claude, 1],
     ["codex", stores.codex, Number.POSITIVE_INFINITY],
     ["pi", stores.pi, 1],
   ];
-  const records: SessionRecord[] = [];
+  const records: IndexedSession[] = [];
 
   for (const [tool, root, depth] of specifications) {
     for (const path of walkJsonl(root, depth)) {
@@ -252,7 +253,7 @@ async function localSessions(): Promise<SessionRecord[]> {
           : tool === "codex"
             ? parseCodexMetadata(path, entries, modified, titles)
             : parsePiMetadata(path, entries, modified);
-        if (record) records.push(record);
+        if (record) records.push({ record, searchText: searchTextFromEntries(tool, entries) });
       } catch {
         // A concurrently changed or malformed session must not break the picker.
       }
@@ -318,7 +319,7 @@ export function encodeRecord(record: SessionRecord): string {
 }
 
 export function decodeRecord(tokenOrEntry: string): SessionRecord {
-  const token = tokenOrEntry.includes("\t") ? tokenOrEntry.slice(tokenOrEntry.lastIndexOf("\t") + 1) : tokenOrEntry;
+  const token = tokenOrEntry.includes("\t") ? tokenOrEntry.split("\t", 3)[1] : tokenOrEntry;
   const value = object(JSON.parse(Buffer.from(token.trim(), "base64url").toString("utf8")));
   const tool = string(value?.tool);
   const id = string(value?.id);
@@ -351,10 +352,18 @@ function display(record: SessionRecord): string {
   return `${TOOL_LABELS[record.tool].padEnd(8)} | ${cleanText(project, 36)} | ${formatUpdated(record.updated)} | ${cleanText(record.title, 100)}`;
 }
 
-async function list(): Promise<void> {
-  const records = [...await localSessions(), ...await openCodeSessions()]
-    .sort((left, right) => right.updated - left.updated);
-  for (const record of records) console.log(`${display(record)}\t${encodeRecord(record)}`);
+async function list(searchable: boolean): Promise<void> {
+  const records = [
+    ...await localSessions(),
+    ...(await openCodeSessions()).map((record): IndexedSession => ({ record, searchText: "" })),
+  ].sort((left, right) => right.record.updated - left.record.updated);
+  for (const { record, searchText } of records) {
+    if (searchable) {
+      console.log(`${display(record)}\x1b[8m\t${encodeRecord(record)}\t${searchText}\x1b[0m`);
+    } else {
+      console.log(`${display(record)}\t${encodeRecord(record)}`);
+    }
+  }
 }
 
 function transcriptFromEntries(tool: Exclude<AgentTool, "opencode">, entries: JsonObject[]): TranscriptMessage[] {
@@ -378,6 +387,17 @@ function transcriptFromEntries(tool: Exclude<AgentTool, "opencode">, entries: Js
     if (text.trim()) messages.push({ role, text });
   }
   return messages;
+}
+
+export function searchTextFromEntries(tool: Exclude<AgentTool, "opencode">, entries: JsonObject[]): string {
+  const text = transcriptFromEntries(tool, entries)
+    .map((message) => message.text)
+    .join(" ")
+    .replace(/[\x00-\x1f\x7f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= 32_000) return text;
+  return `${text.slice(0, 8_000)} ${text.slice(-24_000)}`;
 }
 
 function renderPreview(record: SessionRecord, messages: TranscriptMessage[]): void {
@@ -464,14 +484,14 @@ async function resume(token: string, apply: boolean): Promise<void> {
 }
 
 function usage(): never {
-  console.error("Usage: agent-sessions list | preview <selection> | resume <selection> [--apply]");
+  console.error("Usage: agent-sessions list [--searchable] | preview <selection> | resume <selection> [--apply]");
   process.exit(2);
 }
 
 async function main(): Promise<void> {
   const [command, selection, ...flags] = process.argv.slice(2);
   try {
-    if (command === "list") return await list();
+    if (command === "list") return await list(selection === "--searchable" || flags.includes("--searchable"));
     if (command === "preview" && selection) return await preview(selection);
     if (command === "resume" && selection) return await resume(selection, flags.includes("--apply"));
     usage();
