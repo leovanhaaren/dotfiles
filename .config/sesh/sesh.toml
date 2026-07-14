@@ -46,6 +46,11 @@ path = "~/Workspaces/ksyos/ClientSafeWeb"
 windows = ["wt list", "pi4", "gh dash" , "lazygit"]
 
 [[session]]
+name = "CSW validation 🧪"
+path = "~/Workspaces/ksyos/csw-e2e-validation"
+windows = ["validation control"]
+
+[[session]]
 name = "sidekick 🦾"
 path = "~/Workspaces/leo-ksyos/sidekick"
 windows = ["wt list", "pi4", "gh dash" , "lazygit"]
@@ -90,6 +95,11 @@ startup_script = "zsh -lc 'source ~/.functions; pi4_here'"
 [[window]]
 name = "wt list"
 startup_script = "wt list"
+
+[[window]]
+name = "validation control"
+path = "~/Workspaces/ksyos/csw-e2e-validation"
+startup_script = "just session; just status"
 
 [[window]]
 name = "gh dash"
