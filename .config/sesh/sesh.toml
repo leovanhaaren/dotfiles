@@ -10,6 +10,10 @@ dir_length = 3
 preview_command = "eza --all --git --icons --color=always {}"
 
 [[session]]
+name = "workspaces 🏗️"
+path = "~/Workspaces"
+
+[[session]]
 name = "Obsidian 🗒 ️"
 path = "~/Obsidian"
 startup_command = "nvim ."
@@ -43,7 +47,7 @@ windows = ["pi4"]
 [[session]]
 name = "CSW"
 path = "~/Workspaces/ksyos/ClientSafeWeb"
-windows = ["wt list", "pi4", "gh dash" , "lazygit"]
+windows = ["wt list", "pi4", "gh dash", "lazygit"]
 
 [[session]]
 name = "CSW validation 🧪"
@@ -53,7 +57,7 @@ windows = ["validation control"]
 [[session]]
 name = "sidekick 🦾"
 path = "~/Workspaces/leo-ksyos/sidekick"
-windows = ["wt list", "pi4", "gh dash" , "lazygit"]
+windows = ["wt list", "pi4", "gh dash", "lazygit"]
 
 [[session]]
 name = "automation ⚙️"
