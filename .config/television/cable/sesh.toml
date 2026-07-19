@@ -1,13 +1,14 @@
 [metadata]
 name = "sesh"
 description = "Session manager integrating tmux sessions, zoxide directories, and config paths"
-requirements = [ "sesh", "fd",]
+requirements = ["sesh", "fd"]
 
 [source]
 ansi = true
 frecency = false
 no_sort = true
 output = "{strip_ansi|split: :1..|join: }"
+
 [[source.command]]
 name = "All"
 run = "sesh list --icons"
@@ -33,7 +34,7 @@ command = "sesh preview '{strip_ansi|split: :1..|join: }'"
 
 [keybindings]
 enter = "actions:connect"
-ctrl-d = [ "actions:kill_session", "reload_source",]
+ctrl-d = ["actions:kill_session", "reload_source"]
 
 [actions.connect]
 description = "Connect to selected session"

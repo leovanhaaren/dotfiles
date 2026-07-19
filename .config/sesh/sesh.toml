@@ -10,6 +10,11 @@ dir_length = 3
 preview_command = "eza --all --git --icons --color=always {}"
 
 [[session]]
+name = "herdr 🦙"
+path = "~/Workspaces"
+startup_command = "herdr"
+
+[[session]]
 name = "workspaces 🏗️"
 path = "~/Workspaces"
 

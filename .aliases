@@ -30,7 +30,7 @@ alias gwp="git worktree prune"
 
 # Tmux
 alias s='tv sesh'
-alias ais='tv agent-sessions'
+alias a='tv agent-sessions'
 alias ta="tmux attach -t"
 alias tad="tmux attach -d -t"
 alias tl="tmux list-sessions"
