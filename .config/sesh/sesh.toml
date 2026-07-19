@@ -15,6 +15,11 @@ path = "~/Workspaces"
 startup_command = "herdr"
 
 [[session]]
+name = "Agent Sessions 🤖"
+path = "~"
+startup_command = "tv agent-sessions"
+
+[[session]]
 name = "workspaces 🏗️"
 path = "~/Workspaces"
 
