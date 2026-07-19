@@ -1,7 +1,7 @@
 [metadata]
 name = "sesh"
 description = "Session manager integrating tmux sessions, zoxide directories, and config paths"
-requirements = ["sesh", "fd"]
+requirements = ["sesh", "fd", "wt", "jq", "agent-sessions"]
 
 [source]
 ansi = true
@@ -18,6 +18,14 @@ name = "Tmux"
 run = "sesh list -t --icons"
 
 [[source.command]]
+name = "Worktrunk"
+run = "wt list --format=json | jq -r '.[].path'"
+
+[[source.command]]
+name = "Agent Sessions"
+run = "printf 'Agent Sessions 🤖\\n'"
+
+[[source.command]]
 name = "Configs"
 run = "sesh list -c --icons"
 
@@ -30,7 +38,7 @@ name = "Directories"
 run = "fd -H -d 2 -t d -E .Trash . ~"
 
 [preview]
-command = "sesh preview '{strip_ansi|split: :1..|join: }'"
+command = "sh -c 'if [ \"$1\" = \"Agent Sessions 🤖\" ]; then printf \"Open the agent sessions picker\\n\"; else sesh preview \"$1\"; fi' _ '{strip_ansi|split: :1..|join: }'"
 
 [keybindings]
 enter = "actions:connect"
@@ -38,7 +46,7 @@ ctrl-d = ["actions:kill_session", "reload_source"]
 
 [actions.connect]
 description = "Connect to selected session"
-command = "sesh connect '{strip_ansi|split: :1..|join: }'"
+command = "sh -c 'if [ \"$1\" = \"Agent Sessions 🤖\" ]; then exec tv agent-sessions; else exec sesh connect \"$1\"; fi' _ '{strip_ansi|split: :1..|join: }'"
 mode = "execute"
 
 [actions.kill_session]
