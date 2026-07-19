@@ -1,7 +1,7 @@
 [metadata]
 name = "sesh"
 description = "Session manager integrating tmux sessions, zoxide directories, and config paths"
-requirements = ["sesh", "fd", "wt", "jq"]
+requirements = ["sesh", "fd", "wt", "jq", "herdr"]
 
 [source]
 ansi = true
@@ -19,7 +19,11 @@ run = "sesh list -t --icons"
 
 [[source.command]]
 name = "Worktrunk"
-run = "wt list --format=json | jq -r '.[].path'"
+run = "wt list --format=json | jq -r '.[] | \"worktrunk: \\(.path)\"'"
+
+[[source.command]]
+name = "Herdr"
+run = "herdr workspace list | jq -r '.result.workspaces[] | \"herdr: 🦙 Herdr #\\(.number) \\(.label)\"'"
 
 [[source.command]]
 name = "Configs"
@@ -34,7 +38,7 @@ name = "Directories"
 run = "fd -H -d 2 -t d -E .Trash . ~"
 
 [preview]
-command = "sesh preview '{strip_ansi|split: :1..|join: }'"
+command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) id=$(printf \"%s\\n\" \"$1\" | sed -E \"s/^🦙 Herdr #([0-9]+).*/\\1/\"); herdr workspace get \"$id\" | jq .result.workspace ;; *) sesh preview \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
 
 [keybindings]
 enter = "actions:connect"
@@ -42,10 +46,10 @@ ctrl-d = ["actions:kill_session", "reload_source"]
 
 [actions.connect]
 description = "Connect to selected session"
-command = "sh -c 'if [ \"${HERDR_ENV:-}\" = 1 ]; then unset TMUX; fi; exec sesh connect \"$1\"' _ '{strip_ansi|split: :1..|join: }'"
+command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) id=$(printf \"%s\\n\" \"$1\" | sed -E \"s/^🦙 Herdr #([0-9]+).*/\\1/\"); herdr workspace focus \"$id\" >/dev/null; if [ \"${HERDR_ENV:-}\" != 1 ]; then exec herdr; fi ;; *) if [ \"${HERDR_ENV:-}\" = 1 ]; then unset TMUX; fi; exec sesh connect \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
 mode = "execute"
 
 [actions.kill_session]
 description = "Kill selected tmux session (press Ctrl+r to reload)"
-command = "tmux kill-session -t '{strip_ansi|split: :1..|join: }'"
+command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) exit 0 ;; *) tmux kill-session -t \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
 mode = "fork"
