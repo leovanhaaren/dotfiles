@@ -19,3 +19,10 @@ Host github.com-ksyos
 
 Host 46.225.53.85
   IdentityFile ~/.ssh/id_hetzner
+
+Host leo-mac-mini
+  User leo
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentitiesOnly yes
+  IdentityFile ~/.ssh/id_leovanhaaren

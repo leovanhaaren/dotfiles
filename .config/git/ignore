@@ -4,3 +4,4 @@
 .tasks
 .worktrees
 **/.claude/settings.local.json
+mise.toml
