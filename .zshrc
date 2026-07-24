@@ -79,3 +79,11 @@ export PATH=/Volumes/SSD/leo/.opencode/bin:$PATH
 
 # opencode
 export PATH=/Users/leo/.opencode/bin:$PATH
+
+# pnpm
+export PNPM_HOME="~/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end

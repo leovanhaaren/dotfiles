@@ -26,6 +26,7 @@ echo "Updating homebrew..."
 brew update
 
 BREWFILE="${1:-Brewfile.base}"
+brew trust --tap rjyo/moshi
 cd "$DOTFILES/homebrew" && brew bundle install --file="$BREWFILE"
 
 echo "Cleaning up brew"
