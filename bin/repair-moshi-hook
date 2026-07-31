@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+LABEL="homebrew.mxcl.moshi-hook"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+DOMAIN="gui/$(id -u)"
+APPLY=false
+
+usage() {
+    cat <<'EOF'
+Usage: repair-moshi-hook [--apply]
+
+Repair the moshi-hook Homebrew service after brew regenerates its LaunchAgent.
+The default is a dry run. Pass --apply to update and reload the service.
+EOF
+}
+
+log() {
+    printf '%s\n' "$*"
+}
+
+fail() {
+    printf 'Error: %s\n' "$*" >&2
+    exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --apply)
+            APPLY=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            fail "unknown option: $1"
+            ;;
+    esac
+done
+
+[[ "$(uname -s)" == "Darwin" ]] || fail "this repair is only needed on macOS"
+command -v brew >/dev/null || fail "Homebrew is not installed"
+command -v launchctl >/dev/null || fail "launchctl is unavailable"
+command -v plutil >/dev/null || fail "plutil is unavailable"
+brew list --versions moshi-hook >/dev/null || fail "moshi-hook is not installed"
+
+if [[ "$APPLY" == false ]]; then
+    log "Dry run: would ensure the moshi-hook LaunchAgent exists."
+    log "Dry run: would unload $DOMAIN/$LABEL."
+    log "Dry run: would redirect StandardOutPath and StandardErrorPath to /dev/null."
+    log "Dry run: would bootstrap the repaired LaunchAgent and verify it is running."
+    log "Run 'repair-moshi-hook --apply' to apply the repair."
+    exit 0
+fi
+
+if [[ ! -f "$PLIST" ]]; then
+    log "Generating the moshi-hook LaunchAgent with Homebrew..."
+    brew services start moshi-hook >/dev/null
+fi
+
+[[ -f "$PLIST" ]] || fail "Homebrew did not create $PLIST"
+
+log "Unloading the current moshi-hook LaunchAgent..."
+launchctl bootout "$DOMAIN" "$PLIST" >/dev/null 2>&1 || true
+
+log "Redirecting launchd output away from the external Homebrew volume..."
+plutil -replace StandardOutPath -string /dev/null "$PLIST"
+plutil -replace StandardErrorPath -string /dev/null "$PLIST"
+plutil -lint "$PLIST" >/dev/null
+
+log "Loading the repaired moshi-hook LaunchAgent..."
+launchctl bootstrap "$DOMAIN" "$PLIST"
+
+sleep 2
+if launchctl print "$DOMAIN/$LABEL" 2>/dev/null | grep -q 'state = running'; then
+    log "moshi-hook is running."
+    log "Log: $HOME/Library/Application Support/Moshi/hook.log"
+else
+    fail "moshi-hook did not stay running; inspect: log show --last 5m --predicate 'eventMessage CONTAINS[c] \"moshi-hook\"'"
+fi

@@ -262,6 +262,20 @@ Brewfiles are stored under `homebrew/`:
 - **Brewfile.base** — Primary package set for the main machine
 - **Brewfile.work** — Work-specific packages (1Password, AWS CLI, etc.)
 
+### Repair the moshi-hook service
+
+Homebrew regenerates the `moshi-hook` LaunchAgent during service restarts.
+On a separately mounted Homebrew volume, macOS can block launchd from accessing the generated log path under `/opt/homebrew/var/log`.
+Run the repair command after `brew services start` or `brew services restart` leaves `moshi-hook` loaded but not running:
+
+```bash
+repair-moshi-hook          # Preview the repair
+repair-moshi-hook --apply  # Patch, reload, and verify the service
+```
+
+The command redirects launchd output to `/dev/null` because `moshi-hook` maintains its own log at `~/Library/Application Support/Moshi/hook.log`.
+A later Homebrew service restart can regenerate the broken paths, so rerun the repair when needed.
+
 ### Sync system with Brewfile
 ```bash
 # Check what's missing (dry run)
@@ -294,9 +308,11 @@ Run installation checks and the agent-session tests:
 bun test scripts/tests/agent-sessions.test.ts
 scripts/tests/tmux-bindings.sh
 agent-sessions list | head
+repair-moshi-hook
 ```
 
 `tv list-channels` should include `agent-sessions` after setup.
+On macOS with `moshi-hook` installed, the final command must report only the planned repair and must not modify the LaunchAgent.
 
 ## Troubleshooting
 
