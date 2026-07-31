@@ -60,7 +60,7 @@ worktree-path = "~/Workspaces/worktrees/{{ repo }}/{{ branch | sanitize }}"
 # ### Pi
 #
 [commit.generation]
-command = "pi -p --provider github-copilot --model claude-haiku-4.5"
+command = "pi -p --provider github-copilot --model gpt-5.6-luna"
 #
 # ### Claude Code
 #
