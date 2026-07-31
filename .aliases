@@ -7,7 +7,7 @@ alias al="code ~/.aliases.local"
 alias dotfiles="code $DOTFILES_DIR"
 alias dotai="code ~/Workspaces/leovanhaaren/dot-ai"
 alias claudedir="code ~/.claude"
-
+alias cpi="clear && pi update && pi update --extensions && pi"
 alias h="herdr"
 
 alias ssh-load-keys="~/Workspaces/leovanhaaren/dotfiles/scripts/ssh-load-keys.sh"
