@@ -6,7 +6,7 @@ start-at-login = false
 config-version = 2
 
 after-startup-command = [
-  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=1.0'
+  'exec-and-forget borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=1.0',
 ]
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
@@ -43,14 +43,10 @@ automatically-unhide-macos-hidden-apps = false
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
 on-mode-changed = []
 
-[[on-window-detected]]
-if.app-name-regex-substring = 'finder'
-run = 'layout floating'
-
 # Possible values: (qwerty|dvorak|colemak)
 # See https://nikitabobko.github.io/AeroSpace/guide#key-mapping
 [key-mapping]
-    preset = 'qwerty'
+preset = 'qwerty'
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
@@ -61,12 +57,36 @@ run = 'layout floating'
 #                 See: https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
 [gaps]
 # inner.vertical =   500
-inner.horizontal = [{ monitor."^built-in retina display$" = 20 }, { monitor.main = 40 }, 10]
-inner.vertical =   [{ monitor."^built-in retina display$" = 20 }, { monitor.main = 40 }, 10]
-outer.left =       [{ monitor."^built-in retina display$" = 100 }, { monitor.main = 200 }, 20]
-outer.right =      [{ monitor."^built-in retina display$" = 100 }, { monitor.main = 200 }, 20]
-outer.bottom =     [{ monitor."^built-in retina display$" = 40 }, { monitor.main = 80 }, 10]
-outer.top =        [{ monitor."^built-in retina display$" = 40 }, { monitor.main = 80 }, 10]
+inner.horizontal = [
+  { monitor."^built-in retina display$" = 20 },
+  { monitor.main = 40 },
+  10,
+]
+inner.vertical = [
+  { monitor."^built-in retina display$" = 20 },
+  { monitor.main = 40 },
+  10,
+]
+outer.left = [
+  { monitor."^built-in retina display$" = 100 },
+  { monitor.main = 200 },
+  20,
+]
+outer.right = [
+  { monitor."^built-in retina display$" = 100 },
+  { monitor.main = 200 },
+  20,
+]
+outer.bottom = [
+  { monitor."^built-in retina display$" = 40 },
+  { monitor.main = 80 },
+  10,
+]
+outer.top = [
+  { monitor."^built-in retina display$" = 40 },
+  { monitor.main = 80 },
+  10,
+]
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
@@ -197,18 +217,25 @@ alt-f = 'layout floating tiling' # Toggle between floating and tiling layout
 [mode.service.binding]
 esc = ['reload-config', 'mode main']
 r = ['flatten-workspace-tree', 'mode main'] # reset layout
-f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
+f = [
+  'layout floating tiling',
+  'mode main',
+] # Toggle between floating and tiling layout
 backspace = ['close-all-windows-but-current', 'mode main']
 
 [mode.apps.binding]
 # alt-w = ['exec-and-forget open -a /Applications/WezTerm.app', 'mode main']
 
-# [[on-window-detected]]
-# if.app-id = 'com.google.Chrome'
-# run = ['layout tiling', 'move-node-to-workspace a']
+[[on-window-detected]]
+if.app-name-regex-substring = 'finder'
+run = 'layout floating'
 
 [[on-window-detected]]
-if.app-id = 'com.zen.Zen'
+if.app-id = 'com.apple.ActivityMonitor'
+run = 'layout floating'
+
+[[on-window-detected]]
+if.app-id = 'app.zen-browser.zen'
 run = ['move-node-to-workspace 1']
 
 [[on-window-detected]]
@@ -224,7 +251,7 @@ if.app-id = 'com.microsoft.VSCode'
 run = ['move-node-to-workspace 3']
 
 [[on-window-detected]]
-if.app-id = 'com.openai.Codex'
+if.app-id = 'com.openai.codex'
 run = ['move-node-to-workspace 3']
 
 [[on-window-detected]]
@@ -234,3 +261,7 @@ run = ['move-node-to-workspace 4']
 [[on-window-detected]]
 if.app-id = 'com.microsoft.teams2'
 run = ['move-node-to-workspace 4']
+
+[[on-window-detected]]
+if.app-id = 'com.nvidia.gfnpc.mall'
+run = ['move-node-to-workspace 5']
