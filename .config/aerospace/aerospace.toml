@@ -101,6 +101,11 @@ outer.top =        [{ monitor."^built-in retina display$" = 40 }, { monitor.main
 alt-ctrl-shift-f = 'fullscreen'
 alt-ctrl-f = 'layout floating tiling'
 
+alt-left = 'move left'
+alt-down = 'move down'
+alt-up = 'move up'
+alt-right = 'move right'
+
 alt-shift-left = 'join-with left'
 alt-shift-down = 'join-with down'
 alt-shift-up = 'join-with up'
@@ -178,8 +183,7 @@ alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 # alt-shift-enter = 'mode apps'
 
 # alt-o = 'exec-and-forget open -a /Applications/Obsidian.app'
-# alt-b = 'exec-and-forget open -a /Applications/Brain.fm.app'
-# alt-w = 'exec-and-forget open -a /Applications/WezTerm.app'
+alt-w = 'exec-and-forget open -a /Applications/WezTerm.app'
 # alt-f = 'exec-and-forget open -a /System/Library/CoreServices/Finder.app'
 # alt-e = 'exec-and-forget open -a "/Applications/Final Cut Pro.app"'
 # alt-z = 'exec-and-forget open -a /Applications/Zen.app'
@@ -197,7 +201,7 @@ f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling
 backspace = ['close-all-windows-but-current', 'mode main']
 
 [mode.apps.binding]
-alt-w = ['exec-and-forget open -a /Applications/WezTerm.app', 'mode main']
+# alt-w = ['exec-and-forget open -a /Applications/WezTerm.app', 'mode main']
 
 # [[on-window-detected]]
 # if.app-id = 'com.google.Chrome'
@@ -206,6 +210,10 @@ alt-w = ['exec-and-forget open -a /Applications/WezTerm.app', 'mode main']
 [[on-window-detected]]
 if.app-id = 'com.zen.Zen'
 run = ['move-node-to-workspace 1']
+
+[[on-window-detected]]
+if.app-id = 'com.google.Chrome'
+run = ['layout tiling', 'move-node-to-workspace a']
 
 [[on-window-detected]]
 if.app-id = 'com.github.wez.wezterm'
@@ -223,14 +231,6 @@ run = ['move-node-to-workspace 3']
 if.app-id = 'md.obsidian'
 run = ['move-node-to-workspace 4']
 
-# [[on-window-detected]]
-# if.app-id = 'com.apple.Music'
-# run = ['move-node-to-workspace a']
-
-# [[on-window-detected]]
-# if.app-id = 'com.google.Chrome'
-# run = ['move-node-to-workspace g']
-
-# [[on-window-detected]]
-# if.app-id = 'com.apple.finder'
-# run = ['move-node-to-workspace f']
+[[on-window-detected]]
+if.app-id = 'com.microsoft.teams2'
+run = ['move-node-to-workspace 4']
