@@ -40,9 +40,10 @@ export function encodeRecord(record: PickerRecord): string {
 }
 
 export function decodeRecord(token: string): PickerRecord {
+  const encoded = token.includes("\t") ? token.split("\t")[1] : token;
   let value: unknown;
   try {
-    value = JSON.parse(Buffer.from(token, "base64url").toString("utf8"));
+    value = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
   } catch {
     throw new Error("Invalid picker selection");
   }
@@ -51,7 +52,13 @@ export function decodeRecord(token: string): PickerRecord {
   const kind = text(record?.kind);
   const display = text(record?.display);
   const selected = text(record?.value);
-  if (record?.version !== 1 || (kind !== "sesh" && kind !== "herdr") || !display || !selected) {
+  if (
+    record?.version !== 1 ||
+    (kind !== "sesh" && kind !== "herdr") ||
+    !display ||
+    !selected ||
+    (kind === "herdr" && !/^\d+$/.test(selected))
+  ) {
     throw new Error("Invalid picker selection");
   }
 
@@ -61,21 +68,26 @@ export function decodeRecord(token: string): PickerRecord {
 export function previewInvocation(record: PickerRecord): string[] {
   return record.kind === "herdr"
     ? ["herdr", "workspace", "get", record.value]
-    : ["sesh", "preview", record.value];
+    : ["sesh", "preview", "--", record.value];
 }
 
 export function connectInvocation(record: PickerRecord): string[] {
   return record.kind === "herdr"
     ? ["herdr", "workspace", "focus", record.value]
-    : ["sesh", "connect", record.value];
+    : ["sesh", "connect", "--", record.value];
 }
 
 export function killInvocation(record: PickerRecord): string[] | undefined {
   return record.kind === "herdr" ? undefined : ["tmux", "kill-session", "-t", record.value];
 }
 
+export function pickerLine(record: PickerRecord): string {
+  const safeRecord = { ...record, display: record.display.replace(/[\t\r\n]+/g, " ") };
+  return `${safeRecord.display}\t${encodeRecord(safeRecord)}`;
+}
+
 function emit(record: PickerRecord): void {
-  console.log(`${record.display}\t${encodeRecord(record)}`);
+  console.log(pickerLine(record));
 }
 
 function run(command: string[]): { stdout: string; stderr: string; exitCode: number } {

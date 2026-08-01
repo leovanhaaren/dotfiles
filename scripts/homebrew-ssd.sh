@@ -14,10 +14,20 @@ VOLUME_NAME="Homebrew"
 MOUNT_POINT="/opt/homebrew"
 MOUNT_SCRIPT="/usr/local/bin/mount-homebrew.sh"
 LAUNCH_DAEMON="/Library/LaunchDaemons/com.homebrew.mount.plist"
+TEMP_ROOT="/private/var/db/homebrew"
+TEMP_DIR="$TEMP_ROOT/tmp"
 CONTAINER=""
 DRY_RUN=true
+ALREADY_MIGRATED=false
 BACKUP_CREATED=false
 MOUNT_COMPLETE=false
+PERSISTENCE_TOUCHED=false
+MOUNT_SCRIPT_EXISTED=false
+LAUNCH_DAEMON_EXISTED=false
+MOUNT_SCRIPT_BACKUP="${MOUNT_SCRIPT}.dotfiles-backup.$$"
+LAUNCH_DAEMON_BACKUP="${LAUNCH_DAEMON}.dotfiles-backup.$$"
+MOUNT_SCRIPT_NEW="${MOUNT_SCRIPT}.new.$$"
+LAUNCH_DAEMON_NEW="${LAUNCH_DAEMON}.new.$$"
 DISK_ID=""
 BREW_USER="${SUDO_USER:-${USER:-}}"
 
@@ -58,11 +68,45 @@ run() {
 
 run_as_brew_user() {
     local command=("$@")
+    local environment=()
+    [ -d "$TEMP_DIR" ] && environment=(/usr/bin/env "HOMEBREW_TEMP=$TEMP_DIR")
     if [ "$(id -u)" -eq 0 ]; then
-        /usr/bin/sudo -u "$BREW_USER" -H "${command[@]}"
+        /usr/bin/sudo -u "$BREW_USER" -H "${environment[@]}" "${command[@]}"
     else
-        "${command[@]}"
+        "${environment[@]}" "${command[@]}"
     fi
+}
+
+backup_persistence() {
+    if [ -e "$MOUNT_SCRIPT" ] || [ -L "$MOUNT_SCRIPT" ]; then
+        /bin/cp -pP "$MOUNT_SCRIPT" "$MOUNT_SCRIPT_BACKUP"
+        MOUNT_SCRIPT_EXISTED=true
+    fi
+    if [ -e "$LAUNCH_DAEMON" ] || [ -L "$LAUNCH_DAEMON" ]; then
+        /bin/cp -pP "$LAUNCH_DAEMON" "$LAUNCH_DAEMON_BACKUP"
+        LAUNCH_DAEMON_EXISTED=true
+    fi
+    PERSISTENCE_TOUCHED=true
+}
+
+restore_persistence() {
+    if [ "$PERSISTENCE_TOUCHED" = false ]; then
+        return
+    fi
+    if [ "$MOUNT_SCRIPT_EXISTED" = true ]; then
+        /bin/mv -f "$MOUNT_SCRIPT_BACKUP" "$MOUNT_SCRIPT"
+    else
+        /bin/rm -f "$MOUNT_SCRIPT"
+    fi
+    if [ "$LAUNCH_DAEMON_EXISTED" = true ]; then
+        /bin/mv -f "$LAUNCH_DAEMON_BACKUP" "$LAUNCH_DAEMON"
+    else
+        /bin/rm -f "$LAUNCH_DAEMON"
+    fi
+}
+
+cleanup_persistence_backups() {
+    /bin/rm -f "$MOUNT_SCRIPT_BACKUP" "$LAUNCH_DAEMON_BACKUP" "$MOUNT_SCRIPT_NEW" "$LAUNCH_DAEMON_NEW"
 }
 
 validate_brew() {
@@ -78,19 +122,23 @@ validate_brew() {
 rollback() {
     local exit_code=$?
     trap - ERR
-    if [ "$DRY_RUN" = false ] && [ "$BACKUP_CREATED" = true ] && [ "$MOUNT_COMPLETE" = false ]; then
-        log_error "Migration failed after the original Homebrew tree was moved; rolling back"
-        if [ -n "$DISK_ID" ]; then
-            diskutil unmount "$DISK_ID" >/dev/null 2>&1 || true
-        fi
-        rmdir "$MOUNT_POINT" >/dev/null 2>&1 || true
-        if [ ! -e "$MOUNT_POINT" ] && [ -d "${MOUNT_POINT}.bak" ]; then
-            mv "${MOUNT_POINT}.bak" "$MOUNT_POINT"
-            log_warn "Restored $MOUNT_POINT from ${MOUNT_POINT}.bak"
-        else
-            log_error "Automatic rollback could not restore $MOUNT_POINT; backup remains at ${MOUNT_POINT}.bak"
+    if [ "$DRY_RUN" = false ] && [ "$MOUNT_COMPLETE" = false ]; then
+        restore_persistence
+        if [ "$BACKUP_CREATED" = true ]; then
+            log_error "Migration failed after the original Homebrew tree was moved; rolling back"
+            if [ -n "$DISK_ID" ]; then
+                diskutil unmount "$DISK_ID" >/dev/null 2>&1 || true
+            fi
+            rmdir "$MOUNT_POINT" >/dev/null 2>&1 || true
+            if [ ! -e "$MOUNT_POINT" ] && [ -d "${MOUNT_POINT}.bak" ]; then
+                mv "${MOUNT_POINT}.bak" "$MOUNT_POINT"
+                log_warn "Restored $MOUNT_POINT from ${MOUNT_POINT}.bak"
+            else
+                log_error "Automatic rollback could not restore $MOUNT_POINT; backup remains at ${MOUNT_POINT}.bak"
+            fi
         fi
     fi
+    cleanup_persistence_backups
     exit "$exit_code"
 }
 trap rollback ERR
@@ -142,10 +190,16 @@ if [ "$CURRENT_NAME" = "$VOLUME_NAME" ]; then
         exit 1
     fi
     log_info "Homebrew is already mounted from $CONTAINER at $MOUNT_POINT"
-    validate_brew "$MOUNT_POINT/bin/brew"
-    exit 0
+    ALREADY_MIGRATED=true
+    VOLUME_UUID=$(disk_field "$MOUNT_POINT" "Volume UUID")
+    DISK_ID=$(normalize_disk "$(disk_field "$MOUNT_POINT" "Device Identifier")")
+    if [ -z "$VOLUME_UUID" ] || [ -z "$DISK_ID" ]; then
+        log_error "Could not resolve the mounted Homebrew volume UUID or device identifier"
+        exit 1
+    fi
 fi
 
+if [ "$ALREADY_MIGRATED" = false ]; then
 if [ -e "${MOUNT_POINT}.bak" ]; then
     log_error "Backup already exists at ${MOUNT_POINT}.bak; resolve the previous migration before continuing"
     exit 1
@@ -158,6 +212,14 @@ if diskutil info "$VOLUME_PATH" >/dev/null 2>&1; then
     EXISTING_CONTAINER=$(normalize_disk "$(disk_field "$VOLUME_PATH" "APFS Container" || true)")
     if [ "$EXISTING_CONTAINER" != "$CONTAINER" ]; then
         log_error "$VOLUME_PATH belongs to $EXISTING_CONTAINER, not requested container $CONTAINER"
+        exit 1
+    fi
+    UNEXPECTED_ENTRY=$(/usr/bin/find "$VOLUME_PATH" -mindepth 1 -maxdepth 1 \
+        ! -name '.DocumentRevisions-V100' ! -name '.Spotlight-V100' ! -name '.Trashes' ! -name '.fseventsd' \
+        -print -quit)
+    if [ -n "$UNEXPECTED_ENTRY" ]; then
+        log_error "Existing Homebrew volume is not empty: $UNEXPECTED_ENTRY"
+        log_error "Use a newly created empty volume; existing contents are never merged"
         exit 1
     fi
 fi
@@ -210,17 +272,37 @@ if [ "$DRY_RUN" = false ]; then
     ACTUAL_MOUNT=$(disk_field "$VOLUME_UUID" "Mount Point")
     [ "$ACTUAL_MOUNT" = "$MOUNT_POINT" ] || { log_error "Volume mounted at '$ACTUAL_MOUNT', expected $MOUNT_POINT"; false; }
 fi
+fi
 
 BREW_UID=$(id -u "$BREW_USER")
 BREW_GID=$(id -g "$BREW_USER")
-log_info "Installing strict automount helper..."
+log_info "Creating Homebrew temporary storage beneath a root-owned parent..."
+if [ "$DRY_RUN" = false ]; then
+    [ ! -L "$TEMP_ROOT" ] || { log_error "$TEMP_ROOT must not be a symlink"; false; }
+    [ ! -e "$TEMP_ROOT" ] || [ -d "$TEMP_ROOT" ] || { log_error "$TEMP_ROOT must be a directory"; false; }
+    if [ -d "$TEMP_ROOT" ]; then
+        [ "$(stat -f %u "$TEMP_ROOT")" -eq 0 ] || { log_error "$TEMP_ROOT must be root-owned"; false; }
+    fi
+    [ ! -L "$TEMP_DIR" ] || { log_error "$TEMP_DIR must not be a symlink"; false; }
+    [ ! -e "$TEMP_DIR" ] || [ -d "$TEMP_DIR" ] || { log_error "$TEMP_DIR must be a directory"; false; }
+fi
+run /usr/bin/install -d -o root -g wheel -m 755 "$TEMP_ROOT"
+run /usr/bin/install -d -o "$BREW_UID" -g "$BREW_GID" -m 700 "$TEMP_DIR"
+if [ "$DRY_RUN" = false ]; then
+    validate_brew "$MOUNT_POINT/bin/brew"
+fi
+
+log_info "Installing transactional automount files..."
 run mkdir -p "$(dirname "$MOUNT_SCRIPT")"
 if [ "$DRY_RUN" = false ]; then
-    cat > "$MOUNT_SCRIPT" <<SCRIPT
+    backup_persistence
+    cat > "$MOUNT_SCRIPT_NEW" <<SCRIPT
 #!/bin/bash
 set -euo pipefail
 UUID="$VOLUME_UUID"
 MOUNT_POINT="$MOUNT_POINT"
+TEMP_ROOT="$TEMP_ROOT"
+TEMP_DIR="$TEMP_DIR"
 
 for _ in \$(seq 1 60); do
     VOLUME=\$(/usr/sbin/diskutil info "\$UUID" 2>/dev/null | awk -F: '/Device Identifier/ {gsub(/^[ \t]+/, "", \$2); print \$2; exit}')
@@ -239,14 +321,20 @@ fi
 /usr/sbin/diskutil enableOwnership "\$VOLUME"
 ACTUAL_MOUNT=\$(/usr/sbin/diskutil info "\$UUID" | awk -F: '/Mount Point/ {gsub(/^[ \t]+/, "", \$2); print \$2; exit}')
 [ "\$ACTUAL_MOUNT" = "\$MOUNT_POINT" ] || { /usr/bin/logger -t mount-homebrew "mounted at \$ACTUAL_MOUNT instead of \$MOUNT_POINT"; exit 1; }
-/usr/bin/install -d -o "$BREW_UID" -g "$BREW_GID" -m 700 /tmp/homebrew
-SCRIPT
-    chmod 755 "$MOUNT_SCRIPT"
-fi
 
-log_info "Installing LaunchDaemon..."
-if [ "$DRY_RUN" = false ]; then
-    cat > "$LAUNCH_DAEMON" <<PLIST
+[ ! -L "\$TEMP_ROOT" ] && [ -d "\$TEMP_ROOT" ] && [ "\$(/usr/bin/stat -f %u "\$TEMP_ROOT")" -eq 0 ] || {
+    /usr/bin/logger -t mount-homebrew "unsafe temporary root: \$TEMP_ROOT"
+    exit 1
+}
+[ ! -L "\$TEMP_DIR" ] && [ -d "\$TEMP_DIR" ] || {
+    /usr/bin/logger -t mount-homebrew "unsafe temporary directory: \$TEMP_DIR"
+    exit 1
+}
+/usr/bin/install -d -o "$BREW_UID" -g "$BREW_GID" -m 700 "\$TEMP_DIR"
+SCRIPT
+    chmod 755 "$MOUNT_SCRIPT_NEW"
+
+    cat > "$LAUNCH_DAEMON_NEW" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -262,19 +350,19 @@ if [ "$DRY_RUN" = false ]; then
 </dict>
 </plist>
 PLIST
-    chmod 644 "$LAUNCH_DAEMON"
-    plutil -lint "$LAUNCH_DAEMON" >/dev/null
-fi
-
-run /usr/bin/install -d -o "$BREW_UID" -g "$BREW_GID" -m 700 /tmp/homebrew
-if [ "$DRY_RUN" = false ]; then
-    validate_brew "$MOUNT_POINT/bin/brew"
+    chmod 644 "$LAUNCH_DAEMON_NEW"
+    plutil -lint "$LAUNCH_DAEMON_NEW" >/dev/null
+    mv "$MOUNT_SCRIPT_NEW" "$MOUNT_SCRIPT"
+    mv "$LAUNCH_DAEMON_NEW" "$LAUNCH_DAEMON"
+    cleanup_persistence_backups
     MOUNT_COMPLETE=true
 fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Re-run with --apply under sudo ==="
+elif [ "$ALREADY_MIGRATED" = true ]; then
+    echo "=== Homebrew automount files repaired ==="
 else
     echo "=== Homebrew moved to external SSD ==="
     echo "Backup retained at ${MOUNT_POINT}.bak until reboot verification succeeds."

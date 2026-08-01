@@ -12,7 +12,7 @@ usage() {
     echo "Options:"
     echo "  --apply       Update Homebrew and install the selected bundle"
     echo "  --cleanup     Run brew cleanup after a successful install"
-    echo "  -n, --dry-run Check bundle satisfaction without changes (default)"
+    echo "  -n, --dry-run Show the selected bundle plan without invoking Homebrew (default)"
     echo "  -h, --help    Show this help message"
 }
 
@@ -27,15 +27,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -x /opt/homebrew/bin/brew ]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [ -x /usr/local/bin/brew ]; then
-    eval "$(/usr/local/bin/brew shellenv)"
-elif ! command -v brew >/dev/null 2>&1; then
-    echo "Homebrew is required. Review and install it from https://brew.sh before continuing." >&2
-    exit 1
-fi
-
 case "$BREWFILE" in
     /*) BREWFILE_PATH="$BREWFILE" ;;
     homebrew/*) BREWFILE_PATH="$DOTFILES/$BREWFILE" ;;
@@ -48,11 +39,19 @@ if [ ! -f "$BREWFILE_PATH" ]; then
 fi
 
 if [ "$APPLY" = false ]; then
-    echo "[DRY-RUN] Checking $BREWFILE_PATH"
-    if ! brew bundle check --file="$BREWFILE_PATH" --verbose; then
-        echo "[DRY-RUN] Dependencies are missing or outdated. Run with --apply to install them."
-    fi
+    echo "[DRY-RUN] Would update Homebrew and install $BREWFILE_PATH"
+    [ "$CLEANUP" = true ] && echo "[DRY-RUN] Would run brew cleanup after installation"
+    echo "Run with --apply to make changes."
     exit 0
+fi
+
+if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+elif ! command -v brew >/dev/null 2>&1; then
+    echo "Homebrew is required. Review and install it from https://brew.sh before continuing." >&2
+    exit 1
 fi
 
 echo "Updating Homebrew..."

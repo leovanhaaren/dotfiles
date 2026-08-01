@@ -8,7 +8,9 @@ Personal dotfiles for macOS development environments.
 
 - macOS
 - Git
-- Bash (for running the setup scripts)
+- Bash
+- GNU Stow
+- Homebrew for package installation
 
 ### 1. Clone the Repository
 
@@ -20,21 +22,32 @@ cd ~/Workspaces/leovanhaaren/dotfiles
 ### 2. Create Symlinks via GNU Stow
 
 ```bash
-./setup.sh
+./setup.sh          # dry run
+./setup.sh --apply  # create links
 ```
 
-This creates the macOS symlinks for shell config, git, SSH, editor settings, and custom scripts. Use `./setup.sh -n` for a dry run to preview changes.
+Setup creates the macOS links for shell config, Git, SSH, editor settings, and custom scripts.
+Conflicting Stow targets fail safely by default.
+Use `--adopt` only as an explicit migration after reviewing the dry run; apply mode requires a clean Git tree and creates a repository bundle under `backups/`.
+TPM and tmux plugins are not downloaded automatically.
+Run `tmux-plugins sync` to preview the pinned plugin installation and `tmux-plugins sync --apply` to install the reviewed revisions.
+Neovim dependencies are likewise locked in `.config/nvim/lazy-lock.json`.
 
 ### 3. Install Packages
 
 ```bash
-# Install Homebrew packages
-./scripts/brew.sh                    # defaults to Brewfile.base
-./scripts/brew.sh homebrew/Brewfile.work   # add work-specific packages
+# Preview or install Homebrew packages
+./scripts/brew.sh
+./scripts/brew.sh --apply
+./scripts/brew.sh --apply Brewfile.work
 
-# Apply macOS preferences
+# Preview or apply macOS preferences
 ./scripts/mac.sh
-./scripts/mac.sh --apply-display --disable-screensaver-password  # optional personal settings
+./scripts/mac.sh --apply
+./scripts/mac.sh --apply --apply-display --disable-screensaver-password
+
+# System updates require a separate opt-in
+./scripts/mac.sh --apply --install-system-updates
 ```
 
 ### 4. Verify
@@ -46,43 +59,44 @@ This creates the macOS symlinks for shell config, git, SSH, editor settings, and
 ## What's Included
 
 ### Shell Configuration
-- **.zshrc** — Zsh configuration with Oh My Zsh (stowed to `~/`)
-- **.zprofile** — Environment variables and PATH setup (stowed to `~/`)
-- **.aliases** — Shell aliases (stowed to `~/`)
-- **.functions** — Shell functions (commit, acp, git worktrees, etc.) (stowed to `~/`)
-- **.config/fish/** — Fish shell configuration (stowed to `~/.config/fish/`)
+- **.zshrc** - Zsh configuration with Oh My Zsh (stowed to `~/`)
+- **.zprofile** - Environment variables and PATH setup (stowed to `~/`)
+- **.aliases** - Shell aliases (stowed to `~/`)
+- **.functions** - Shell functions (commit, acp, git worktrees, etc.) (stowed to `~/`)
+- **.config/fish/** - Fish shell configuration (stowed to `~/.config/fish/`)
 
 ### Git
-- **.gitconfig** — Git configuration with SSH signing via 1Password (stowed to `~/`)
-- **.config/git/ksyos.gitconfig** — Conditional config for work account (stowed to `~/.config/git/`)
-- **.config/git/hooks/** — Git hooks for automation (stowed to `~/.config/git/`)
+- **.gitconfig** - Git configuration with SSH signing via 1Password (stowed to `~/`)
+- **.config/git/ksyos.gitconfig** - Conditional config for work account (stowed to `~/.config/git/`)
+- **.config/git/hooks/** - Git hooks for automation (stowed to `~/.config/git/`)
 
 ### Applications
-- **homebrew/Brewfile.base** — Primary Homebrew package set
-- **homebrew/Brewfile.work** — Work-specific packages (1Password, AWS, etc.)
-- **vscode/settings.json** — VS Code editor settings (symlinked manually on each OS)
-- **vscode/extensions.list** — Documented VS Code extensions (not auto-installed)
+- **homebrew/Brewfile.base** - Primary Homebrew package set
+- **homebrew/Brewfile.work** - Work-specific packages (1Password, AWS, etc.)
+- **vscode/settings.json** - VS Code editor settings (symlinked manually on each OS)
+- **vscode/extensions.list** - VS Code extensions captured by the repository pre-commit hook
 
 ### Terminal Emulators
-- **.tmux.conf** — Tmux configuration with TPM, Catppuccin theme, resurrect, floax (stowed to `~/`)
-- **.gitmux.conf** — Git status in tmux status bar (stowed to `~/`)
-- **.config/wezterm/wezterm.lua** — Wezterm configuration (stowed to `~/.config/wezterm/`)
-- **.config/ghostty/config** — Ghostty terminal configuration (stowed to `~/.config/ghostty/`)
+- **.tmux.conf** - Tmux configuration with TPM, Catppuccin theme, resurrect, floax (stowed to `~/`)
+- **.gitmux.conf** - Git status in tmux status bar (stowed to `~/`)
+- **.config/wezterm/wezterm.lua** - Wezterm configuration (stowed to `~/.config/wezterm/`)
+- **.config/ghostty/config** - Ghostty terminal configuration (stowed to `~/.config/ghostty/`)
 
 ### Window Management
-- **.config/aerospace/aerospace.toml** — AeroSpace window manager configuration (stowed to `~/.config/aerospace/`)
+- **.config/aerospace/aerospace.toml** - AeroSpace window manager configuration (stowed to `~/.config/aerospace/`)
   - Do not also create `~/.aerospace.toml`; AeroSpace errors when both config locations exist.
 
 ### Session Management
 - **.config/sesh/sesh.toml** - Sesh session manager configuration (stowed to `~/.config/sesh/`)
 - **.config/television/** - Television fuzzy finder and agent session channels (stowed to `~/.config/television/`)
 - **bin/agent-sessions** - Lists, previews, and resumes local Claude, Codex, OpenCode, and Pi sessions
+- **bin/sesh-picker** - Encodes Sesh and Herdr selections before Television actions execute them
 - **.config/worktrunk/config.toml** - Worktrunk git worktree manager (stowed to `~/.config/worktrunk/`)
 
 ### Other Tools
-- **.config/starship.toml** — Starship prompt configuration (stowed to `~/.config/`)
-- **.config/mise/config.toml** — Mise version manager config (stowed to `~/.config/mise/`)
-- **.config/zed/settings.json** — Zed editor settings (stowed to `~/.config/zed/`)
+- **.config/starship.toml** - Starship prompt configuration (stowed to `~/.config/`)
+- **.config/mise/config.toml** - Mise version manager config (stowed to `~/.config/mise/`)
+- **.config/zed/settings.json** - Zed editor settings (stowed to `~/.config/zed/`)
 
 ## Directory Structure
 
@@ -107,8 +121,12 @@ dotfiles/
 ├── .gitmux.conf          # Tmux: Git status (stowed to ~/)
 ├── .config/sesh/         # Tmux: Sesh session config (stowed to ~/.config/sesh/)
 ├── .config/television/   # Tmux: Television config (stowed to ~/.config/television/)
-├── bin/                  # Commands stowed to ~/bin/
-│   └── agent-sessions    #   Browse and resume coding-agent sessions
+├── bin/                       # Commands stowed to ~/bin/
+│   ├── agent-sessions         # Browse and resume coding-agent sessions
+│   ├── nvim-plugins           # Verify installed Neovim plugin integrity
+│   ├── save-vscode-extensions # Safely capture the extension list
+│   ├── sesh-picker            # Safely dispatch Television session actions
+│   └── tmux-plugins           # Verify or install locked tmux plugins
 │
 ├── .config/wezterm/      # Terminal: Wezterm config (stowed to ~/.config/wezterm/)
 ├── .config/ghostty/      # Terminal: Ghostty config (stowed to ~/.config/ghostty/)
@@ -131,12 +149,15 @@ dotfiles/
 │   ├── settings.json
 │   └── extensions.list
 │
-├── scripts/              # Setup/utility scripts (not stowed)
-│   ├── brew.sh           #   Homebrew installation
-│   ├── mac.sh            #   macOS preferences
-│   ├── install.sh        #   Meta-installer (calls brew.sh)
-│   ├── homebrew-ssd.sh   #   Move Homebrew to external SSD
-│   └── ssh-load-keys.sh  #   Load SSH keys from Proton Pass
+├── tmux/plugins.lock          # Reviewed tmux plugin revisions
+│
+├── scripts/                   # Setup and utility scripts (not stowed)
+│   ├── lib/managed-links.sh   # Shared lifecycle ownership manifest
+│   ├── tests/                 # Regression and safety checks
+│   ├── brew.sh                # Homebrew bundle workflow
+│   ├── mac.sh                 # macOS preferences
+│   ├── homebrew-ssd.sh        # Transactional external-SSD migration
+│   └── ssh-load-keys.sh       # Load SSH keys from Proton Pass
 │
 └── .gitignore            # Git ignore rules (git only, not stowed)
 ```
@@ -159,14 +180,13 @@ dotfiles/
 ### Git Worktrees
 | Alias | Description |
 |-------|-------------|
-| `gwl` | List worktrees |
-| `gwa` | Add worktree |
-| `gwr` | Remove worktree |
-| `gwp` | Prune worktrees |
-| `gwab <branch>` | Create new branch worktree |
-| `gwae <branch>` | Add existing branch worktree |
-| `gwao <branch>` | Add worktree tracking origin branch |
-| `gwcd <name>` | Navigate to worktree by name |
+| `gwl` | List worktrees with Worktrunk |
+| `gwa` | Create and switch to a Worktrunk worktree |
+| `gwr` | Remove a worktree with Worktrunk |
+| `gwab <branch>` | Create and switch to a new branch worktree |
+| `gwae <branch>` | Switch to an existing branch worktree |
+| `gwao <branch>` | Switch to an origin branch without installing dependencies |
+| `gwcd <name>` | Switch to a matching worktree |
 
 ### Claude Code
 | Alias | Description |
@@ -178,8 +198,8 @@ dotfiles/
 ### Tmux
 | Alias | Description |
 |-------|-------------|
-| `s` | Launch sesh session picker |
-| `ais` | Launch agent session picker |
+| `s` | Launch Sesh session picker |
+| `a` | Launch agent session picker |
 | `ta` | Attach to tmux session |
 | `tad` | Attach (detaching others) |
 | `tl` | List tmux sessions |
@@ -209,9 +229,12 @@ Session previews stay local and show only the selected transcript.
 ### Decisions
 
 - Agent conversations use a separate Television channel instead of overloading Sesh's connect action.
-- Picker selections carry an opaque encoded record so session titles cannot alter shell commands.
-- Resume defaults to a dry run in `agent-sessions`; the Television action passes `--apply` explicitly.
+- Both picker commands carry opaque encoded records so titles and filesystem paths cannot alter shell commands.
+- Neovim and tmux plugin code executes only from clean checkouts at reviewed revisions recorded in lock files.
+- Mutating picker actions default to a dry run; Television passes `--apply` only for an explicit key action.
 - Missing or malformed session files are skipped so one dirty history cannot break the picker.
+- Setup, uninstall, package installation, macOS preferences, and SSD migration expose non-mutating defaults and require `--apply` for writes.
+- Setup, uninstall, and verification share one manual-link ownership manifest so lifecycle behavior remains symmetric.
 
 ## Custom Functions
 
@@ -221,7 +244,8 @@ commit        # Stage? No. Generate message from staged diff, confirm, commit
 acp           # Stage all, generate message, commit, push
 ```
 
-Both use `claude -p --model haiku` to generate commit messages in Conventional Commits format.
+Both send the staged diff to `pi` through the configured GitHub Copilot provider to generate Conventional Commit messages.
+Generation, commit, and push failures return nonzero and never print a false success message.
 
 ### Git Worktrees
 ```bash
@@ -231,25 +255,18 @@ gwao <branch>   # Add worktree tracking origin branch
 gwcd <name>     # Navigate to worktree by name
 ```
 
-### Port Management
-```bash
-check-port 3000    # Check if port is in use
-kill-port 3000     # Kill process on port
-```
-(Requires `bin/` directory — currently on `my-new-feature` branch, pending merge.)
-
 ## Local Overrides
 
 Files ending in `.local` are sourced but not tracked in git:
-- `~/.aliases.local` — Local alias overrides
-- `~/.zshrc.local` — Local zsh configuration
-- `~/.tmux.conf.local` — Local tmux configuration
+- `~/.aliases.local` - Local alias overrides
+- `~/.zshrc.local` - Local zsh configuration
+- `~/.tmux.conf.local` - Local tmux configuration
 
 ## Homebrew
 
 Brewfiles are stored under `homebrew/`:
-- **Brewfile.base** — Primary package set for the main machine
-- **Brewfile.work** — Work-specific packages (1Password, AWS CLI, etc.)
+- **Brewfile.base** - Primary package set for the main machine
+- **Brewfile.work** - Work-specific packages (1Password, AWS CLI, etc.)
 
 ### Repair the moshi-hook service
 
@@ -267,8 +284,8 @@ A later Homebrew service restart can regenerate the broken paths, so rerun the r
 
 ### Sync system with Brewfile
 ```bash
-# Check what's missing (dry run)
-brew bundle check --file=homebrew/Brewfile.base
+# Check what is missing without Homebrew auto-update
+HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file=homebrew/Brewfile.base
 
 # Install missing packages
 brew bundle --file=homebrew/Brewfile.base
@@ -290,34 +307,43 @@ brew bundle cleanup --force --file=homebrew/Brewfile.base
 
 ## Verification
 
-Run installation checks and the agent-session tests:
+Run the complete repository checks:
 
 ```bash
 ./verify.sh
-bun test scripts/tests/agent-sessions.test.ts
+bun test scripts/tests/*.test.ts
+scripts/tests/lifecycle-safety.sh
+scripts/tests/stow-lifecycle.sh
 scripts/tests/tmux-bindings.sh
 agent-sessions list | head
+sesh-picker list all | head
+nvim-plugins verify
+tmux-plugins verify
 repair-moshi-hook
 ```
 
-`tv list-channels` should include `agent-sessions` after setup.
+The Bun tests cover both picker record formats, shell-sensitive selections, lifecycle invariants, and agent-session behavior.
+The lifecycle tests prove that defaults do not write and that a real isolated setup, verification, and uninstall round trip succeeds.
+`tv list-channels` should include `agent-sessions` and `sesh` after setup.
 On macOS with `moshi-hook` installed, the final command must report only the planned repair and must not modify the LaunchAgent.
 
 ## Troubleshooting
 
 ### Symlinks not working
 ```bash
-# Remove existing symlinks
+# Preview and remove repository-owned symlinks
 ./uninstall.sh
+./uninstall.sh --apply
 
-# Recreate symlinks
+# Preview and recreate symlinks
 ./setup.sh
+./setup.sh --apply
 ```
 
 ### Permission denied on scripts
 ```bash
 chmod +x setup.sh uninstall.sh verify.sh
-chmod +x scripts/*
+chmod +x bin/* scripts/*.sh scripts/tests/*.sh
 ```
 
 ### 1Password SSH signing not working

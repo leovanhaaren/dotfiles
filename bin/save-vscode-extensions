@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+resolve_script_path() {
+    local source="$1"
+    local directory target
+    while [ -L "$source" ]; do
+        directory=$(cd -P "$(dirname "$source")" && pwd)
+        target=$(readlink "$source")
+        case "$target" in
+            /*) source="$target" ;;
+            *) source="$directory/$target" ;;
+        esac
+    done
+    directory=$(cd -P "$(dirname "$source")" && pwd)
+    printf '%s/%s\n' "$directory" "$(basename "$source")"
+}
+
+SCRIPT_PATH=$(resolve_script_path "${BASH_SOURCE[0]}")
+DOTFILES="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)"
 OUTPUT="$DOTFILES/vscode/extensions.list"
 APPLY=false
 

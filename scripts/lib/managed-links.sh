@@ -10,11 +10,11 @@ managed_stow_links() {
         "tmux.conf" "$DOTFILES/.tmux.conf" "$HOME/.tmux.conf" \
         "gitmux.conf" "$DOTFILES/.gitmux.conf" "$HOME/.gitmux.conf" \
         "starship.toml" "$DOTFILES/.config/starship.toml" "$HOME/.config/starship.toml" \
-        "ghostty" "$DOTFILES/.config/ghostty" "$HOME/.config/ghostty" \
+        "ghostty/config" "$DOTFILES/.config/ghostty/config" "$HOME/.config/ghostty/config" \
         "fish/config.fish" "$DOTFILES/.config/fish/config.fish" "$HOME/.config/fish/config.fish" \
         "fish/functions/wt.fish" "$DOTFILES/.config/fish/functions/wt.fish" "$HOME/.config/fish/functions/wt.fish" \
         "nvim/init.lua" "$DOTFILES/.config/nvim/init.lua" "$HOME/.config/nvim/init.lua" \
-        "nvim/lua" "$DOTFILES/.config/nvim/lua" "$HOME/.config/nvim/lua" \
+        "nvim/lua/config/lazy.lua" "$DOTFILES/.config/nvim/lua/config/lazy.lua" "$HOME/.config/nvim/lua/config/lazy.lua" \
         "wezterm/wezterm.lua" "$DOTFILES/.config/wezterm/wezterm.lua" "$HOME/.config/wezterm/wezterm.lua" \
         "zed/settings.json" "$DOTFILES/.config/zed/settings.json" "$HOME/.config/zed/settings.json" \
         "sesh/sesh.toml" "$DOTFILES/.config/sesh/sesh.toml" "$HOME/.config/sesh/sesh.toml" \
@@ -26,9 +26,12 @@ managed_stow_links() {
 }
 
 managed_manual_links() {
+    if [ "$DOTFILES" != "$HOME/dotfiles" ]; then
+        printf '%s\t%s\t%s\n' "dotfiles convenience symlink" "$DOTFILES" "$HOME/dotfiles"
+    fi
     printf '%s\t%s\t%s\n' \
-        "dotfiles convenience symlink" "$DOTFILES" "$HOME/dotfiles" \
         "ssh/config" "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" \
+        "nvim/lazy-lock.json" "$DOTFILES/.config/nvim/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json" \
         "vscode/settings.json" "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json" \
         "rtk/config.toml" "$DOTFILES/rtk/config.toml" "$HOME/Library/Application Support/rtk/config.toml"
 }

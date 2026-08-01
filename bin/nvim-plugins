@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+resolve_script_path() {
+    local source="$1"
+    local directory target
+    while [ -L "$source" ]; do
+        directory=$(cd -P "$(dirname "$source")" && pwd)
+        target=$(readlink "$source")
+        case "$target" in
+            /*) source="$target" ;;
+            *) source="$directory/$target" ;;
+        esac
+    done
+    directory=$(cd -P "$(dirname "$source")" && pwd)
+    printf '%s/%s\n' "$directory" "$(basename "$source")"
+}
+
+SCRIPT_PATH=$(resolve_script_path "${BASH_SOURCE[0]}")
+DOTFILES="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)"
+LOCKFILE="$DOTFILES/.config/nvim/lazy-lock.json"
+PLUGIN_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/nvim/lazy"
+ALLOW_MISSING=false
+
+usage() {
+    echo "Usage: nvim-plugins verify [--allow-missing]"
+}
+
+[ "${1:-verify}" = "verify" ] || { usage >&2; exit 2; }
+[ "${2:-}" = "--allow-missing" ] && ALLOW_MISSING=true
+command -v jq >/dev/null 2>&1 || { echo "jq is required to verify Neovim plugins" >&2; exit 1; }
+
+entries=$(jq -r 'to_entries[] | [.key, .value.commit] | @tsv' "$LOCKFILE") || {
+    echo "Invalid Neovim plugin lock file: $LOCKFILE" >&2
+    exit 1
+}
+[ -n "$entries" ] || { echo "Neovim plugin lock file is empty" >&2; exit 1; }
+
+failed=0
+while IFS=$'\t' read -r name commit; do
+    if [[ ! "$name" =~ ^[A-Za-z0-9._-]+$ || ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+        echo "Invalid Neovim plugin lock entry: $name" >&2
+        failed=1
+        continue
+    fi
+    path="$PLUGIN_ROOT/$name"
+    if [ ! -d "$path/.git" ]; then
+        if [ -e "$path" ] || [ -L "$path" ]; then
+            echo "Unsafe non-Git Neovim plugin path: $name" >&2
+            failed=1
+        elif [ "$ALLOW_MISSING" = false ]; then
+            echo "Missing pinned Neovim plugin: $name" >&2
+            failed=1
+        fi
+        continue
+    fi
+
+    actual=$(/usr/bin/git -C "$path" rev-parse HEAD 2>/dev/null || true)
+    if [ "$actual" != "$commit" ]; then
+        echo "Unpinned Neovim plugin revision: $name (${actual:-unknown}, expected $commit)" >&2
+        failed=1
+        continue
+    fi
+
+    unsafe_status=$(/usr/bin/git -C "$path" status --porcelain --untracked-files=all 2>/dev/null | grep -v '^?? doc/tags$' || true)
+    if [ -n "$unsafe_status" ]; then
+        echo "Modified or untracked executable content in Neovim plugin: $name" >&2
+        printf '%s\n' "$unsafe_status" >&2
+        failed=1
+    fi
+done <<< "$entries"
+
+exit "$failed"

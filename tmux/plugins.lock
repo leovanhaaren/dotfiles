@@ -1,0 +1,6 @@
+tmux	https://github.com/catppuccin/tmux.git	8b0b9150f9d7dee2a4b70cdb50876ba7fd6d674a
+tmux-battery	https://github.com/tmux-plugins/tmux-battery.git	43832651ede43f54dcf0588727c1957fe648d57d
+tmux-cpu	https://github.com/tmux-plugins/tmux-cpu.git	bcb110d754ab2417de824c464730c412a3eb2769
+tmux-floax	https://github.com/omerxx/tmux-floax.git	133f526793d90d2caa323c47687dd5544a2c704b
+tmux-resurrect	https://github.com/tmux-plugins/tmux-resurrect.git	cff343cf9e81983d3da0c8562b01616f12e8d548
+tpm	https://github.com/tmux-plugins/tpm.git	99469c4a9b1ccf77fade25842dc7bafbc8ce9946

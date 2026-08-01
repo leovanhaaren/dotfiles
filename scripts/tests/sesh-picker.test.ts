@@ -4,6 +4,7 @@ import {
   decodeRecord,
   encodeRecord,
   killInvocation,
+  pickerLine,
   previewInvocation,
   type PickerRecord,
 } from "../../bin/sesh-picker";
@@ -24,15 +25,24 @@ describe("opaque picker selections", () => {
     expect(decodeRecord(`display text\t${token}`)).toEqual(record);
   });
 
+  test("keep display control characters out of the Television field separator", () => {
+    const line = pickerLine({ ...record, display: "directory:\tunsafe\nname" });
+    expect(line.split("\t")).toHaveLength(2);
+    expect(line.split("\t")[0]).toBe("directory: unsafe name");
+  });
+
   test("pass selections as one argv element", () => {
-    expect(previewInvocation(record)).toEqual(["sesh", "preview", hostilePath]);
-    expect(connectInvocation(record)).toEqual(["sesh", "connect", hostilePath]);
+    expect(previewInvocation(record)).toEqual(["sesh", "preview", "--", hostilePath]);
+    expect(connectInvocation(record)).toEqual(["sesh", "connect", "--", hostilePath]);
     expect(killInvocation(record)).toEqual(["tmux", "kill-session", "-t", hostilePath]);
   });
 
   test("reject malformed records", () => {
     const token = Buffer.from(JSON.stringify({ ...record, kind: "shell" })).toString("base64url");
     expect(() => decodeRecord(token)).toThrow("Invalid picker selection");
+
+    const invalidHerdr = Buffer.from(JSON.stringify({ ...record, kind: "herdr", value: "--help" })).toString("base64url");
+    expect(() => decodeRecord(invalidHerdr)).toThrow("Invalid picker selection");
   });
 
   test("does not expose a kill action for Herdr workspaces", () => {

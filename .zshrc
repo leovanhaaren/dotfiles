@@ -2,7 +2,7 @@
 # setopt NO_BEEP
 
 # Homebrew
-export HOMEBREW_TEMP=/tmp/homebrew
+export HOMEBREW_TEMP=/private/var/db/homebrew/tmp
 
 # Oh My Zsh
 export ZSH="$HOME/.oh-my-zsh"

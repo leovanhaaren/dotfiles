@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 OS="$(uname -s)"
 DRY_RUN=true
 
@@ -92,7 +92,7 @@ fi
 echo ""
 
 log_info "Removing stow-managed dotfiles..."
-STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --delete)
+STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --delete --no-folding)
 [ "$DRY_RUN" = true ] && STOW_FLAGS+=(--simulate)
 stow "${STOW_FLAGS[@]}" .
 log_info "Stow-managed dotfiles plan completed."

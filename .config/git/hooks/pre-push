@@ -5,7 +5,7 @@
 set -euo pipefail
 
 unsigned=""
-while read -r local_ref local_sha remote_ref remote_sha; do
+while read -r _local_ref local_sha _remote_ref remote_sha; do
   # All-zero local sha = branch deletion; nothing to check.
   [ -z "${local_sha//0/}" ] && continue
 
@@ -26,7 +26,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 done
 
 if [ -n "$unsigned" ]; then
-  echo "pre-push: REFUSED — unsigned commit(s):" >&2
+  echo "pre-push: REFUSED - unsigned commit(s):" >&2
   for c in $unsigned; do git show --no-patch --format='  %h %s' "$c" >&2; done
   echo >&2
   echo "Ensure the signing key is loaded (ssh-add -l), then re-sign, e.g.:" >&2

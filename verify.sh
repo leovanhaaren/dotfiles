@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 OS="$(uname -s)"
 
 # shellcheck source=scripts/lib/managed-links.sh
@@ -41,11 +41,6 @@ check_symlink() {
         return 1
     fi
 
-    if [ ! -L "$target" ]; then
-        log_error "$description: exists but is not a symlink ($target)"
-        return 1
-    fi
-
     local resolved expected
     resolved=$(resolve_path "$target" || true)
     expected=$(resolve_path "$expected_source" || true)
@@ -67,11 +62,35 @@ check_command() {
     fi
 }
 
+check_stow_state() {
+    local output status drift
+    output=$(LC_ALL=C stow --dir "$DOTFILES" --target "$HOME" --restow --no-folding --simulate --verbose=2 . 2>&1)
+    status=$?
+    if [ "$status" -ne 0 ]; then
+        log_error "GNU Stow could not validate the installation"
+        printf '%s\n' "$output" | tail -10
+        return 1
+    fi
+
+    drift=$(printf '%s\n' "$output" | sed -n '/^LINK:/ { /reverts previous action/!p; }')
+    if [ -n "$drift" ]; then
+        log_error "Stow-managed paths are missing or stale"
+        printf '%s\n' "$drift"
+        return 1
+    fi
+    log_ok "complete GNU Stow link set"
+}
+
 echo ""
 echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
 echo "Checking stow-managed dotfiles..."
+if command -v stow >/dev/null 2>&1; then
+    check_stow_state
+else
+    log_error "GNU Stow is required to validate managed links"
+fi
 while IFS=$'\t' read -r description source target; do
     check_symlink "$target" "$source" "$description"
 done < <(managed_stow_links)
@@ -101,6 +120,12 @@ check_command "starship" "Starship"
 check_command "brew"     "Homebrew"
 check_command "bun"      "Bun"
 check_command "tmux"     "Tmux"
+check_command "jq"       "jq"
+if "$DOTFILES/bin/nvim-plugins" verify --allow-missing; then
+    log_ok "present Neovim plugins match the lock file"
+else
+    log_error "Neovim plugin integrity"
+fi
 echo ""
 
 echo "=== Verification Summary ==="

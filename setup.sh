@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 OS="$(uname -s)"
 DRY_RUN=true
 ADOPT=false
@@ -39,7 +39,8 @@ resolve_path() {
 
 backup_path() {
     local target="$1"
-    local candidate="${target}.backup.$(date +%Y%m%d-%H%M%S)"
+    local candidate
+    candidate="${target}.backup.$(date +%Y%m%d-%H%M%S)"
     local counter=1
     while [ -e "$candidate" ] || [ -L "$candidate" ]; do
         candidate="${target}.backup.$(date +%Y%m%d-%H%M%S).$counter"
@@ -57,13 +58,14 @@ create_symlink() {
         return 1
     fi
 
+    local current_source
+    current_source=$(resolve_path "$target" || true)
+    if [ -n "$current_source" ] && [ "$current_source" = "$source" ]; then
+        log_info "Already managed: $target"
+        return 0
+    fi
+
     if [ -L "$target" ]; then
-        local current_source
-        current_source=$(resolve_path "$target" || true)
-        if [ "$current_source" = "$source" ]; then
-            log_info "Already linked: $target"
-            return 0
-        fi
         log_warn "Replacing existing symlink: $target (was: ${current_source:-unresolved})"
     elif [ -e "$target" ]; then
         local backup
@@ -124,7 +126,7 @@ fi
 echo ""
 
 log_info "Stowing dotfiles..."
-STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow)
+STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow --no-folding)
 [ "$ADOPT" = true ] && STOW_FLAGS+=(--adopt)
 [ "$DRY_RUN" = true ] && STOW_FLAGS+=(--simulate)
 stow "${STOW_FLAGS[@]}" .
@@ -142,9 +144,13 @@ fi
 
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ -d "$TPM_DIR" ]; then
-    log_info "TPM already installed: $TPM_DIR"
+    if "$DOTFILES/bin/tmux-plugins" verify >/dev/null 2>&1; then
+        log_info "Tmux plugins match the reviewed lock file"
+    else
+        log_warn "Tmux plugin revisions differ; preview repair with: tmux-plugins sync"
+    fi
 else
-    log_warn "TPM is not installed. Review and install it explicitly from https://github.com/tmux-plugins/tpm"
+    log_warn "Tmux plugins are not installed; preview installation with: tmux-plugins sync"
 fi
 
 echo ""

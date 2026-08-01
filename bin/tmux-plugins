@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+resolve_script_path() {
+    local source="$1"
+    local directory target
+    while [ -L "$source" ]; do
+        directory=$(cd -P "$(dirname "$source")" && pwd)
+        target=$(readlink "$source")
+        case "$target" in
+            /*) source="$target" ;;
+            *) source="$directory/$target" ;;
+        esac
+    done
+    directory=$(cd -P "$(dirname "$source")" && pwd)
+    printf '%s/%s\n' "$directory" "$(basename "$source")"
+}
+
+SCRIPT_PATH=$(resolve_script_path "${BASH_SOURCE[0]}")
+DOTFILES="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)"
+LOCKFILE="$DOTFILES/tmux/plugins.lock"
+PLUGIN_ROOT="$HOME/.tmux/plugins"
+COMMAND="${1:-verify}"
+APPLY=false
+[ "${2:-}" = "--apply" ] && APPLY=true
+
+usage() {
+    echo "Usage: tmux-plugins verify | sync [--apply]"
+}
+
+valid_entry() {
+    [[ "$1" =~ ^[A-Za-z0-9._-]+$ && "$2" =~ ^https://github\.com/[A-Za-z0-9._/-]+\.git$ && "$3" =~ ^[0-9a-f]{40}$ ]]
+}
+
+verify_plugins() {
+    local failed=0 name repo commit path actual
+    while IFS=$'\t' read -r name repo commit; do
+        [ -n "$name" ] || continue
+        if ! valid_entry "$name" "$repo" "$commit"; then
+            echo "Invalid tmux plugin lock entry: $name" >&2
+            failed=1
+            continue
+        fi
+        path="$PLUGIN_ROOT/$name"
+        if [ ! -d "$path/.git" ]; then
+            echo "Missing pinned tmux plugin: $name" >&2
+            failed=1
+            continue
+        fi
+        actual=$(/usr/bin/git -C "$path" rev-parse HEAD 2>/dev/null || true)
+        if [ "$actual" != "$commit" ]; then
+            echo "Unpinned tmux plugin revision: $name (${actual:-unknown}, expected $commit)" >&2
+            failed=1
+        elif [ -n "$(/usr/bin/git -C "$path" status --porcelain --untracked-files=all 2>/dev/null)" ]; then
+            echo "Modified or untracked files in tmux plugin: $name" >&2
+            failed=1
+        fi
+    done < "$LOCKFILE"
+    return "$failed"
+}
+
+sync_plugins() {
+    local name repo commit path
+    if [ "$APPLY" = false ]; then
+        echo "[DRY-RUN] Would install the exact revisions in $LOCKFILE"
+        echo "Run 'tmux-plugins sync --apply' to update the plugin directory."
+        return 0
+    fi
+
+    mkdir -p "$PLUGIN_ROOT"
+    while IFS=$'\t' read -r name repo commit; do
+        [ -n "$name" ] || continue
+        valid_entry "$name" "$repo" "$commit" || { echo "Invalid tmux plugin lock entry: $name" >&2; return 1; }
+        path="$PLUGIN_ROOT/$name"
+        if [ ! -d "$path/.git" ]; then
+            /usr/bin/git clone --filter=blob:none --no-checkout "$repo" "$path"
+        fi
+        /usr/bin/git -C "$path" fetch --quiet origin "$commit"
+        /usr/bin/git -C "$path" checkout --quiet --detach "$commit"
+        /usr/bin/git -C "$path" reset --quiet --hard "$commit"
+        /usr/bin/git -C "$path" clean -qfdx
+        echo "Pinned clean checkout: $name at $commit"
+    done < "$LOCKFILE"
+    verify_plugins
+}
+
+case "$COMMAND" in
+    verify) verify_plugins ;;
+    sync) sync_plugins ;;
+    -h|--help) usage ;;
+    *) usage >&2; exit 2 ;;
+esac

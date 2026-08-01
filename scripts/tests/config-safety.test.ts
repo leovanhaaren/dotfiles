@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(import.meta.dir, "../..");
@@ -13,11 +13,15 @@ describe("security-sensitive configuration", () => {
     expect(cable).toContain("sesh-picker connect '{split:\\t:1}' --apply");
   });
 
-  test("remote worktree checkout does not install dependencies", () => {
+  test("worktree helpers use Worktrunk without installing dependencies", () => {
     const functions = read(".functions");
     const gwao = functions.match(/gwao\(\) \{[\s\S]*?\n\}/)?.[0] ?? "";
     expect(gwao).toContain("wt switch");
     expect(gwao).not.toContain("npm install");
+
+    const prWorktree = read(".config/gh-dash/pr-worktree.sh");
+    expect(prWorktree).toContain('wt -C "$repo_path" switch');
+    expect(prWorktree).not.toContain("git worktree");
   });
 
   test("default setup does not adopt conflicting files", () => {
@@ -33,6 +37,21 @@ describe("security-sensitive configuration", () => {
     expect(migration).toContain('/usr/bin/sudo -u "$BREW_USER"');
     expect(migration).not.toMatch(/^\s*"\/Volumes\/\$VOLUME_NAME\/bin\/brew"/m);
     expect(migration).not.toContain("brew doctor || true");
+    expect(migration).not.toContain("/tmp/homebrew");
+    expect(migration).toContain("backup_persistence");
+    expect(migration).toContain("restore_persistence");
+    expect(migration).toContain("Existing Homebrew volume is not empty");
+  });
+
+  test("bootstrap code is explicit and pinned", () => {
+    expect(read("scripts/brew.sh")).not.toContain("curl");
+    expect(read(".config/nvim/lua/config/lazy.lua")).toContain("lazy_commit");
+    expect(read(".config/nvim/lua/config/lazy.lua")).toContain('verifier, "verify", "--allow-missing"');
+    expect(read(".config/nvim/lazy-lock.json")).toContain('"commit"');
+    expect(read("bin/nvim-plugins")).toContain("--untracked-files=all");
+    expect(read("bin/tmux-plugins")).toContain("--untracked-files=all");
+    expect(read(".tmux.conf")).toContain("tmux-plugins verify");
+    expect(read("tmux/plugins.lock")).toMatch(/tpm\thttps:\/\/github\.com\/tmux-plugins\/tpm\.git\t[0-9a-f]{40}/);
   });
 
   test("system updates require a separate opt-in", () => {
@@ -43,10 +62,12 @@ describe("security-sensitive configuration", () => {
 });
 
 describe("lifecycle correctness", () => {
-  test("verification treats wrong required links as errors", () => {
+  test("verification accepts folded Stow paths but rejects wrong targets", () => {
     const verify = read("verify.sh");
-    expect(verify).toContain('log_error "$description: exists but is not a symlink');
+    expect(verify).toContain('[ "$resolved" = "$expected" ]');
+    expect(verify).toContain('log_error "$description: resolves to');
     expect(verify).toContain("managed_manual_links");
+    expect(verify).toContain("check_stow_state");
   });
 
   test("uninstall checks link ownership", () => {
@@ -57,5 +78,10 @@ describe("lifecycle correctness", () => {
 
   test("Brewfile package names do not begin with whitespace", () => {
     expect(read("homebrew/Brewfile.base")).not.toMatch(/^go "\s/m);
+  });
+
+  test("managed application configuration is intentional and reachable", () => {
+    expect(existsSync(join(root, ".config/cmux/cmux.json"))).toBeFalse();
+    expect(read(".config/aerospace/aerospace.toml")).toContain("alt-a = 'workspace a'");
   });
 });

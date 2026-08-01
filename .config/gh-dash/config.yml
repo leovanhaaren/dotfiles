@@ -85,11 +85,11 @@ keybindings:
     - key: g
       name: lazygit
       command: >
-        cd {{.RepoPath}} && lazygit
+        cd "{{.RepoPath}}" && lazygit
     - key: R
       name: Review
       command: >
-        ~/.config/gh-dash/pr-worktree.sh {{.RepoPath}} {{.PrNumber}}
+        ~/.config/gh-dash/pr-worktree.sh --apply "{{.RepoPath}}" "{{.PrNumber}}"
     - key: s
       builtin: search
 repoPaths: {}

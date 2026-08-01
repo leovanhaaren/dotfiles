@@ -19,6 +19,7 @@
 ^\.aerospace\.toml$
 
 # Editor artifacts
+\.config/nvim/lazy-lock\.json
 ~$
 \.swp$
 \.swo$
@@ -37,15 +38,16 @@
 ^vscode$
 ^ssh$
 ^rtk$
+^tmux$
 
 # Repo-specific directories not meant for ~
 ^ai-providers$
 ^backups$
-^config$
 ^secrets$
 ^shell$
 ^\.pi-subagents$
 ^\.test-safety-.*$
+^\.test-stow-.*$
 ^\.worktrees$
 
 # Brewfile symlinks (belong in repo, not ~)
