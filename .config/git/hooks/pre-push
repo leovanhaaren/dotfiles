@@ -13,7 +13,9 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     # New remote branch: check commits not already on any remote.
     range=$(git rev-list "$local_sha" --not --remotes)
   else
-    range=$(git rev-list "${remote_sha}..${local_sha}")
+    # Exclude commits already present on another remote ref, such as a
+    # GitHub-signed squash commit merged into the default branch.
+    range=$(git rev-list "${remote_sha}..${local_sha}" --not --remotes)
   fi
 
   for c in $range; do
