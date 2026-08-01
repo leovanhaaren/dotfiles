@@ -1,10 +1,10 @@
-function commit -d "Stage and generate AI commit message from diff"
+function commit -d "Generate an AI commit message from the staged diff"
     if not test -d .git
         set_color yellow; echo "=> Initializing git repository..."; set_color normal
-        git init
+        git init; or return 1
     end
 
-    set -l diff (git diff --cached --stat)
+    set -l diff (git diff --cached --stat); or return 1
     if test -z "$diff"
         set_color yellow; echo "=> No changes to commit."; set_color normal
         return 0
@@ -24,6 +24,17 @@ function commit -d "Stage and generate AI commit message from diff"
 Example types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
 Optionally, include a body for more details in bullet points.
 Just return the commit message as plain text. Do not wrap it in backticks or any other formatting." | string replace -a '`' '')
+    set -l generation_status $pipestatus
+    for status_code in $generation_status
+        if test $status_code -ne 0
+            set_color red; echo "=> Commit message generation failed." >&2; set_color normal
+            return 1
+        end
+    end
+    if test -z (string trim -- "$msg")
+        set_color red; echo "=> Commit message generation returned no text." >&2; set_color normal
+        return 1
+    end
 
     echo
     set_color --bold; echo "--- Proposed commit message ---"; set_color normal
@@ -33,7 +44,10 @@ Just return the commit message as plain text. Do not wrap it in backticks or any
 
     read -P "Commit with this message? [y/N] " confirm
     if string match -qi y $confirm
-        git commit -m "$msg"
+        if not git commit -m "$msg"
+            set_color red; echo "=> Commit failed." >&2; set_color normal
+            return 1
+        end
         set_color green; echo "=> Committed successfully."; set_color normal
     else
         set_color red; echo "=> Commit aborted. Changes remain staged."; set_color normal

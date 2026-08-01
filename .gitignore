@@ -1,6 +1,12 @@
 .DS_Store
 *.backup
+*.backup.*
 *.local
+
+# Local safety and analysis artifacts
+/backups/
+/.pi-subagents/
+/.test-safety-*/
 
 # Secrets (machine-specific, never committed)
 /secrets

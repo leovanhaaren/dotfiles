@@ -3,6 +3,9 @@
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
 
+# shellcheck source=scripts/lib/managed-links.sh
+source "$DOTFILES/scripts/lib/managed-links.sh"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -15,8 +18,13 @@ log_ok() { echo -e "${GREEN}[OK]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; ((WARNINGS++)); }
 log_error() { echo -e "${RED}[FAIL]${NC} $1"; ((ERRORS++)); }
 
+if [ "$OS" != "Darwin" ]; then
+    log_error "Unsupported operating system: $OS. Only macOS is supported."
+    exit 1
+fi
+
 resolve_path() {
-    if command -v realpath &>/dev/null; then
+    if command -v realpath >/dev/null 2>&1; then
         realpath "$1" 2>/dev/null
     else
         python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$1" 2>/dev/null
@@ -34,16 +42,17 @@ check_symlink() {
     fi
 
     if [ ! -L "$target" ]; then
-        log_warn "$description: exists but not a symlink ($target)"
+        log_error "$description: exists but is not a symlink ($target)"
         return 1
     fi
 
-    local resolved
-    resolved=$(resolve_path "$target")
-    if [ "$resolved" = "$expected_source" ]; then
+    local resolved expected
+    resolved=$(resolve_path "$target" || true)
+    expected=$(resolve_path "$expected_source" || true)
+    if [ -n "$expected" ] && [ "$resolved" = "$expected" ]; then
         log_ok "$description"
     else
-        log_warn "$description: resolves to $resolved, expected $expected_source"
+        log_error "$description: resolves to ${resolved:-unresolved}, expected $expected_source"
         return 1
     fi
 }
@@ -51,7 +60,7 @@ check_symlink() {
 check_command() {
     local cmd="$1"
     local description="$2"
-    if command -v "$cmd" &>/dev/null; then
+    if command -v "$cmd" >/dev/null 2>&1; then
         log_ok "$description"
     else
         log_warn "$description: not installed"
@@ -62,38 +71,13 @@ echo ""
 echo "=== Verifying Dotfiles Installation ($OS) ==="
 echo ""
 
-echo "Checking convenience symlink..."
-check_symlink "$HOME/dotfiles" "$DOTFILES" "dotfiles convenience symlink"
+echo "Checking stow-managed dotfiles..."
+while IFS=$'\t' read -r description source target; do
+    check_symlink "$target" "$source" "$description"
+done < <(managed_stow_links)
 echo ""
 
-echo "Checking stow-managed dotfiles (~/)..."
-check_symlink "$HOME/.zshrc"      "$DOTFILES/.zshrc"      "zshrc"
-check_symlink "$HOME/.zprofile"   "$DOTFILES/.zprofile"   "zprofile"
-check_symlink "$HOME/.aliases"    "$DOTFILES/.aliases"    "aliases"
-check_symlink "$HOME/.functions"  "$DOTFILES/.functions"  "functions"
-check_symlink "$HOME/.gitconfig"  "$DOTFILES/.gitconfig"  "gitconfig"
-check_symlink "$HOME/.tmux.conf"  "$DOTFILES/.tmux.conf"  "tmux.conf"
-check_symlink "$HOME/.gitmux.conf" "$DOTFILES/.gitmux.conf" "gitmux.conf"
-echo ""
-
-echo "Checking stow-managed XDG config (~/.config/)..."
-check_symlink "$HOME/.config/starship.toml"             "$DOTFILES/.config/starship.toml"             "starship.toml"
-check_symlink "$HOME/.config/ghostty"                   "$DOTFILES/.config/ghostty"                   "ghostty"
-check_symlink "$HOME/.config/fish/config.fish"          "$DOTFILES/.config/fish/config.fish"          "fish/config.fish"
-check_symlink "$HOME/.config/fish/functions/wt.fish"    "$DOTFILES/.config/fish/functions/wt.fish"    "fish/functions/wt.fish"
-check_symlink "$HOME/.config/nvim/init.lua"             "$DOTFILES/.config/nvim/init.lua"             "nvim/init.lua"
-check_symlink "$HOME/.config/nvim/lua"                  "$DOTFILES/.config/nvim/lua"                  "nvim/lua"
-check_symlink "$HOME/.config/wezterm/wezterm.lua"       "$DOTFILES/.config/wezterm/wezterm.lua"       "wezterm/wezterm.lua"
-check_symlink "$HOME/.config/zed/settings.json"         "$DOTFILES/.config/zed/settings.json"         "zed/settings.json"
-check_symlink "$HOME/.config/sesh/sesh.toml"            "$DOTFILES/.config/sesh/sesh.toml"            "sesh/sesh.toml"
-check_symlink "$HOME/.config/television/config.toml"    "$DOTFILES/.config/television/config.toml"    "television/config.toml"
-check_symlink "$HOME/.config/television/cable/agent-sessions.toml" "$DOTFILES/.config/television/cable/agent-sessions.toml" "television/cable/agent-sessions.toml"
-check_symlink "$HOME/.config/television/cable/sesh.toml" "$DOTFILES/.config/television/cable/sesh.toml" "television/cable/sesh.toml"
-check_symlink "$HOME/.config/worktrunk/config.toml"     "$DOTFILES/.config/worktrunk/config.toml"     "worktrunk/config.toml"
-check_symlink "$HOME/.config/mise/config.toml"          "$DOTFILES/.config/mise/config.toml"          "mise/config.toml"
-echo ""
-
-echo "Checking stow-managed bin scripts (~/bin/)..."
+echo "Checking stow-managed bin scripts..."
 for script in "$DOTFILES/bin/"*; do
     if [ -f "$script" ]; then
         scriptname=$(basename "$script")
@@ -102,21 +86,10 @@ for script in "$DOTFILES/bin/"*; do
 done
 echo ""
 
-echo "Checking platform-specific configuration (manually linked)..."
-case "$OS" in
-    Darwin) check_symlink "$HOME/.ssh/config"  "$DOTFILES/ssh/config.macos" "ssh/config" ;;
-    Linux)  check_symlink "$HOME/.ssh/config"  "$DOTFILES/ssh/config.linux" "ssh/config" ;;
-esac
-case "$OS" in
-    Darwin)
-        check_symlink "$HOME/Library/Application Support/Code/User/settings.json" \
-            "$DOTFILES/vscode/settings.json" "vscode/settings.json"
-        ;;
-    Linux)
-        check_symlink "$HOME/.config/Code/User/settings.json" \
-            "$DOTFILES/vscode/settings.json" "vscode/settings.json"
-        ;;
-esac
+echo "Checking manually managed links..."
+while IFS=$'\t' read -r description source target; do
+    check_symlink "$target" "$source" "$description"
+done < <(managed_manual_links)
 echo ""
 
 echo "Checking tools..."
@@ -125,19 +98,22 @@ check_command "git"      "Git"
 check_command "zsh"      "Zsh"
 check_command "nvim"     "Neovim"
 check_command "starship" "Starship"
-[ "$OS" = "Darwin" ] && check_command "brew" "Homebrew"
+check_command "brew"     "Homebrew"
+check_command "bun"      "Bun"
+check_command "tmux"     "Tmux"
 echo ""
 
 echo "=== Verification Summary ==="
-if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
+if [ "$ERRORS" -eq 0 ] && [ "$WARNINGS" -eq 0 ]; then
     echo -e "${GREEN}All checks passed!${NC}"
     exit 0
-elif [ $ERRORS -eq 0 ]; then
+elif [ "$ERRORS" -eq 0 ]; then
     echo -e "${YELLOW}Passed with $WARNINGS warning(s)${NC}"
     exit 0
 else
     echo -e "${RED}Failed with $ERRORS error(s) and $WARNINGS warning(s)${NC}"
     echo ""
-    echo "To fix: ./setup.sh"
+    echo "Preview repairs with: ./setup.sh"
+    echo "Apply repairs with: ./setup.sh --apply"
     exit 1
 fi

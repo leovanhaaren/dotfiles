@@ -1,26 +1,43 @@
 #!/bin/bash
 set -e
 
+APPLY=false
 APPLY_DISPLAY=false
 DISABLE_SCREENSAVER_PASSWORD=false
+INSTALL_SYSTEM_UPDATES=false
 
 usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
+    echo "  --apply                         Apply the selected macOS settings"
     echo "  --apply-display                 Apply personal display resolution settings"
     echo "  --disable-screensaver-password  Disable password requirement after screensaver"
+    echo "  --install-system-updates        Install all available macOS updates"
+    echo "  -n, --dry-run                   Show the plan without making changes (default)"
     echo "  -h, --help                      Show this help message"
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --apply)
+            APPLY=true
+            shift
+            ;;
         --apply-display)
             APPLY_DISPLAY=true
             shift
             ;;
         --disable-screensaver-password)
             DISABLE_SCREENSAVER_PASSWORD=true
+            shift
+            ;;
+        --install-system-updates)
+            INSTALL_SYSTEM_UPDATES=true
+            shift
+            ;;
+        -n|--dry-run)
+            APPLY=false
             shift
             ;;
         -h|--help)
@@ -34,6 +51,20 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "mac.sh supports macOS only" >&2
+    exit 1
+fi
+
+if [ "$APPLY" = false ]; then
+    echo "[DRY-RUN] Would apply the standard macOS preference set."
+    [ "$APPLY_DISPLAY" = true ] && echo "[DRY-RUN] Would apply the personal display resolution."
+    [ "$DISABLE_SCREENSAVER_PASSWORD" = true ] && echo "[DRY-RUN] Would disable the screensaver password requirement."
+    [ "$INSTALL_SYSTEM_UPDATES" = true ] && echo "[DRY-RUN] Would install all available macOS updates."
+    echo "Run with --apply to make changes."
+    exit 0
+fi
 
 echo "# Setting global mac configs from mac.sh"
 
@@ -264,8 +295,10 @@ sudo pmset -a displaysleep 60
 ### Media ###
 #############
 
-# Stop iTunes from responding to the keyboard media keys
-launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2> /dev/null
+# Stop Music from responding to the keyboard media keys when macOS permits it.
+if ! launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2>/dev/null; then
+    echo "# Could not unload com.apple.rcd; leaving media-key behavior unchanged" >&2
+fi
 
 ################
 ### Security ###
@@ -291,8 +324,11 @@ sudo pmset -a autorestart 1
 # Disable the sound effects on boot
 sudo nvram SystemAudioVolume=" "
 
-# Update Apple developer utils
-softwareupdate --all --install --force
+if [ "$INSTALL_SYSTEM_UPDATES" = true ]; then
+    softwareupdate --all --install --force
+else
+    echo "# Skipping system updates; pass --install-system-updates to enable"
+fi
 
 ################
 ### Restart  ###

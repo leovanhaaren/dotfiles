@@ -1,0 +1,232 @@
+#!/usr/bin/env bun
+
+export type PickerKind = "sesh" | "herdr";
+
+export interface PickerRecord {
+  version: 1;
+  kind: PickerKind;
+  display: string;
+  value: string;
+}
+
+type JsonObject = Record<string, unknown>;
+
+function object(value: unknown): JsonObject | undefined {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as JsonObject)
+    : undefined;
+}
+
+function text(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function number(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function stripAnsi(value: string): string {
+  return value.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, "");
+}
+
+function selectionValue(display: string): string {
+  const clean = stripAnsi(display).trim();
+  const separator = clean.indexOf(": ");
+  return separator === -1 ? clean : clean.slice(separator + 2);
+}
+
+export function encodeRecord(record: PickerRecord): string {
+  return Buffer.from(JSON.stringify(record)).toString("base64url");
+}
+
+export function decodeRecord(token: string): PickerRecord {
+  let value: unknown;
+  try {
+    value = JSON.parse(Buffer.from(token, "base64url").toString("utf8"));
+  } catch {
+    throw new Error("Invalid picker selection");
+  }
+
+  const record = object(value);
+  const kind = text(record?.kind);
+  const display = text(record?.display);
+  const selected = text(record?.value);
+  if (record?.version !== 1 || (kind !== "sesh" && kind !== "herdr") || !display || !selected) {
+    throw new Error("Invalid picker selection");
+  }
+
+  return { version: 1, kind, display, value: selected };
+}
+
+export function previewInvocation(record: PickerRecord): string[] {
+  return record.kind === "herdr"
+    ? ["herdr", "workspace", "get", record.value]
+    : ["sesh", "preview", record.value];
+}
+
+export function connectInvocation(record: PickerRecord): string[] {
+  return record.kind === "herdr"
+    ? ["herdr", "workspace", "focus", record.value]
+    : ["sesh", "connect", record.value];
+}
+
+export function killInvocation(record: PickerRecord): string[] | undefined {
+  return record.kind === "herdr" ? undefined : ["tmux", "kill-session", "-t", record.value];
+}
+
+function emit(record: PickerRecord): void {
+  console.log(`${record.display}\t${encodeRecord(record)}`);
+}
+
+function run(command: string[]): { stdout: string; stderr: string; exitCode: number } {
+  if (!Bun.which(command[0])) return { stdout: "", stderr: "", exitCode: 127 };
+  const result = Bun.spawnSync(command, { stdout: "pipe", stderr: "pipe" });
+  return {
+    stdout: result.stdout.toString(),
+    stderr: result.stderr.toString(),
+    exitCode: result.exitCode,
+  };
+}
+
+function emitSesh(command: string[]): void {
+  const result = run(command);
+  if (result.exitCode !== 0) return;
+  for (const line of result.stdout.split("\n")) {
+    if (!line.trim()) continue;
+    emit({ version: 1, kind: "sesh", display: line, value: selectionValue(line) });
+  }
+}
+
+function emitWorktrunk(): void {
+  const result = run(["wt", "list", "--format=json"]);
+  if (result.exitCode !== 0) return;
+  try {
+    const worktrees = JSON.parse(result.stdout);
+    if (!Array.isArray(worktrees)) return;
+    for (const item of worktrees) {
+      const path = text(object(item)?.path);
+      if (path) emit({ version: 1, kind: "sesh", display: `worktrunk: ${path}`, value: path });
+    }
+  } catch {
+    return;
+  }
+}
+
+function emitHerdr(): void {
+  const result = run(["herdr", "workspace", "list"]);
+  if (result.exitCode !== 0) return;
+  try {
+    const root = object(JSON.parse(result.stdout));
+    const resultObject = object(root?.result);
+    const workspaces = resultObject?.workspaces;
+    if (!Array.isArray(workspaces)) return;
+    for (const item of workspaces) {
+      const workspace = object(item);
+      const id = number(workspace?.number);
+      const label = text(workspace?.label) ?? "";
+      if (id !== undefined) {
+        const value = String(id);
+        emit({ version: 1, kind: "herdr", display: `herdr: 🦙 Herdr #${value} ${label}`.trim(), value });
+      }
+    }
+  } catch {
+    return;
+  }
+}
+
+function list(category: string): void {
+  switch (category) {
+    case "all": emitSesh(["sesh", "list", "--icons"]); return;
+    case "tmux": emitSesh(["sesh", "list", "-t", "--icons"]); return;
+    case "worktrunk": emitWorktrunk(); return;
+    case "herdr": emitHerdr(); return;
+    case "configs": emitSesh(["sesh", "list", "-c", "--icons"]); return;
+    case "zoxide": emitSesh(["sesh", "list", "-z", "--icons"]); return;
+    case "directories": {
+      const home = process.env.HOME;
+      if (home) emitSesh(["fd", "-H", "-d", "2", "-t", "d", "-E", ".Trash", ".", home]);
+      return;
+    }
+    default: throw new Error(`Unknown list category: ${category}`);
+  }
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+async function runInteractive(command: string[], env = process.env): Promise<number> {
+  if (!Bun.which(command[0])) throw new Error(`${command[0]} is not installed`);
+  const child = Bun.spawn(command, { env, stdin: "inherit", stdout: "inherit", stderr: "inherit" });
+  return await child.exited;
+}
+
+async function preview(token: string): Promise<void> {
+  const record = decodeRecord(token);
+  const invocation = previewInvocation(record);
+  const result = run(invocation);
+  if (result.exitCode !== 0) throw new Error(result.stderr.trim() || `${invocation[0]} failed`);
+
+  if (record.kind === "herdr") {
+    try {
+      const workspace = object(object(JSON.parse(result.stdout))?.result)?.workspace;
+      console.log(JSON.stringify(workspace, null, 2));
+      return;
+    } catch {
+      // Fall through to the original output when Herdr returns non-JSON diagnostics.
+    }
+  }
+  process.stdout.write(result.stdout);
+}
+
+async function connect(token: string, apply: boolean): Promise<void> {
+  const record = decodeRecord(token);
+  const invocation = connectInvocation(record);
+  if (!apply) {
+    console.log(`[dry-run] ${invocation.map(shellQuote).join(" ")}`);
+    return;
+  }
+
+  if (record.kind === "herdr") {
+    const focusCode = await runInteractive(invocation);
+    if (focusCode !== 0) throw new Error("herdr workspace focus failed");
+    if (process.env.HERDR_ENV !== "1") process.exitCode = await runInteractive(["herdr"]);
+    return;
+  }
+
+  const env = { ...process.env };
+  if (env.HERDR_ENV === "1") delete env.TMUX;
+  process.exitCode = await runInteractive(invocation, env);
+}
+
+async function kill(token: string, apply: boolean): Promise<void> {
+  const record = decodeRecord(token);
+  const invocation = killInvocation(record);
+  if (!invocation) return;
+  if (!apply) {
+    console.log(`[dry-run] ${invocation.map(shellQuote).join(" ")}`);
+    return;
+  }
+  process.exitCode = await runInteractive(invocation);
+}
+
+function usage(): never {
+  console.error("Usage: sesh-picker list <category> | preview <selection> | connect <selection> [--apply] | kill <selection> [--apply]");
+  process.exit(2);
+}
+
+async function main(): Promise<void> {
+  const [command, selection, ...flags] = process.argv.slice(2);
+  try {
+    if (command === "list" && selection) return list(selection);
+    if (command === "preview" && selection) return await preview(selection);
+    if (command === "connect" && selection) return await connect(selection, flags.includes("--apply"));
+    if (command === "kill" && selection) return await kill(selection, flags.includes("--apply"));
+    usage();
+  } catch (error) {
+    console.error(`sesh-picker: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
+}
+
+if (import.meta.main) await main();

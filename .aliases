@@ -11,10 +11,10 @@ alias cpi="clear && pi"
 alias upi="pi update && pi update --extensions"
 alias h="herdr"
 
-alias ssh-load-keys="~/Workspaces/leovanhaaren/dotfiles/scripts/ssh-load-keys.sh"
+alias ssh-load-keys="$DOTFILES_DIR/scripts/ssh-load-keys.sh"
 
 # Air (installed via go install)
-alias air='$(go env GOPATH)/bin/air'
+air() { "$(go env GOPATH)/bin/air" "$@"; }
 
 # Symlinks
 alias symlinkls="find . -maxdepth 1 -type l -ls"
@@ -24,10 +24,9 @@ alias symlinkrm="find . -maxdepth 1 -type l -delete"
 alias greadme="git add README.md && git commit -m 'chore: Update README.md' && git push"
 
 # Git Worktrees
-alias gwl="git worktree list"
-alias gwa="git worktree add"
-alias gwr="git worktree remove"
-alias gwp="git worktree prune"
+alias gwl="wt list"
+alias gwa="wt switch --create"
+alias gwr="wt remove"
 
 # Tmux
 alias s='tv sesh'

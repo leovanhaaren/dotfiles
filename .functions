@@ -19,17 +19,25 @@ Just return the commit message as plain text. Do not wrap it in backticks or any
 
 # Generate commit message from staged diff
 _generate_commit_msg() {
-  git diff --cached | pi -p --provider github-copilot --model claude-haiku-4.5 "$_COMMIT_MSG_PROMPT" | sed 's/`//g'
+  setopt localoptions pipefail
+  local msg
+  msg=$(git diff --cached | pi -p --provider github-copilot --model claude-haiku-4.5 "$_COMMIT_MSG_PROMPT" | sed 's/`//g') || return 1
+  if [[ -z "${msg//[[:space:]]/}" ]]; then
+    printf 'Commit message generation returned no text.\n' >&2
+    return 1
+  fi
+  print -r -- "$msg"
 }
 
 # Stage and generate commit message from diff
 commit() {
   if [[ ! -d .git ]]; then
     printf '\033[33m=> Initializing git repository...\033[0m\n'
-    git init
+    git init || return 1
   fi
 
-  local diff=$(git diff --cached --stat)
+  local diff
+  diff=$(git diff --cached --stat) || return 1
   if [[ -z "$diff" ]]; then
     printf '\033[33m=> No changes to commit.\033[0m\n'
     return 0
@@ -37,14 +45,21 @@ commit() {
 
   printf '\033[36m%s\033[0m\n' "$diff"
   printf '\n\033[34m=> Generating commit message...\033[0m\n'
-  local msg=$(_generate_commit_msg)
+  local msg
+  if ! msg=$(_generate_commit_msg); then
+    printf '\033[31m=> Commit message generation failed.\033[0m\n' >&2
+    return 1
+  fi
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
   printf '\033[1m-------------------------------\033[0m\n\n'
   read "confirm?Commit with this message? [y/N] "
   if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    git commit -m "$msg"
+    if ! git commit -m "$msg"; then
+      printf '\033[31m=> Commit failed.\033[0m\n' >&2
+      return 1
+    fi
     printf '\033[32m=> Committed successfully.\033[0m\n'
   else
     printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
@@ -55,13 +70,14 @@ commit() {
 acp() {
   if [[ ! -d .git ]]; then
     printf '\033[33m=> Initializing git repository...\033[0m\n'
-    git init
+    git init || return 1
   fi
 
   printf '\033[34m=> Staging all files...\033[0m\n'
-  git add -A
+  git add -A || return 1
 
-  local diff=$(git diff --cached --stat)
+  local diff
+  diff=$(git diff --cached --stat) || return 1
   if [[ -z "$diff" ]]; then
     printf '\033[33m=> No changes to commit.\033[0m\n'
     return 0
@@ -69,39 +85,45 @@ acp() {
 
   printf '\033[36m%s\033[0m\n' "$diff"
   printf '\n\033[34m=> Generating commit message...\033[0m\n'
-  local msg=$(_generate_commit_msg)
+  local msg
+  if ! msg=$(_generate_commit_msg); then
+    printf '\033[31m=> Commit message generation failed.\033[0m\n' >&2
+    return 1
+  fi
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
   printf '\033[1m-------------------------------\033[0m\n\n'
-  git commit -m "$msg"
+  if ! git commit -m "$msg"; then
+    printf '\033[31m=> Commit failed; nothing was pushed.\033[0m\n' >&2
+    return 1
+  fi
   printf '\033[34m=> Pushing to remote...\033[0m\n'
-  git push
+  if ! git push; then
+    printf '\033[31m=> Push failed; the commit exists only locally.\033[0m\n' >&2
+    return 1
+  fi
   printf '\033[32m=> Done.\033[0m\n'
 }
 
 # Git Worktrees
 gwab() {
-  git worktree add -b "$1" "../$(basename $(pwd))-$1"
+  wt switch --create "$1"
 }
 
 gwae() {
-  git worktree add "../$(basename $(pwd))-$1" "$1"
+  wt switch "$1"
 }
 
 gwao() {
-  local worktree_path="../$(basename $(pwd))-$1"
-  git worktree add --track -b "$1" "$worktree_path" "origin/$1"
-  if [[ -f "$worktree_path/package.json" ]]; then
-    echo "Installing dependencies..."
-    (cd "$worktree_path" && npm install)
+  wt switch "$1"
+  if [[ -f package.json ]]; then
+    echo "package.json detected; dependencies were not installed automatically."
   fi
-  cd "$worktree_path"
 }
 
 gwcd() {
-  local wt=$(git worktree list | grep -i "$1" | head -1 | awk '{print $1}')
-  [[ -n "$wt" ]] && cd "$wt" || echo "No worktree matching '$1'"
+  wt switch "$1"
 }
 
 # Dump a file to ~/Workspaces/leovanhaaren/dump and push
@@ -140,15 +162,26 @@ dumpf() {
     return 0
   fi
 
-  local msg=$(git -C "$dump_dir" diff --cached | pi -p --provider github-copilot --model claude-haiku-4.5 "$_COMMIT_MSG_PROMPT" | sed 's/`//g')
+  setopt localoptions pipefail
+  local msg
+  if ! msg=$(git -C "$dump_dir" diff --cached | pi -p --provider github-copilot --model claude-haiku-4.5 "$_COMMIT_MSG_PROMPT" | sed 's/`//g') || [[ -z "${msg//[[:space:]]/}" ]]; then
+    printf '\033[31m=> Commit message generation failed.\033[0m\n' >&2
+    return 1
+  fi
 
   printf '\n\033[1m--- Proposed commit message ---\033[0m\n'
   printf '\033[32m%s\033[0m\n' "$msg"
   printf '\033[1m-------------------------------\033[0m\n\n'
   read "confirm?Commit and push with this message? [y/N] "
   if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    git -C "$dump_dir" commit -m "$msg"
-    git -C "$dump_dir" push
+    if ! git -C "$dump_dir" commit -m "$msg"; then
+      printf '\033[31m=> Commit failed; nothing was pushed.\033[0m\n' >&2
+      return 1
+    fi
+    if ! git -C "$dump_dir" push; then
+      printf '\033[31m=> Push failed; the commit exists only locally.\033[0m\n' >&2
+      return 1
+    fi
     printf '\033[32m=> Committed and pushed successfully.\033[0m\n'
   else
     printf '\033[31m=> Commit aborted. Changes remain staged.\033[0m\n'
@@ -172,33 +205,38 @@ mm() {
   claude "$@"
 }
 
-session () {
-  WORK_DIR="${1:-$PWD}"
-  EXTENSION_DIR="~/Workspaces/clones/pi-vs-claude-code/extensions"
-  EXTENSIONS="--extension $EXTENSION_DIR/coms.ts --extension $EXTENSION_DIR/minimal.ts"
-  THINKING_MODEL="openai-codex/gpt-5.5:xhigh"
-  PLANNING_MODEL="opencode-go/deepseek-v4-pro:xhigh"
-  WORKER_MODEL="opencode-go/deepseek-v4-flash:xhigh"
-  SESSION="$(basename "$WORK_DIR")-team"
+session() {
+  local work_dir="${1:-$PWD}"
+  local extension_dir="$HOME/Workspaces/clones/pi-vs-claude-code/extensions"
+  local thinking_model="openai-codex/gpt-5.5:xhigh"
+  local planning_model="opencode-go/deepseek-v4-pro:xhigh"
+  local worker_model="opencode-go/deepseek-v4-flash:xhigh"
+  local session_name="$(basename "$work_dir")-team"
+  local -a extensions=(--extension "$extension_dir/coms.ts" --extension "$extension_dir/minimal.ts")
 
-  local NAMES=(truus sjaak henk greet kees mien bep dirk ria wim)
+  local names=(truus sjaak henk greet kees mien bep dirk ria wim)
   local i j tmp
-  for ((i = ${#NAMES[@]}; i > 1; i--)); do
+  for ((i = ${#names[@]}; i > 1; i--)); do
     j=$((RANDOM % i + 1))
-    tmp="${NAMES[i]}"
-    NAMES[i]="${NAMES[j]}"
-    NAMES[j]="$tmp"
+    tmp="${names[i]}"
+    names[i]="${names[j]}"
+    names[j]="$tmp"
   done
 
-  tmux kill-session -t $SESSION
-  tmux new-session -d -s $SESSION
-  tmux split-window -h -t $SESSION:1.1
-  tmux split-window -v -t $SESSION:1.2
-  tmux split-window -v -t $SESSION:1.1
-  tmux send-keys -t $SESSION:1.1 "cd $WORK_DIR && clear && pi $EXTENSIONS --name ${NAMES[1]} --model $THINKING_MODEL" Enter
-  tmux send-keys -t $SESSION:1.2 "cd $WORK_DIR && clear && pi $EXTENSIONS --name ${NAMES[2]} --model $PLANNING_MODEL" Enter
-  tmux send-keys -t $SESSION:1.3 "cd $WORK_DIR && clear && pi $EXTENSIONS --name ${NAMES[3]} --model $WORKER_MODEL" Enter
-  tmux attach-session -t $SESSION
+  tmux kill-session -t "$session_name" >/dev/null 2>&1 || true
+  tmux new-session -d -s "$session_name" -c "$work_dir"
+  tmux split-window -h -t "$session_name:1.1" -c "$work_dir"
+  tmux split-window -v -t "$session_name:1.2" -c "$work_dir"
+  tmux split-window -v -t "$session_name:1.1" -c "$work_dir"
+
+  local command
+  command="$(_pi_tmux_quote_args pi "${extensions[@]}" --name "${names[1]}" --model "$thinking_model")"
+  tmux send-keys -t "$session_name:1.1" "$command" Enter
+  command="$(_pi_tmux_quote_args pi "${extensions[@]}" --name "${names[2]}" --model "$planning_model")"
+  tmux send-keys -t "$session_name:1.2" "$command" Enter
+  command="$(_pi_tmux_quote_args pi "${extensions[@]}" --name "${names[3]}" --model "$worker_model")"
+  tmux send-keys -t "$session_name:1.3" "$command" Enter
+  tmux attach-session -t "$session_name"
 }
 
 _pi_tmux_quote_args() {

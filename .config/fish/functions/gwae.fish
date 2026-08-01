@@ -1,4 +1,3 @@
-function gwae -d "Git worktree add existing branch"
-    set -l branch $argv[1]
-    git worktree add "../"(basename (pwd))"-$branch" $branch
+function gwae -d "Switch to a worktree for an existing branch"
+    wt switch "$argv[1]"
 end

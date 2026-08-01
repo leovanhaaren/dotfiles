@@ -40,9 +40,12 @@
 
 # Repo-specific directories not meant for ~
 ^ai-providers$
+^backups$
 ^config$
 ^secrets$
 ^shell$
+^\.pi-subagents$
+^\.test-safety-.*$
 ^\.worktrees$
 
 # Brewfile symlinks (belong in repo, not ~)

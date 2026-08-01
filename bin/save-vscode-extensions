@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+OUTPUT="$DOTFILES/vscode/extensions.list"
+APPLY=false
+
+usage() {
+    echo "Usage: save-vscode-extensions [--apply]"
+    echo ""
+    echo "Without --apply, report whether the tracked extension list is current."
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --apply) APPLY=true; shift ;;
+        -n|--dry-run) APPLY=false; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+    esac
+done
+
+command -v code >/dev/null 2>&1 || { echo "VS Code CLI is not installed" >&2; exit 1; }
+
+if [ "$APPLY" = false ]; then
+    if code --list-extensions | LC_ALL=C sort | diff -u "$OUTPUT" - >/dev/null; then
+        echo "VS Code extension list is current."
+    else
+        echo "[DRY-RUN] VS Code extension list would be updated: $OUTPUT"
+    fi
+    exit 0
+fi
+
+TEMP_FILE=$(mktemp "$DOTFILES/.vscode-extensions.XXXXXX")
+trap 'rm -f "$TEMP_FILE"' EXIT
+code --list-extensions | LC_ALL=C sort > "$TEMP_FILE"
+if cmp -s "$TEMP_FILE" "$OUTPUT"; then
+    echo "VS Code extension list is current."
+else
+    mv "$TEMP_FILE" "$OUTPUT"
+    echo "Updated $OUTPUT"
+fi

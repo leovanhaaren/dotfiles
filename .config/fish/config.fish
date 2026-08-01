@@ -1,5 +1,5 @@
 # Path
-set -gx DOTFILES_DIR $HOME/Workspaces/leovanhaaren/dotfiles
+set -gx DOTFILES_DIR (path dirname (path dirname (path dirname (path resolve (status filename)))))
 fish_add_path $HOME/.local/bin
 fish_add_path $HOME/bin
 

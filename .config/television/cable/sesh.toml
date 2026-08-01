@@ -1,44 +1,44 @@
 [metadata]
 name = "sesh"
 description = "Session manager integrating tmux sessions, zoxide directories, and config paths"
-requirements = ["sesh", "fd", "wt", "jq", "herdr"]
+requirements = ["sesh-picker", "bun"]
 
 [source]
 ansi = true
 frecency = false
 no_sort = true
-output = "{strip_ansi|split: :1..|join: }"
+output = "{strip_ansi|split:\t:0}"
 
 [[source.command]]
 name = "All"
-run = "sesh list --icons"
+run = "sesh-picker list all"
 
 [[source.command]]
 name = "Tmux"
-run = "sesh list -t --icons"
+run = "sesh-picker list tmux"
 
 [[source.command]]
 name = "Worktrunk"
-run = "wt list --format=json | jq -r '.[] | \"worktrunk: \\(.path)\"'"
+run = "sesh-picker list worktrunk"
 
 [[source.command]]
 name = "Herdr"
-run = "herdr workspace list | jq -r '.result.workspaces[] | \"herdr: 🦙 Herdr #\\(.number) \\(.label)\"'"
+run = "sesh-picker list herdr"
 
 [[source.command]]
 name = "Configs"
-run = "sesh list -c --icons"
+run = "sesh-picker list configs"
 
 [[source.command]]
 name = "Zoxide"
-run = "sesh list -z --icons"
+run = "sesh-picker list zoxide"
 
 [[source.command]]
 name = "Directories"
-run = "fd -H -d 2 -t d -E .Trash . ~"
+run = "sesh-picker list directories"
 
 [preview]
-command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) id=$(printf \"%s\\n\" \"$1\" | sed -E \"s/^🦙 Herdr #([0-9]+).*/\\1/\"); herdr workspace get \"$id\" | jq .result.workspace ;; *) sesh preview \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
+command = "sesh-picker preview '{split:\t:1}'"
 
 [keybindings]
 enter = "actions:connect"
@@ -46,10 +46,10 @@ ctrl-d = ["actions:kill_session", "reload_source"]
 
 [actions.connect]
 description = "Connect to selected session"
-command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) id=$(printf \"%s\\n\" \"$1\" | sed -E \"s/^🦙 Herdr #([0-9]+).*/\\1/\"); herdr workspace focus \"$id\" >/dev/null; if [ \"${HERDR_ENV:-}\" != 1 ]; then exec herdr; fi ;; *) if [ \"${HERDR_ENV:-}\" = 1 ]; then unset TMUX; fi; exec sesh connect \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
+command = "sesh-picker connect '{split:\t:1}' --apply"
 mode = "execute"
 
 [actions.kill_session]
 description = "Kill selected tmux session (press Ctrl+r to reload)"
-command = "sh -c 'case \"$1\" in \"🦙 Herdr #\"*) exit 0 ;; *) tmux kill-session -t \"$1\" ;; esac' _ '{strip_ansi|split: :1..|join: }'"
+command = "sesh-picker kill '{split:\t:1}' --apply"
 mode = "fork"

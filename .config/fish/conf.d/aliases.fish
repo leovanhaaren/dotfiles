@@ -6,10 +6,13 @@ alias reload "exec fish"
 alias dotfiles "code $DOTFILES_DIR"
 alias dotai "code ~/Workspaces/leovanhaaren/dot-ai"
 alias claudedir "code ~/.claude"
-alias ssh-load-keys "$HOME/Workspaces/leovanhaaren/dotfiles/scripts/ssh-load-keys.sh"
+alias ssh-load-keys "$HOME/dotfiles/scripts/ssh-load-keys.sh"
 
 # Air (installed via go install)
-alias air '(go env GOPATH)/bin/air'
+function air
+    set -l air_bin (go env GOPATH)/bin/air
+    command $air_bin $argv
+end
 
 # Symlinks
 alias symlinkls "find . -maxdepth 1 -type l -ls"
@@ -19,10 +22,9 @@ alias symlinkrm "find . -maxdepth 1 -type l -delete"
 alias greadme "git add README.md && git commit -m 'chore: Update README.md' && git push"
 
 # Git Worktrees
-abbr -a gwl "git worktree list"
-abbr -a gwa "git worktree add"
-abbr -a gwr "git worktree remove"
-abbr -a gwp "git worktree prune"
+abbr -a gwl "wt list"
+abbr -a gwa "wt switch --create"
+abbr -a gwr "wt remove"
 
 # Tmux
 abbr -a ta "tmux attach -t"

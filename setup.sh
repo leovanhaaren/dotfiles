@@ -3,7 +3,11 @@ set -e
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OS="$(uname -s)"
-DRY_RUN=false
+DRY_RUN=true
+ADOPT=false
+
+# shellcheck source=scripts/lib/managed-links.sh
+source "$DOTFILES/scripts/lib/managed-links.sh"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,7 +18,9 @@ usage() {
     echo "Usage: $0 [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  -n, --dry-run    Show what would be done without making changes"
+    echo "  --apply          Apply the planned changes"
+    echo "  -n, --dry-run    Show what would be done without making changes (default)"
+    echo "  --adopt          Explicitly adopt conflicting files into a clean repository"
     echo "  -h, --help       Show this help message"
     exit 0
 }
@@ -22,6 +28,25 @@ usage() {
 log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+resolve_path() {
+    if command -v realpath >/dev/null 2>&1; then
+        realpath "$1" 2>/dev/null
+    else
+        python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$1" 2>/dev/null
+    fi
+}
+
+backup_path() {
+    local target="$1"
+    local candidate="${target}.backup.$(date +%Y%m%d-%H%M%S)"
+    local counter=1
+    while [ -e "$candidate" ] || [ -L "$candidate" ]; do
+        candidate="${target}.backup.$(date +%Y%m%d-%H%M%S).$counter"
+        counter=$((counter + 1))
+    done
+    printf '%s\n' "$candidate"
+}
 
 create_symlink() {
     local source="$1"
@@ -34,49 +59,60 @@ create_symlink() {
 
     if [ -L "$target" ]; then
         local current_source
-        current_source=$(readlink "$target")
+        current_source=$(resolve_path "$target" || true)
         if [ "$current_source" = "$source" ]; then
             log_info "Already linked: $target"
             return 0
         fi
-        log_warn "Replacing existing symlink: $target (was: $current_source)"
+        log_warn "Replacing existing symlink: $target (was: ${current_source:-unresolved})"
     elif [ -e "$target" ]; then
-        log_warn "Backing up existing file: $target -> $target.backup"
+        local backup
+        backup=$(backup_path "$target")
+        log_warn "Backing up existing file: $target -> $backup"
         if [ "$DRY_RUN" = false ]; then
-            mv "$target" "$target.backup"
+            mv "$target" "$backup"
         fi
     fi
 
     if [ "$DRY_RUN" = true ]; then
         log_info "[DRY-RUN] Would link: $source -> $target"
     else
-        ln -sf "$source" "$target"
+        mkdir -p "$(dirname "$target")"
+        ln -sfn "$source" "$target"
         log_info "Linked: $source -> $target"
-    fi
-}
-
-create_directory() {
-    local dir="$1"
-    if [ -d "$dir" ]; then return 0; fi
-    if [ "$DRY_RUN" = true ]; then
-        log_info "[DRY-RUN] Would create directory: $dir"
-    else
-        mkdir -p "$dir"
-        log_info "Created directory: $dir"
     fi
 }
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --apply) DRY_RUN=false; shift ;;
         -n|--dry-run) DRY_RUN=true; shift ;;
+        --adopt) ADOPT=true; shift ;;
         -h|--help) usage ;;
         *) log_error "Unknown option: $1"; usage ;;
     esac
 done
 
-if ! command -v stow &>/dev/null; then
+if [ "$OS" != "Darwin" ]; then
+    log_error "Unsupported operating system: $OS. Only macOS is supported."
+    exit 1
+fi
+
+if ! command -v stow >/dev/null 2>&1; then
     log_error "GNU Stow not found. Install with: brew install stow"
     exit 1
+fi
+
+if [ "$ADOPT" = true ] && [ "$DRY_RUN" = false ]; then
+    if [ -n "$(git -C "$DOTFILES" status --porcelain)" ]; then
+        log_error "--adopt requires a clean Git working tree"
+        exit 1
+    fi
+    mkdir -p "$DOTFILES/backups"
+    BUNDLE="$DOTFILES/backups/dotfiles-before-adopt-$(date +%Y%m%d-%H%M%S).bundle"
+    git -C "$DOTFILES" bundle create "$BUNDLE" HEAD
+    log_warn "Created canonical repository backup: $BUNDLE"
+    log_warn "Before rollback, copy adopted file contents out of the repository, then restore canonical files from Git or the bundle"
 fi
 
 echo ""
@@ -87,80 +123,38 @@ else
 fi
 echo ""
 
-# Convenience symlink: ~/dotfiles -> repo root
-if [ "$DOTFILES" != "$HOME/dotfiles" ]; then
-    log_info "Setting up ~/dotfiles convenience symlink..."
-    create_symlink "$DOTFILES" "$HOME/dotfiles"
-fi
-
-# Stow all XDG-compatible dotfiles
 log_info "Stowing dotfiles..."
-STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow --adopt)
+STOW_FLAGS=(--dir "$DOTFILES" --target "$HOME" --restow)
+[ "$ADOPT" = true ] && STOW_FLAGS+=(--adopt)
 [ "$DRY_RUN" = true ] && STOW_FLAGS+=(--simulate)
 stow "${STOW_FLAGS[@]}" .
-log_info "Dotfiles stowed."
+log_info "Dotfiles stow plan completed."
 
-# SSH configuration (platform-specific config)
-log_info "Setting up SSH configuration..."
-create_directory "$HOME/.ssh"
-[ "$DRY_RUN" = false ] && chmod 700 "$HOME/.ssh" 2>/dev/null || true
-case "$OS" in
-    Darwin) create_symlink "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" ;;
-    Linux)  create_symlink "$DOTFILES/ssh/config.linux" "$HOME/.ssh/config" ;;
-esac
+log_info "Setting up manually managed links..."
+while IFS=$'\t' read -r description source target; do
+    log_info "$description"
+    create_symlink "$source" "$target"
+done < <(managed_manual_links)
 
-# VS Code (non-XDG path on macOS, not stow-able)
-log_info "Setting up VS Code configuration..."
-case "$OS" in
-    Darwin)
-        create_directory "$HOME/Library/Application Support/Code/User"
-        create_symlink "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
-        ;;
-    Linux)
-        create_directory "$HOME/.config/Code/User"
-        create_symlink "$DOTFILES/vscode/settings.json" "$HOME/.config/Code/User/settings.json"
-        ;;
-esac
+if [ "$DRY_RUN" = false ]; then
+    chmod 700 "$HOME/.ssh"
+fi
 
-# rtk (non-XDG path on macOS, not stow-able)
-log_info "Setting up rtk configuration..."
-case "$OS" in
-    Darwin)
-        create_directory "$HOME/Library/Application Support/rtk"
-        create_symlink "$DOTFILES/rtk/config.toml" "$HOME/Library/Application Support/rtk/config.toml"
-        ;;
-    Linux)
-        create_directory "$HOME/.config/rtk"
-        create_symlink "$DOTFILES/rtk/config.toml" "$HOME/.config/rtk/config.toml"
-        ;;
-esac
-
-# Tmux Plugin Manager
-log_info "Setting up Tmux Plugin Manager..."
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ -d "$TPM_DIR" ]; then
     log_info "TPM already installed: $TPM_DIR"
-elif [ "$DRY_RUN" = true ]; then
-    log_info "[DRY-RUN] Would clone TPM to $TPM_DIR"
 else
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null 2>&1
-    log_info "Installed TPM: $TPM_DIR"
-    "$TPM_DIR/bin/install_plugins" >/dev/null 2>&1
-    log_info "Installed tmux plugins"
+    log_warn "TPM is not installed. Review and install it explicitly from https://github.com/tmux-plugins/tpm"
 fi
 
 echo ""
 if [ "$DRY_RUN" = true ]; then
-    echo "=== Dry run complete. Run without -n to apply changes ==="
+    echo "=== Dry run complete. Run with --apply to apply changes ==="
 else
     echo "=== Setup complete ==="
     echo ""
     echo "Next steps:"
     echo "  1. source ~/.zshrc"
-    if [ "$OS" = "Darwin" ]; then
-        echo "  2. ./scripts/brew.sh"
-        echo "  3. ./scripts/mac.sh"
-    else
-        echo "  2. ./scripts/ubuntu.sh"
-    fi
+    echo "  2. ./scripts/brew.sh --apply"
+    echo "  3. ./scripts/mac.sh --apply"
 fi

@@ -1,11 +1,12 @@
 # Dotfiles
 
-Personal dotfiles for macOS and Linux development environments.
+Personal dotfiles for macOS development environments.
 
 ## Installation
 
 ### Prerequisites
 
+- macOS
 - Git
 - Bash (for running the setup scripts)
 
@@ -22,11 +23,9 @@ cd ~/Workspaces/leovanhaaren/dotfiles
 ./setup.sh
 ```
 
-This detects the OS and creates the appropriate symlinks for shell config, git, SSH, editor settings, and custom scripts. Use `./setup.sh -n` for a dry run to preview changes.
+This creates the macOS symlinks for shell config, git, SSH, editor settings, and custom scripts. Use `./setup.sh -n` for a dry run to preview changes.
 
 ### 3. Install Packages
-
-#### macOS
 
 ```bash
 # Install Homebrew packages
@@ -37,15 +36,6 @@ This detects the OS and creates the appropriate symlinks for shell config, git, 
 ./scripts/mac.sh
 ./scripts/mac.sh --apply-display --disable-screensaver-password  # optional personal settings
 ```
-
-#### Ubuntu Server
-
-```bash
-# Install packages, Oh My Zsh, NVM, Bun, pnpm, Go, and set zsh as default shell
-./scripts/ubuntu.sh
-```
-
-(Note: the Ubuntu bootstrap script exists on the `my-new-feature` branch and needs to be ported to `main`. See `scripts/install.sh` as a starting point.)
 
 ### 4. Verify
 
@@ -135,8 +125,7 @@ dotfiles/
 │   └── Brewfile.work     #   Work-specific packages
 │
 ├── ssh/                  # SSH configuration (not stowed, linked by setup.sh)
-│   ├── config.macos      #   macOS SSH config
-│   └── config.linux      #   Linux SSH config
+│   └── config.macos      #   macOS SSH config
 │
 ├── vscode/               # VS Code settings (not stowed, linked by setup.sh)
 │   ├── settings.json

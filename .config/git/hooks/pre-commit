@@ -6,7 +6,7 @@ current_dir="$(pwd -P)"
 
 if [ "$current_dir" = "$dotfiles_dir" ]; then
   if command -v code >/dev/null 2>&1; then
-    "$dotfiles_dir/bin/save-vscode-extensions"
+    "$dotfiles_dir/bin/save-vscode-extensions" --apply
     git add vscode/extensions.list
   fi
 

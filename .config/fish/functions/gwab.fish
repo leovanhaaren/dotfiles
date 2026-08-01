@@ -1,4 +1,3 @@
-function gwab -d "Git worktree add with new branch"
-    set -l branch $argv[1]
-    git worktree add -b $branch "../"(basename (pwd))"-$branch"
+function gwab -d "Create and switch to a worktree for a new branch"
+    wt switch --create "$argv[1]"
 end

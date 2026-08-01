@@ -11,9 +11,9 @@ DISABLE_AUTO_TITLE="true"
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 source "$ZSH/oh-my-zsh.sh"
 
-export DOTFILES_DIR="$HOME/Workspaces/leovanhaaren/dotfiles"
+export DOTFILES_DIR="${${:-$HOME/.zshrc}:A:h}"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
-export OBSIDIAN_VAULT="~/Obsidian/Personal/"
+export OBSIDIAN_VAULT="$HOME/Obsidian/Personal"
 
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
@@ -61,29 +61,15 @@ export HASS_TOKEN=pass://Development/hass-cli/HASS_TOKEN
 [[ -f ~/.tmux.conf ]] && export TMUX_CONF="$HOME/.tmux.conf"
 
 # Taskdown
-[[ -x "$(command -v td)" ]] && \
-  source ~/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh
+[[ -x "$(command -v td)" && -f "$HOME/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh" ]] && \
+  source "$HOME/Workspaces/leovanhaaren/taskdown/scripts/td-greeting.sh"
 
-# Starship prompt (must be at the end)
-command -v starship &>/dev/null && eval "$(starship init zsh)"
-
-eval "$(zoxide init zsh)"
-eval "$(mise activate zsh)"
+# Shell integrations
+command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
-
-# opencode
-export PATH=/Volumes/SSD/leo/.opencode/bin:$PATH
-
-# opencode
-export PATH=/Users/leo/.opencode/bin:$PATH
-
-# pnpm
-export PNPM_HOME="~/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-# pnpm end
+[[ -d /opt/homebrew/opt/libpq/bin ]] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
