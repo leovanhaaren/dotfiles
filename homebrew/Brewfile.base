@@ -10,6 +10,7 @@ tap "jakehilborn/jakehilborn"
 tap "nguyenphutrong/tap"
 tap "nikitabobko/tap"
 tap "oven-sh/bun"
+tap "ovh/tap"
 tap "protonpass/tap"
 tap "rjyo/moshi"
 tap "steipete/tap"
@@ -94,6 +95,7 @@ cask "zen"
 cask "cmux"
 cask "nguyenphutrong/tap/quotio"
 cask "nikitabobko/tap/aerospace"
+cask "ovh/tap/ovhcloud-cli"
 
 # Mac App Store Apps
 mas "Irvue", id: 1039633667
