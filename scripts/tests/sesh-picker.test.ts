@@ -4,6 +4,7 @@ import {
   decodeRecord,
   encodeRecord,
   killInvocation,
+  parseWorktreePaths,
   pickerLine,
   previewInvocation,
   type PickerRecord,
@@ -45,7 +46,32 @@ describe("opaque picker selections", () => {
     expect(() => decodeRecord(invalidHerdr)).toThrow("Invalid picker selection");
   });
 
+  test("keeps informational rows non-actionable", () => {
+    const info: PickerRecord = {
+      version: 1,
+      kind: "info",
+      display: "No active tmux sessions",
+      value: "Herdr does not use tmux.",
+    };
+
+    expect(decodeRecord(encodeRecord(info))).toEqual(info);
+    expect(previewInvocation(info)).toBeUndefined();
+    expect(connectInvocation(info)).toBeUndefined();
+    expect(killInvocation(info)).toBeUndefined();
+  });
+
   test("does not expose a kill action for Herdr workspaces", () => {
     expect(killInvocation({ ...record, kind: "herdr", value: "12" })).toBeUndefined();
+  });
+
+  test("extracts valid Worktrunk paths from dirty JSON records", () => {
+    expect(parseWorktreePaths(JSON.stringify([
+      { path: "/repo/one" },
+      { path: "" },
+      { missing: "path" },
+      null,
+      { path: "/repo/two" },
+    ]))).toEqual(["/repo/one", "/repo/two"]);
+    expect(parseWorktreePaths("not json")).toEqual([]);
   });
 });

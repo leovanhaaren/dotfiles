@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-export type PickerKind = "sesh" | "herdr";
+export type PickerKind = "sesh" | "herdr" | "info";
 
 export interface PickerRecord {
   version: 1;
@@ -54,7 +54,7 @@ export function decodeRecord(token: string): PickerRecord {
   const selected = text(record?.value);
   if (
     record?.version !== 1 ||
-    (kind !== "sesh" && kind !== "herdr") ||
+    (kind !== "sesh" && kind !== "herdr" && kind !== "info") ||
     !display ||
     !selected ||
     (kind === "herdr" && !/^\d+$/.test(selected))
@@ -65,20 +65,22 @@ export function decodeRecord(token: string): PickerRecord {
   return { version: 1, kind, display, value: selected };
 }
 
-export function previewInvocation(record: PickerRecord): string[] {
+export function previewInvocation(record: PickerRecord): string[] | undefined {
+  if (record.kind === "info") return undefined;
   return record.kind === "herdr"
     ? ["herdr", "workspace", "get", record.value]
     : ["sesh", "preview", "--", record.value];
 }
 
-export function connectInvocation(record: PickerRecord): string[] {
+export function connectInvocation(record: PickerRecord): string[] | undefined {
+  if (record.kind === "info") return undefined;
   return record.kind === "herdr"
     ? ["herdr", "workspace", "focus", record.value]
     : ["sesh", "connect", "--", record.value];
 }
 
 export function killInvocation(record: PickerRecord): string[] | undefined {
-  return record.kind === "herdr" ? undefined : ["tmux", "kill-session", "-t", record.value];
+  return record.kind === "sesh" ? ["tmux", "kill-session", "-t", record.value] : undefined;
 }
 
 export function pickerLine(record: PickerRecord): string {
@@ -100,27 +102,70 @@ function run(command: string[]): { stdout: string; stderr: string; exitCode: num
   };
 }
 
-function emitSesh(command: string[]): void {
+function emitInfo(display: string, detail: string): void {
+  emit({ version: 1, kind: "info", display, value: detail });
+}
+
+function emitSesh(command: string[]): number {
   const result = run(command);
-  if (result.exitCode !== 0) return;
+  if (result.exitCode !== 0) return 0;
+  let count = 0;
   for (const line of result.stdout.split("\n")) {
     if (!line.trim()) continue;
     emit({ version: 1, kind: "sesh", display: line, value: selectionValue(line) });
+    count++;
+  }
+  return count;
+}
+
+export function parseWorktreePaths(stdout: string): string[] {
+  try {
+    const worktrees = JSON.parse(stdout);
+    if (!Array.isArray(worktrees)) return [];
+    return worktrees.flatMap((item) => {
+      const path = text(object(item)?.path);
+      return path ? [path] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
+function herdrPaneCwds(): string[] {
+  if (process.env.HERDR_ENV !== "1") return [];
+  const result = run(["herdr", "pane", "list"]);
+  if (result.exitCode !== 0) return [];
+  try {
+    const panes = object(object(JSON.parse(result.stdout))?.result)?.panes;
+    if (!Array.isArray(panes)) return [];
+    const workspaceId = process.env.HERDR_WORKSPACE_ID;
+    return [...new Set(panes.flatMap((item) => {
+      const pane = object(item);
+      if (workspaceId && text(pane?.workspace_id) !== workspaceId) return [];
+      const cwd = text(pane?.foreground_cwd) ?? text(pane?.cwd);
+      return cwd ? [cwd] : [];
+    }))];
+  } catch {
+    return [];
   }
 }
 
 function emitWorktrunk(): void {
-  const result = run(["wt", "list", "--format=json"]);
-  if (result.exitCode !== 0) return;
-  try {
-    const worktrees = JSON.parse(result.stdout);
-    if (!Array.isArray(worktrees)) return;
-    for (const item of worktrees) {
-      const path = text(object(item)?.path);
-      if (path) emit({ version: 1, kind: "sesh", display: `worktrunk: ${path}`, value: path });
+  const paths = new Set(parseWorktreePaths(run(["wt", "list", "--format=json"]).stdout));
+  if (paths.size === 0) {
+    for (const cwd of herdrPaneCwds()) {
+      const result = run(["wt", "-C", cwd, "list", "--format=json"]);
+      if (result.exitCode !== 0) continue;
+      for (const path of parseWorktreePaths(result.stdout)) paths.add(path);
+      if (paths.size > 0) break;
     }
-  } catch {
-    return;
+  }
+
+  for (const path of paths) {
+    emit({ version: 1, kind: "sesh", display: `worktrunk: ${path}`, value: path });
+  }
+  if (paths.size === 0) {
+    emitInfo("No Worktrunk worktrees found", "Open Television inside a Git worktree, or create a Herdr workspace for one.");
   }
 }
 
@@ -149,7 +194,16 @@ function emitHerdr(): void {
 function list(category: string): void {
   switch (category) {
     case "all": emitSesh(["sesh", "list", "--icons"]); return;
-    case "tmux": emitSesh(["sesh", "list", "-t", "--icons"]); return;
+    case "tmux": {
+      const count = emitSesh(["sesh", "list", "-t", "--icons"]);
+      if (count === 0) {
+        const detail = process.env.HERDR_ENV === "1"
+          ? "Herdr does not use tmux. Use the Herdr source to switch Herdr workspaces."
+          : "No tmux server or active tmux sessions were found.";
+        emitInfo("No active tmux sessions", detail);
+      }
+      return;
+    }
     case "worktrunk": emitWorktrunk(); return;
     case "herdr": emitHerdr(); return;
     case "configs": emitSesh(["sesh", "list", "-c", "--icons"]); return;
@@ -176,6 +230,10 @@ async function runInteractive(command: string[], env = process.env): Promise<num
 async function preview(token: string): Promise<void> {
   const record = decodeRecord(token);
   const invocation = previewInvocation(record);
+  if (!invocation) {
+    console.log(record.value);
+    return;
+  }
   const result = run(invocation);
   if (result.exitCode !== 0) throw new Error(result.stderr.trim() || `${invocation[0]} failed`);
 
@@ -194,6 +252,7 @@ async function preview(token: string): Promise<void> {
 async function connect(token: string, apply: boolean): Promise<void> {
   const record = decodeRecord(token);
   const invocation = connectInvocation(record);
+  if (!invocation) return;
   if (!apply) {
     console.log(`[dry-run] ${invocation.map(shellQuote).join(" ")}`);
     return;
