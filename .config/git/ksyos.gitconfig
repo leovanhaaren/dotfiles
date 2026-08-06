@@ -1,4 +1,12 @@
 [user]
     name = Leo van Haaren
     email = 137489716+leo-ksyos@users.noreply.github.com
-    signingkey = ~/.ssh/id_leo_ksyos.pub
+	signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBAw27DIvqEFBmIDU3OH5eYIFZTjauTKRHgbP2X22JwP
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
