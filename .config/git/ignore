@@ -3,6 +3,7 @@
 .docs
 .tasks
 .worktrees
+.worktreeinclude
 **/.claude/settings.local.json
 mise.toml
 .ai
