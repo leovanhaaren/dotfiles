@@ -98,6 +98,23 @@ Neovim dependencies are likewise locked in `.config/nvim/lazy-lock.json`.
 - **.config/mise/config.toml** - Mise version manager config (stowed to `~/.config/mise/`)
 - **.config/zed/settings.json** - Zed editor settings (stowed to `~/.config/zed/`)
 
+### GitHub SSH key management
+
+`create-github-ssh-key` creates an Ed25519 authentication key in the 1Password `Employee` vault, streams the same private key into the Proton Pass `SSH` vault, uploads only its public key to the active `leo-ksyos` GitHub account, and configures `github.com-ksyos` to use the 1Password SSH agent.
+The command defaults to a non-mutating dry run and never stores the private key as a regular local file.
+
+```bash
+gh auth refresh -h github.com -s admin:public_key
+create-github-ssh-key
+create-github-ssh-key --apply
+```
+
+The apply preflight verifies the active GitHub account, both vaults, the required GitHub scope, and the 1Password agent socket before creating anything.
+If a run stops after creating its 1Password item, repeat it with the exact reported title and `--apply --resume`.
+Changed local public keys and SSH configuration are backed up under `~/.ssh/backups/create-github-ssh-key/`.
+Existing GitHub keys are intentionally retained for manual removal after normal Git operations have been verified.
+Use `create-github-ssh-key --help` to override the account, host alias, vaults, title, or paths.
+
 ## Directory Structure
 
 ```
@@ -123,6 +140,7 @@ dotfiles/
 ├── .config/television/   # Tmux: Television config (stowed to ~/.config/television/)
 ├── bin/                       # Commands stowed to ~/bin/
 │   ├── agent-sessions         # Browse and resume coding-agent sessions
+│   ├── create-github-ssh-key  # Create and distribute a GitHub SSH key safely
 │   ├── nvim-plugins           # Verify installed Neovim plugin integrity
 │   ├── save-vscode-extensions # Safely capture the extension list
 │   ├── sesh-picker            # Safely dispatch Television session actions

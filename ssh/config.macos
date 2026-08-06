@@ -13,9 +13,9 @@ Host github.com
 Host github.com-ksyos
   HostName github.com
   User git
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_leo_ksyos
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+  IdentityFile "~/.ssh/id_leo_ksyos.pub"
+  IdentitiesOnly yes
 
 Host 46.225.53.85
   IdentityFile ~/.ssh/id_hetzner
