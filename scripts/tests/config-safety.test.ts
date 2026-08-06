@@ -6,9 +6,10 @@ const root = join(import.meta.dir, "../..");
 const read = (path: string) => readFileSync(join(root, path), "utf8");
 
 describe("security-sensitive configuration", () => {
-  test("Television actions receive only opaque picker tokens", () => {
+  test("Television hides opaque picker tokens while actions can use them", () => {
     const cable = read(".config/television/cable/sesh.toml");
     expect(cable).not.toContain("sh -c");
+    expect(cable).toContain('display = "{strip_ansi|split:\\t:0}"');
     expect(cable).toContain("sesh-picker preview '{split:\\t:1}'");
     expect(cable).toContain("sesh-picker connect '{split:\\t:1}' --apply");
   });

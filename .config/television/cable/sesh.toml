@@ -7,6 +7,7 @@ requirements = ["sesh-picker", "bun"]
 ansi = true
 frecency = false
 no_sort = true
+display = "{strip_ansi|split:\t:0}"
 output = "{strip_ansi|split:\t:0}"
 
 [[source.command]]
