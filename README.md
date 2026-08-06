@@ -100,20 +100,28 @@ Neovim dependencies are likewise locked in `.config/nvim/lazy-lock.json`.
 
 ### GitHub SSH key management
 
-`create-github-ssh-key` creates an Ed25519 authentication key in the 1Password `Employee` vault, streams the same private key into the Proton Pass `SSH` vault, uploads only its public key to the active `leo-ksyos` GitHub account, and configures `github.com-ksyos` to use the 1Password SSH agent.
-The command defaults to a non-mutating dry run and never stores the private key as a regular local file.
+`create-github-ssh-key` creates a separate Ed25519 authentication or signing key in the 1Password `Employee` vault, streams the same private key into the Proton Pass `SSH` vault, and uploads only its public key to the active `leo-ksyos` GitHub account.
+Authentication mode configures `github.com-ksyos` to use the 1Password SSH agent.
+Signing mode writes the public key and 1Password `op-ssh-sign` program to the work Git config, then creates and verifies a signed commit in a disposable local repository.
+The command defaults to authentication and a non-mutating dry run, and it never stores the private key as a regular local file.
 
 ```bash
+# Authentication key
 gh auth refresh -h github.com -s admin:public_key
 create-github-ssh-key
 create-github-ssh-key --apply
+
+# Separate signing key
+gh auth refresh -h github.com -s admin:ssh_signing_key
+create-github-ssh-key --type signing
+create-github-ssh-key --type signing --apply
 ```
 
-The apply preflight verifies the active GitHub account, both vaults, the required GitHub scope, and the 1Password agent socket before creating anything.
-If a run stops after creating its 1Password item, repeat it with the exact reported title and `--apply --resume`.
-Changed local public keys and SSH configuration are backed up under `~/.ssh/backups/create-github-ssh-key/`.
+The apply preflight verifies the active GitHub account, both vaults, the required type-specific GitHub scope, and the required 1Password integration before creating anything.
+If a run stops after creating its 1Password item, repeat it with the exact reported title, key type, and `--apply --resume`.
+Changed local public keys and SSH or Git configuration are backed up under `~/.ssh/backups/create-github-ssh-key/`.
 Existing GitHub keys are intentionally retained for manual removal after normal Git operations have been verified.
-Use `create-github-ssh-key --help` to override the account, host alias, vaults, title, or paths.
+Use `create-github-ssh-key --help` to override the type, account, host alias, vaults, title, signing program, or paths.
 
 ## Directory Structure
 

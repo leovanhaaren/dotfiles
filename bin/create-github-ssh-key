@@ -1,6 +1,6 @@
 #!/bin/bash
-# Create one SSH authentication key in 1Password, copy it to Proton Pass,
-# register its public key with GitHub, and configure SSH to use 1Password.
+# Create an SSH authentication or signing key in 1Password, copy it to
+# Proton Pass, register its public key with GitHub, and configure local use.
 
 set -euo pipefail
 
@@ -10,9 +10,12 @@ GITHUB_ACCOUNT="leo-ksyos"
 GITHUB_HOST="github.com-ksyos"
 ONEPASSWORD_VAULT="Employee"
 PROTON_VAULT="SSH"
-PUBLIC_KEY_PATH="$HOME/.ssh/id_leo_ksyos.pub"
+KEY_TYPE="authentication"
+PUBLIC_KEY_PATH=""
 SSH_CONFIG="$HOME/.ssh/config"
 IDENTITY_AGENT="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+GIT_CONFIG="$HOME/.config/git/ksyos.gitconfig"
+SIGNING_PROGRAM="/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 TITLE=""
 
 usage() {
@@ -20,27 +23,35 @@ usage() {
 Usage: create-github-ssh-key [options]
 
 Creates an Ed25519 key in 1Password, copies the same key to Proton Pass,
-uploads the public key to GitHub, and configures an SSH host to use the
-1Password SSH agent. The default invocation is a dry run; --apply is required
-for all writes.
+and uploads the public key to GitHub. Authentication keys configure an SSH
+host. Signing keys configure Git to sign through 1Password and verify a signed
+test commit. The default invocation is a dry run; --apply is required for all
+writes.
 
 Options:
   --apply                      Perform the planned writes.
   --resume                     Resume an interrupted run using an existing
                                1Password item with the exact title.
+  --type TYPE                  Key type: authentication or signing
+                               (default: authentication).
   --github-account ACCOUNT     Expected active gh account (default: leo-ksyos).
-  --github-host HOST           SSH host block to update (default: github.com-ksyos).
+  --github-host HOST           Authentication SSH host (default: github.com-ksyos).
   --title TITLE                Vault item and GitHub key title.
   --onepassword-vault VAULT    1Password vault (default: Employee).
   --proton-vault VAULT         Proton Pass vault (default: SSH).
-  --public-key PATH            Local public-key path
-                               (default: ~/.ssh/id_leo_ksyos.pub).
-  --ssh-config PATH            SSH config to update (default: ~/.ssh/config).
-  --identity-agent PATH        1Password SSH agent socket.
+  --public-key PATH            Local public-key path. Defaults to
+                               ~/.ssh/id_leo_ksyos.pub for authentication or
+                               ~/.ssh/id_leo_ksyos_signing.pub for signing.
+  --ssh-config PATH            Authentication SSH config (default: ~/.ssh/config).
+  --identity-agent PATH        Authentication 1Password SSH agent socket.
+  --git-config PATH            Signing Git config
+                               (default: ~/.config/git/ksyos.gitconfig).
+  --signing-program PATH       SSH signing program (default: 1Password op-ssh-sign).
   -h, --help                   Show this help.
 
-Before --apply, authorize gh to manage public keys if needed:
+Before --apply, authorize gh for the selected key type if needed:
   gh auth refresh -h github.com -s admin:public_key
+  gh auth refresh -h github.com -s admin:ssh_signing_key
 
 A private key is streamed through a named pipe from 1Password to Proton Pass.
 It is never stored as a regular local file. Existing GitHub keys are retained.
@@ -61,6 +72,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --resume)
       RESUME=true
+      ;;
+    --type)
+      require_value "$@"
+      KEY_TYPE="$2"
+      shift
       ;;
     --github-account)
       require_value "$@"
@@ -102,6 +118,16 @@ while [[ $# -gt 0 ]]; do
       IDENTITY_AGENT="$2"
       shift
       ;;
+    --git-config)
+      require_value "$@"
+      GIT_CONFIG="$2"
+      shift
+      ;;
+    --signing-program)
+      require_value "$@"
+      SIGNING_PROGRAM="$2"
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -115,6 +141,25 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+case "$KEY_TYPE" in
+  authentication)
+    [[ -z "$PUBLIC_KEY_PATH" ]] && PUBLIC_KEY_PATH="$HOME/.ssh/id_leo_ksyos.pub"
+    CONFIG_PATH="$SSH_CONFIG"
+    GITHUB_KEYS_ENDPOINT="user/keys"
+    GITHUB_SCOPE="admin:public_key"
+    ;;
+  signing)
+    [[ -z "$PUBLIC_KEY_PATH" ]] && PUBLIC_KEY_PATH="$HOME/.ssh/id_leo_ksyos_signing.pub"
+    CONFIG_PATH="$GIT_CONFIG"
+    GITHUB_KEYS_ENDPOINT="user/ssh_signing_keys"
+    GITHUB_SCOPE="admin:ssh_signing_key"
+    ;;
+  *)
+    echo "Error: --type must be authentication or signing" >&2
+    exit 2
+    ;;
+esac
+
 if [[ ! "$GITHUB_ACCOUNT" =~ ^[A-Za-z0-9-]+$ ]]; then
   echo "Error: invalid GitHub account: $GITHUB_ACCOUNT" >&2
   exit 2
@@ -125,33 +170,53 @@ if [[ ! "$GITHUB_HOST" =~ ^[A-Za-z0-9._-]+$ ]]; then
   exit 2
 fi
 
-for value in "$ONEPASSWORD_VAULT" "$PROTON_VAULT" "$PUBLIC_KEY_PATH" "$SSH_CONFIG" "$IDENTITY_AGENT"; do
+for value in "$ONEPASSWORD_VAULT" "$PROTON_VAULT" "$PUBLIC_KEY_PATH" "$CONFIG_PATH"; do
   if [[ -z "$value" || "$value" == *$'\n'* || "$value" == *$'\r'* ]]; then
     echo "Error: option values must be non-empty single lines" >&2
     exit 2
   fi
 done
 
-for path_value in "$PUBLIC_KEY_PATH" "$SSH_CONFIG" "$IDENTITY_AGENT"; do
+TYPE_PATHS=()
+if [[ "$KEY_TYPE" == "authentication" ]]; then
+  TYPE_PATHS=("$SSH_CONFIG" "$IDENTITY_AGENT")
+else
+  TYPE_PATHS=("$GIT_CONFIG" "$SIGNING_PROGRAM")
+fi
+for path_value in "$PUBLIC_KEY_PATH" "${TYPE_PATHS[@]}"; do
   if [[ "$path_value" == *'"'* || "$path_value" == *\\* ]]; then
     echo "Error: paths containing double quotes or backslashes are not supported" >&2
     exit 2
   fi
+  if [[ "$path_value" != /* ]]; then
+    echo "Error: public-key and configuration paths must be absolute" >&2
+    exit 2
+  fi
 done
-
-if [[ "$PUBLIC_KEY_PATH" != /* || "$SSH_CONFIG" != /* || "$IDENTITY_AGENT" != /* ]]; then
-  echo "Error: public-key, SSH config, and identity-agent paths must be absolute" >&2
-  exit 2
-fi
 
 if [[ -z "$TITLE" ]]; then
   MACHINE_NAME="$(hostname -s 2>/dev/null || hostname)"
-  TITLE="GitHub authentication - $GITHUB_ACCOUNT - $MACHINE_NAME"
+  TITLE="GitHub $KEY_TYPE - $GITHUB_ACCOUNT - $MACHINE_NAME"
 fi
 
 if [[ "$TITLE" == *$'\n'* || "$TITLE" == *$'\r'* ]]; then
   echo "Error: title must be a single line" >&2
   exit 2
+fi
+TITLE_LOWER="$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]')"
+if [[ "$TITLE_LOWER" == *authentication* && "$TITLE_LOWER" == *signing* ]]; then
+  echo "Error: title must not identify both authentication and signing purposes" >&2
+  exit 2
+fi
+if [[ "$TITLE_LOWER" == *authentication* && "$KEY_TYPE" != "authentication" ]] ||
+   [[ "$TITLE_LOWER" == *signing* && "$KEY_TYPE" != "signing" ]]; then
+  echo "Error: title conflicts with the selected key type: $KEY_TYPE" >&2
+  exit 2
+fi
+if [[ "$TITLE_LOWER" == *"$KEY_TYPE"* ]]; then
+  ITEM_TITLE="$TITLE"
+else
+  ITEM_TITLE="$TITLE [$KEY_TYPE]"
 fi
 
 if [[ "$RESUME" == true && "$APPLY" != true ]]; then
@@ -161,35 +226,55 @@ fi
 
 cat <<EOF
 GitHub SSH key plan
+  Key type:          $KEY_TYPE
   GitHub account:    $GITHUB_ACCOUNT
-  GitHub SSH host:   $GITHUB_HOST
-  Key title:         $TITLE
+  Key title:         $ITEM_TITLE
   1Password vault:  $ONEPASSWORD_VAULT
   Proton Pass vault: $PROTON_VAULT
   Public key:        $PUBLIC_KEY_PATH
+EOF
+if [[ "$KEY_TYPE" == "authentication" ]]; then
+  cat <<EOF
+  GitHub SSH host:   $GITHUB_HOST
   SSH config:        $SSH_CONFIG
   SSH agent:         1Password
 EOF
+else
+  cat <<EOF
+  Git config:        $GIT_CONFIG
+  Signing program:   $SIGNING_PROGRAM
+EOF
+fi
 
 if [[ "$APPLY" != true ]]; then
   cat <<'EOF'
 
-DRY RUN: no local files, vault items, GitHub settings, or SSH configuration were changed.
+DRY RUN: no local files, vault items, GitHub settings, or local configuration were changed.
 Run again with --apply after reviewing this plan.
 EOF
   exit 0
 fi
 
-for command_name in gh op pass-cli jq ssh-keygen ssh awk realpath mkfifo mktemp; do
+REQUIRED_COMMANDS=(gh op pass-cli jq ssh-keygen awk realpath mkfifo mktemp)
+if [[ "$KEY_TYPE" == "authentication" ]]; then
+  REQUIRED_COMMANDS+=(ssh)
+else
+  REQUIRED_COMMANDS+=(git)
+fi
+for command_name in "${REQUIRED_COMMANDS[@]}"; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "Error: required command not found: $command_name" >&2
     exit 1
   fi
 done
 
-if [[ ! -S "$IDENTITY_AGENT" ]]; then
+if [[ "$KEY_TYPE" == "authentication" && ! -S "$IDENTITY_AGENT" ]]; then
   echo "Error: 1Password SSH agent socket is unavailable: $IDENTITY_AGENT" >&2
   echo "Enable Settings > Developer > Use the SSH Agent in 1Password." >&2
+  exit 1
+fi
+if [[ "$KEY_TYPE" == "signing" && ! -x "$SIGNING_PROGRAM" ]]; then
+  echo "Error: SSH signing program is not executable: $SIGNING_PROGRAM" >&2
   exit 1
 fi
 
@@ -208,10 +293,32 @@ if [[ "$PINNED_GITHUB_ACCOUNT" != "$GITHUB_ACCOUNT" ]]; then
   echo "Error: stored GitHub credentials resolve to '$PINNED_GITHUB_ACCOUNT', expected '$GITHUB_ACCOUNT'." >&2
   exit 1
 fi
-if ! GH_TOKEN="$PINNED_GITHUB_TOKEN" gh api 'user/keys?per_page=1' >/dev/null 2>&1; then
-  echo "Error: gh lacks the admin:public_key scope; no changes were made." >&2
-  echo "Authorize it first: gh auth refresh -h github.com -s admin:public_key" >&2
+PINNED_GITHUB_HEADERS="$(GH_TOKEN="$PINNED_GITHUB_TOKEN" gh api --include user)"
+PINNED_GITHUB_SCOPES="$(printf '%s\n' "$PINNED_GITHUB_HEADERS" | awk 'tolower($0) ~ /^x-oauth-scopes:/ { sub(/^[^:]*:[[:space:]]*/, ""); print; exit }')"
+if ! printf '%s' "$PINNED_GITHUB_SCOPES" | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | grep -Fxq "$GITHUB_SCOPE"; then
+  echo "Error: pinned gh credentials lack the $GITHUB_SCOPE write scope; no changes were made." >&2
+  echo "Authorize it first: gh auth refresh -h github.com -s $GITHUB_SCOPE" >&2
   exit 1
+fi
+if ! GH_TOKEN="$PINNED_GITHUB_TOKEN" gh api "$GITHUB_KEYS_ENDPOINT?per_page=1" >/dev/null 2>&1; then
+  echo "Error: GitHub denied access to the $KEY_TYPE key endpoint; no changes were made." >&2
+  echo "Authorize it first: gh auth refresh -h github.com -s $GITHUB_SCOPE" >&2
+  exit 1
+fi
+if ! GITHUB_AUTHENTICATION_KEYS="$(GH_TOKEN="$PINNED_GITHUB_TOKEN" gh api "users/$GITHUB_ACCOUNT/keys" --paginate --jq '.[].key')"; then
+  echo "Error: could not inspect the account's public authentication keys; no changes were made." >&2
+  exit 1
+fi
+if ! GITHUB_SIGNING_KEYS="$(GH_TOKEN="$PINNED_GITHUB_TOKEN" gh api "users/$GITHUB_ACCOUNT/ssh_signing_keys" --paginate --jq '.[].key')"; then
+  echo "Error: could not inspect the account's public signing keys; no changes were made." >&2
+  exit 1
+fi
+if [[ "$KEY_TYPE" == "authentication" ]]; then
+  REGISTERED_GITHUB_KEYS="$GITHUB_AUTHENTICATION_KEYS"
+  OPPOSITE_GITHUB_KEYS="$GITHUB_SIGNING_KEYS"
+else
+  REGISTERED_GITHUB_KEYS="$GITHUB_SIGNING_KEYS"
+  OPPOSITE_GITHUB_KEYS="$GITHUB_AUTHENTICATION_KEYS"
 fi
 
 op vault get "$ONEPASSWORD_VAULT" --format json >/dev/null
@@ -223,27 +330,27 @@ fi
 
 PUBLIC_KEY_DIRECTORY="$(dirname "$PUBLIC_KEY_PATH")"
 
-if [[ -L "$SSH_CONFIG" && ! -e "$SSH_CONFIG" ]]; then
-  echo "Error: SSH config is a dangling symbolic link: $SSH_CONFIG" >&2
+if [[ -L "$CONFIG_PATH" && ! -e "$CONFIG_PATH" ]]; then
+  echo "Error: configuration is a dangling symbolic link: $CONFIG_PATH" >&2
   exit 1
 fi
-if [[ -e "$SSH_CONFIG" ]]; then
-  SSH_CONFIG_TARGET="$(realpath "$SSH_CONFIG")"
-  SSH_CONFIG_SOURCE="$SSH_CONFIG_TARGET"
+if [[ -e "$CONFIG_PATH" ]]; then
+  CONFIG_TARGET="$(realpath "$CONFIG_PATH")"
+  CONFIG_SOURCE="$CONFIG_TARGET"
 else
-  SSH_CONFIG_TARGET="$SSH_CONFIG"
-  SSH_CONFIG_SOURCE="/dev/null"
+  CONFIG_TARGET="$CONFIG_PATH"
+  CONFIG_SOURCE="/dev/null"
 fi
-SSH_CONFIG_TARGET_DIRECTORY="$(dirname "$SSH_CONFIG_TARGET")"
+CONFIG_TARGET_DIRECTORY="$(dirname "$CONFIG_TARGET")"
 
-if [[ "$PUBLIC_KEY_PATH" == "$SSH_CONFIG" || "$PUBLIC_KEY_PATH" == "$SSH_CONFIG_TARGET" ]] ||
-   [[ -e "$PUBLIC_KEY_PATH" && "$(realpath "$PUBLIC_KEY_PATH")" == "$SSH_CONFIG_TARGET" ]]; then
-  echo "Error: public-key and SSH config paths must be different" >&2
+if [[ "$PUBLIC_KEY_PATH" == "$CONFIG_PATH" || "$PUBLIC_KEY_PATH" == "$CONFIG_TARGET" ]] ||
+   [[ -e "$PUBLIC_KEY_PATH" && "$(realpath "$PUBLIC_KEY_PATH")" == "$CONFIG_TARGET" ]]; then
+  echo "Error: public-key and configuration paths must be different" >&2
   exit 1
 fi
 
-if [[ "$SSH_CONFIG_SOURCE" != "/dev/null" && ( ! -r "$SSH_CONFIG_TARGET" || ! -w "$SSH_CONFIG_TARGET" ) ]]; then
-  echo "Error: SSH config target is not readable and writable: $SSH_CONFIG_TARGET" >&2
+if [[ "$CONFIG_SOURCE" != "/dev/null" && ( ! -r "$CONFIG_TARGET" || ! -w "$CONFIG_TARGET" ) ]]; then
+  echo "Error: configuration target is not readable and writable: $CONFIG_TARGET" >&2
   exit 1
 fi
 if [[ -L "$PUBLIC_KEY_PATH" ]]; then
@@ -260,15 +367,15 @@ if [[ -d "$PUBLIC_KEY_DIRECTORY" && ! -w "$PUBLIC_KEY_DIRECTORY" ]]; then
 fi
 
 umask 077
-if [[ ! -d "$SSH_CONFIG_TARGET_DIRECTORY" ]]; then
-  mkdir -p "$SSH_CONFIG_TARGET_DIRECTORY"
+if [[ ! -d "$CONFIG_TARGET_DIRECTORY" ]]; then
+  mkdir -p "$CONFIG_TARGET_DIRECTORY"
 fi
-if [[ ! -w "$SSH_CONFIG_TARGET_DIRECTORY" ]]; then
-  echo "Error: SSH config target directory is not writable: $SSH_CONFIG_TARGET_DIRECTORY" >&2
+if [[ ! -w "$CONFIG_TARGET_DIRECTORY" ]]; then
+  echo "Error: configuration target directory is not writable: $CONFIG_TARGET_DIRECTORY" >&2
   exit 1
 fi
-SSH_CONFIG_PROBE="$(mktemp "$SSH_CONFIG_TARGET_DIRECTORY/.ssh-config.probe.XXXXXX")"
-rm -f "$SSH_CONFIG_PROBE"
+CONFIG_PROBE="$(mktemp "$CONFIG_TARGET_DIRECTORY/.github-ssh-key.probe.XXXXXX")"
+rm -f "$CONFIG_PROBE"
 
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
@@ -291,6 +398,7 @@ PRIVATE_FIFO="$RUNTIME_DIR/private-key.fifo"
 TEMP_PUBLIC_KEY="$RUNTIME_DIR/public-key.pub"
 TEMP_PUBLIC_INSTALL="$RUNTIME_DIR/public-key.install"
 TEMP_CONFIG=""
+SIGNING_TEST_DIR=""
 OP_READ_PID=""
 cleanup() {
   if [[ -n "$OP_READ_PID" ]] && kill -0 "$OP_READ_PID" 2>/dev/null; then
@@ -301,6 +409,9 @@ cleanup() {
   [[ -f "$TEMP_PUBLIC_KEY" ]] && rm -f "$TEMP_PUBLIC_KEY"
   [[ -f "$TEMP_PUBLIC_INSTALL" ]] && rm -f "$TEMP_PUBLIC_INSTALL"
   [[ -n "$TEMP_CONFIG" && -f "$TEMP_CONFIG" ]] && rm -f "$TEMP_CONFIG"
+  if [[ -n "$SIGNING_TEST_DIR" && "$SIGNING_TEST_DIR" == "$RUNTIME_DIR/"* && -d "$SIGNING_TEST_DIR" ]]; then
+    rm -rf "$SIGNING_TEST_DIR"
+  fi
   [[ -d "$RUNTIME_DIR" ]] && rmdir "$RUNTIME_DIR" 2>/dev/null || true
   [[ -d "$LOCK_DIRECTORY" ]] && rmdir "$LOCK_DIRECTORY" 2>/dev/null || true
 }
@@ -308,9 +419,9 @@ trap cleanup EXIT INT TERM
 mkdir "$RUNTIME_DIR"
 
 OP_ITEMS="$(op item list --vault "$ONEPASSWORD_VAULT" --categories 'SSH Key' --format json)"
-OP_MATCH_COUNT="$(printf '%s' "$OP_ITEMS" | jq --arg title "$TITLE" '[.[] | select(.title == $title)] | length')"
+OP_MATCH_COUNT="$(printf '%s' "$OP_ITEMS" | jq --arg title "$ITEM_TITLE" '[.[] | select(.title == $title)] | length')"
 PROTON_ITEMS="$(pass-cli item list --vault-name "$PROTON_VAULT" --filter-type ssh-key --filter-state active --output json)"
-PROTON_MATCH_COUNT="$(printf '%s' "$PROTON_ITEMS" | jq --arg title "$TITLE" '[.items[] | select(.title == $title)] | length')"
+PROTON_MATCH_COUNT="$(printf '%s' "$PROTON_ITEMS" | jq --arg title "$ITEM_TITLE" '[.items[] | select(.title == $title)] | length')"
 
 if [[ "$OP_MATCH_COUNT" -gt 1 || "$PROTON_MATCH_COUNT" -gt 1 ]]; then
   echo "Error: duplicate SSH-key items already use this title; refusing an ambiguous update." >&2
@@ -318,7 +429,7 @@ if [[ "$OP_MATCH_COUNT" -gt 1 || "$PROTON_MATCH_COUNT" -gt 1 ]]; then
 fi
 
 if [[ "$RESUME" != true && ( "$OP_MATCH_COUNT" -ne 0 || "$PROTON_MATCH_COUNT" -ne 0 ) ]]; then
-  echo "Error: an item named '$TITLE' already exists; no changes were made." >&2
+  echo "Error: an item named '$ITEM_TITLE' already exists; no changes were made." >&2
   echo "Use --resume with the same --title only to continue an interrupted run." >&2
   exit 1
 fi
@@ -329,11 +440,11 @@ if [[ "$RESUME" == true && "$OP_MATCH_COUNT" -ne 1 ]]; then
 fi
 
 if [[ "$RESUME" == true ]]; then
-  OP_ITEM_ID="$(printf '%s' "$OP_ITEMS" | jq -r --arg title "$TITLE" '.[] | select(.title == $title) | .id')"
-  echo "Resuming with existing 1Password item: $TITLE"
+  OP_ITEM_ID="$(printf '%s' "$OP_ITEMS" | jq -r --arg title "$ITEM_TITLE" '.[] | select(.title == $title) | .id')"
+  echo "Resuming with existing 1Password item: $ITEM_TITLE"
 else
   echo "Creating Ed25519 key in 1Password..."
-  OP_ITEM_ID="$(op item create --category ssh --ssh-generate-key ed25519 --title "$TITLE" --vault "$ONEPASSWORD_VAULT" --format json | jq -r '.id')"
+  OP_ITEM_ID="$(op item create --category ssh --ssh-generate-key ed25519 --title "$ITEM_TITLE" --tags "github-ssh-key,github-$KEY_TYPE" --vault "$ONEPASSWORD_VAULT" --format json | jq -r '.id')"
   if [[ -z "$OP_ITEM_ID" || "$OP_ITEM_ID" == "null" ]]; then
     echo "Error: 1Password did not return a new item ID." >&2
     exit 1
@@ -350,13 +461,19 @@ normalize_public_key() {
 }
 
 NEW_PUBLIC_KEY="$(normalize_public_key "$TEMP_PUBLIC_KEY")"
-if [[ -z "$NEW_PUBLIC_KEY" ]]; then
+if [[ -z "$NEW_PUBLIC_KEY" ]] || ! ssh-keygen -lf "$TEMP_PUBLIC_KEY" >/dev/null 2>&1; then
   echo "Error: 1Password returned an invalid public key." >&2
   exit 1
 fi
 
+if printf '%s\n' "$OPPOSITE_GITHUB_KEYS" | awk 'NF >= 2 { print $1 " " $2 }' | grep -Fxq "$NEW_PUBLIC_KEY"; then
+  echo "Error: this key is already registered for the opposite GitHub key purpose." >&2
+  echo "Authentication and signing keys must remain separate." >&2
+  exit 1
+fi
+
 if [[ "$PROTON_MATCH_COUNT" -eq 1 ]]; then
-  PROTON_ITEM_ID="$(printf '%s' "$PROTON_ITEMS" | jq -r --arg title "$TITLE" '.items[] | select(.title == $title) | .id')"
+  PROTON_ITEM_ID="$(printf '%s' "$PROTON_ITEMS" | jq -r --arg title "$ITEM_TITLE" '.items[] | select(.title == $title) | .id')"
   EXISTING_PROTON_PUBLIC="$(pass-cli item view --vault-name "$PROTON_VAULT" --item-id "$PROTON_ITEM_ID" --field public_key)"
   EXISTING_PROTON_NORMALIZED="$(printf '%s\n' "$EXISTING_PROTON_PUBLIC" | awk 'NF >= 2 { print $1 " " $2; exit }')"
   if [[ "$EXISTING_PROTON_NORMALIZED" != "$NEW_PUBLIC_KEY" ]]; then
@@ -369,7 +486,7 @@ else
   mkfifo -m 600 "$PRIVATE_FIFO"
   op read "$OP_PRIVATE_REFERENCE" >"$PRIVATE_FIFO" &
   OP_READ_PID=$!
-  if ! pass-cli item create ssh-key import --from-private-key "$PRIVATE_FIFO" --vault-name "$PROTON_VAULT" --title "$TITLE"; then
+  if ! pass-cli item create ssh-key import --from-private-key "$PRIVATE_FIFO" --vault-name "$PROTON_VAULT" --title "$ITEM_TITLE"; then
     kill "$OP_READ_PID" 2>/dev/null || true
     wait "$OP_READ_PID" 2>/dev/null || true
     echo "Error: Proton Pass import failed. Resume with --resume and the same title." >&2
@@ -384,12 +501,11 @@ else
   rm -f "$PRIVATE_FIFO"
 fi
 
-PUBLIC_FINGERPRINT="$(ssh-keygen -lf "$TEMP_PUBLIC_KEY" | awk '{print $2}')"
-if GH_TOKEN="$PINNED_GITHUB_TOKEN" gh ssh-key list 2>/dev/null | grep -Fq "$PUBLIC_FINGERPRINT"; then
-  echo "GitHub already contains the same public key; skipping upload."
+if printf '%s\n' "$REGISTERED_GITHUB_KEYS" | awk 'NF >= 2 { print $1 " " $2 }' | grep -Fxq "$NEW_PUBLIC_KEY"; then
+  echo "GitHub already contains the same $KEY_TYPE key; skipping upload."
 else
-  echo "Uploading the public key to GitHub account $GITHUB_ACCOUNT..."
-  GH_TOKEN="$PINNED_GITHUB_TOKEN" gh ssh-key add "$TEMP_PUBLIC_KEY" --type authentication --title "$TITLE"
+  echo "Uploading the $KEY_TYPE public key to GitHub account $GITHUB_ACCOUNT..."
+  GH_TOKEN="$PINNED_GITHUB_TOKEN" gh ssh-key add "$TEMP_PUBLIC_KEY" --type "$KEY_TYPE" --title "$ITEM_TITLE"
 fi
 unset PINNED_GITHUB_TOKEN
 
@@ -421,18 +537,19 @@ if [[ "$EXISTING_LOCAL_PUBLIC" != "$NEW_PUBLIC_KEY" ]]; then
   echo "Installed public key: $PUBLIC_KEY_PATH"
 fi
 
-TEMP_CONFIG="$(mktemp "$SSH_CONFIG_TARGET_DIRECTORY/.ssh-config.XXXXXX")"
-
 portable_ssh_path() {
   case "$1" in
     "$HOME"/*) printf '\x7e/%s' "${1#"$HOME"/}" ;;
     *) printf '%s' "$1" ;;
   esac
 }
-SSH_AGENT_CONFIG_PATH="$(portable_ssh_path "$IDENTITY_AGENT")"
-SSH_IDENTITY_CONFIG_PATH="$(portable_ssh_path "$PUBLIC_KEY_PATH")"
 
-SSH_TARGET_HOST="$GITHUB_HOST" SSH_AGENT_PATH="$SSH_AGENT_CONFIG_PATH" SSH_IDENTITY_PATH="$SSH_IDENTITY_CONFIG_PATH" awk '
+if [[ "$KEY_TYPE" == "authentication" ]]; then
+  TEMP_CONFIG="$(mktemp "$CONFIG_TARGET_DIRECTORY/.ssh-config.XXXXXX")"
+  SSH_AGENT_CONFIG_PATH="$(portable_ssh_path "$IDENTITY_AGENT")"
+  SSH_IDENTITY_CONFIG_PATH="$(portable_ssh_path "$PUBLIC_KEY_PATH")"
+
+  SSH_TARGET_HOST="$GITHUB_HOST" SSH_AGENT_PATH="$SSH_AGENT_CONFIG_PATH" SSH_IDENTITY_PATH="$SSH_IDENTITY_CONFIG_PATH" awk '
 BEGIN {
   target_host = ENVIRON["SSH_TARGET_HOST"]
   agent = ENVIRON["SSH_AGENT_PATH"]
@@ -487,28 +604,70 @@ END {
     managed_options()
   }
 }
-' "$SSH_CONFIG_SOURCE" >"$TEMP_CONFIG"
-chmod 600 "$TEMP_CONFIG"
+' "$CONFIG_SOURCE" >"$TEMP_CONFIG"
+  chmod 600 "$TEMP_CONFIG"
 
-if [[ "$SSH_CONFIG_SOURCE" == "/dev/null" ]] || ! cmp -s "$SSH_CONFIG_TARGET" "$TEMP_CONFIG"; then
-  backup_file "$SSH_CONFIG_TARGET" "ssh-config"
-  mv "$TEMP_CONFIG" "$SSH_CONFIG_TARGET"
-  TEMP_CONFIG=""
-  echo "Updated SSH host '$GITHUB_HOST' to use the 1Password agent."
+  if [[ "$CONFIG_SOURCE" == "/dev/null" ]] || ! cmp -s "$CONFIG_TARGET" "$TEMP_CONFIG"; then
+    backup_file "$CONFIG_TARGET" "ssh-config"
+    mv "$TEMP_CONFIG" "$CONFIG_TARGET"
+    TEMP_CONFIG=""
+    echo "Updated SSH host '$GITHUB_HOST' to use the 1Password agent."
+  fi
+
+  SSH_OUTPUT="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -T "git@$GITHUB_HOST" 2>&1 || true)"
+  if ! printf '%s' "$SSH_OUTPUT" | grep -Fq "Hi $GITHUB_ACCOUNT! You've successfully authenticated"; then
+    echo "Error: GitHub SSH verification did not succeed." >&2
+    printf '%s\n' "$SSH_OUTPUT" >&2
+    echo "The key is stored and uploaded. Check the 1Password agent, then retry:" >&2
+    echo "  ssh -T git@$GITHUB_HOST" >&2
+    [[ "$BACKUP_CREATED" == true ]] && echo "Local backups: $BACKUP_ROOT" >&2
+    exit 1
+  fi
+  printf '%s\n' "$SSH_OUTPUT"
+else
+  SIGNING_TEST_DIR="$RUNTIME_DIR/signing-test"
+  SIGNING_TEST_EMAIL="$GITHUB_ACCOUNT@github.invalid"
+  mkdir "$SIGNING_TEST_DIR"
+  git -C "$SIGNING_TEST_DIR" init --quiet
+  git -C "$SIGNING_TEST_DIR" config user.name "GitHub signing verification"
+  git -C "$SIGNING_TEST_DIR" config user.email "$SIGNING_TEST_EMAIL"
+  git -C "$SIGNING_TEST_DIR" config user.signingkey "$NEW_PUBLIC_KEY"
+  git -C "$SIGNING_TEST_DIR" config gpg.format ssh
+  git -C "$SIGNING_TEST_DIR" config gpg.ssh.program "$SIGNING_PROGRAM"
+  git -C "$SIGNING_TEST_DIR" config gpg.ssh.allowedSignersFile "$SIGNING_TEST_DIR/allowed_signers"
+  printf '%s %s\n' "$SIGNING_TEST_EMAIL" "$NEW_PUBLIC_KEY" >"$SIGNING_TEST_DIR/allowed_signers"
+  if ! git -C "$SIGNING_TEST_DIR" commit --allow-empty --gpg-sign -m "Verify GitHub SSH signing key" >/dev/null; then
+    echo "Error: 1Password could not create a signed test commit." >&2
+    echo "The key is stored and uploaded. Check 1Password signing access, then retry with --resume." >&2
+    exit 1
+  fi
+  if ! SIGNING_VERIFY_OUTPUT="$(git -C "$SIGNING_TEST_DIR" verify-commit HEAD 2>&1)"; then
+    echo "Error: the signed test commit could not be verified with the new public key." >&2
+    printf '%s\n' "$SIGNING_VERIFY_OUTPUT" >&2
+    exit 1
+  fi
+  rm -rf "$SIGNING_TEST_DIR"
+  SIGNING_TEST_DIR=""
+  echo "Verified a signed test commit with the new 1Password key."
+
+  TEMP_CONFIG="$(mktemp "$CONFIG_TARGET_DIRECTORY/.git-signing-config.XXXXXX")"
+  if [[ "$CONFIG_SOURCE" != "/dev/null" ]]; then
+    cp "$CONFIG_SOURCE" "$TEMP_CONFIG"
+  fi
+  git config --file "$TEMP_CONFIG" user.signingkey "$NEW_PUBLIC_KEY"
+  git config --file "$TEMP_CONFIG" gpg.format ssh
+  git config --file "$TEMP_CONFIG" gpg.ssh.program "$SIGNING_PROGRAM"
+  git config --file "$TEMP_CONFIG" commit.gpgsign true
+  git config --file "$TEMP_CONFIG" tag.gpgsign true
+  chmod 600 "$TEMP_CONFIG"
+  if [[ "$CONFIG_SOURCE" == "/dev/null" ]] || ! cmp -s "$CONFIG_TARGET" "$TEMP_CONFIG"; then
+    backup_file "$CONFIG_TARGET" "git-signing-config"
+    mv "$TEMP_CONFIG" "$CONFIG_TARGET"
+    TEMP_CONFIG=""
+    echo "Updated Git signing configuration: $CONFIG_TARGET"
+  fi
 fi
-
-SSH_OUTPUT="$(ssh -o BatchMode=yes -o ConnectTimeout=10 -T "git@$GITHUB_HOST" 2>&1 || true)"
-if ! printf '%s' "$SSH_OUTPUT" | grep -Fq "Hi $GITHUB_ACCOUNT! You've successfully authenticated"; then
-  echo "Error: GitHub SSH verification did not succeed." >&2
-  printf '%s\n' "$SSH_OUTPUT" >&2
-  echo "The key is stored and uploaded. Check the 1Password agent, then retry:" >&2
-  echo "  ssh -T git@$GITHUB_HOST" >&2
-  [[ "$BACKUP_CREATED" == true ]] && echo "Local backups: $BACKUP_ROOT" >&2
-  exit 1
-fi
-
-printf '%s\n' "$SSH_OUTPUT"
-echo "Done. The private key is stored in 1Password and Proton Pass; only the public key is local."
+echo "Done. The $KEY_TYPE private key is stored in 1Password and Proton Pass; only the public key is local."
 if [[ "$BACKUP_CREATED" == true ]]; then
   echo "Backups: $BACKUP_ROOT"
 fi

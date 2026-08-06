@@ -36,8 +36,33 @@ describe("create-github-ssh-key", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout.toString()).toContain("DRY RUN");
     expect(result.stdout.toString()).toContain("Dry-run key");
-    expect(result.stdout.toString()).toContain("no local files, vault items, GitHub settings, or SSH configuration were changed");
+    expect(result.stdout.toString()).toContain("no local files, vault items, GitHub settings, or local configuration were changed");
     expect(readFileSync(script, "utf8")).toContain("if [[ \"$APPLY\" != true ]]");
+  });
+
+  test("plans a separate signing key and Git configuration", () => {
+    const home = makeTemporaryDirectory();
+    const result = Bun.spawnSync([script, "--type", "signing", "--title", "Signing key"], {
+      env: { ...process.env, HOME: home },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout.toString()).toContain("Key type:          signing");
+    expect(result.stdout.toString()).toContain(`${home}/.ssh/id_leo_ksyos_signing.pub`);
+    expect(result.stdout.toString()).toContain(`${home}/.config/git/ksyos.gitconfig`);
+    expect(result.stdout.toString()).not.toContain("GitHub SSH host");
+  });
+
+  test("rejects a title that conflicts with the selected key purpose", () => {
+    const result = Bun.spawnSync([script, "--type", "signing", "--title", "Fixture authentication key"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr.toString()).toContain("title conflicts with the selected key type");
   });
 
   test("rejects resume without explicit apply", () => {
@@ -60,7 +85,7 @@ describe("create-github-ssh-key", () => {
     expect(result.stderr.toString()).toContain("double quotes or backslashes are not supported");
   });
 
-  test("applies through both vault CLIs and safely rewrites the target SSH block", async () => {
+  test("applies authentication and signing workflows safely", async () => {
     const fixture = makeTemporaryDirectory();
     const home = join(fixture, "home");
     const mockBin = join(fixture, "bin");
@@ -68,8 +93,11 @@ describe("create-github-ssh-key", () => {
     const agentDirectory = join(home, "agent");
     const agentSocket = join(agentDirectory, "agent.sock");
     const publicKey = join(sshDirectory, "id_leo_ksyos.pub");
+    const signingPublicKey = join(sshDirectory, "id_leo_ksyos_signing.pub");
     const config = join(sshDirectory, "config");
     const configSource = join(fixture, "repo", "ssh", "config.macos");
+    const gitConfig = join(fixture, "repo", "git", "ksyos.gitconfig");
+    const signingProgram = join(mockBin, "op-ssh-sign");
     const commandLog = join(fixture, "commands.log");
     const generatedPrivateKey = join(fixture, "generated-key");
 
@@ -77,6 +105,8 @@ describe("create-github-ssh-key", () => {
     mkdirSync(sshDirectory, { recursive: true });
     mkdirSync(agentDirectory, { recursive: true });
     mkdirSync(join(fixture, "repo", "ssh"), { recursive: true });
+    mkdirSync(join(fixture, "repo", "git"), { recursive: true });
+    writeFileSync(gitConfig, "[user]\n\tname = Fixture User\n\tsigningkey = ~/.ssh/old-signing-key.pub\n");
     writeFileSync(
       configSource,
       `Host github.com-ksyos\n  HostName github.com\n  User git\n  AddKeysToAgent yes\n  UseKeychain yes\n  IdentityFile ~/.ssh/id_leo_ksyos\n\nHost retained.example\n  ProxyJump jump.example\n`,
@@ -85,6 +115,20 @@ describe("create-github-ssh-key", () => {
 
     const keygen = Bun.spawnSync(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "fixture", "-f", generatedPrivateKey]);
     expect(keygen.exitCode).toBe(0);
+    const signingAgentStart = Bun.spawnSync(["/usr/bin/ssh-agent", "-s"]);
+    expect(signingAgentStart.exitCode).toBe(0);
+    const signingAgentOutput = signingAgentStart.stdout.toString();
+    const signingAgentSocket = signingAgentOutput.match(/SSH_AUTH_SOCK=([^;]+)/)?.[1] ?? "";
+    const signingAgentPid = signingAgentOutput.match(/SSH_AGENT_PID=([0-9]+)/)?.[1] ?? "";
+    expect(signingAgentSocket).not.toBe("");
+    expect(signingAgentPid).not.toBe("");
+    const signingAgentEnvironment = { ...process.env, SSH_AUTH_SOCK: signingAgentSocket, SSH_AGENT_PID: signingAgentPid };
+    const addSigningKey = Bun.spawnSync(["/usr/bin/ssh-add", generatedPrivateKey], {
+      env: signingAgentEnvironment,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    expect(addSigningKey.exitCode).toBe(0);
 
     writeExecutable(
       join(mockBin, "gh"),
@@ -97,10 +141,20 @@ elif [[ "$1 $2" == "auth token" ]]; then
   printf '%s\\n' 'fixture-token'
 elif [[ "$1 $2" == "api user" ]]; then
   printf '%s\\n' 'leo-ksyos'
+elif [[ "$1 $2" == "api --include" ]]; then
+  printf 'X-OAuth-Scopes: %s\\n\\n{}\\n' "\${MOCK_GH_SCOPES:-admin:public_key, admin:ssh_signing_key}"
 elif [[ "$1 $2" == "api user/keys?per_page=1" ]]; then
   printf '%s\\n' '[]'
-elif [[ "$1 $2" == "ssh-key list" ]]; then
-  exit 0
+elif [[ "$1 $2" == "api user/keys" ]]; then
+  printf '%s\\n' '[]'
+elif [[ "$1 $2" == "api user/ssh_signing_keys?per_page=1" ]]; then
+  printf '%s\\n' '[]'
+elif [[ "$1 $2" == "api user/ssh_signing_keys" ]]; then
+  printf '%s\\n' '[]'
+elif [[ "$1 $2" == "api users/leo-ksyos/keys" ]]; then
+  printf '%s\\n' "\${MOCK_AUTHENTICATION_KEYS:-}"
+elif [[ "$1 $2" == "api users/leo-ksyos/ssh_signing_keys" ]]; then
+  printf '%s\\n' "\${MOCK_SIGNING_KEYS:-}"
 elif [[ "$1 $2" == "ssh-key add" ]]; then
   [[ -s "$3" ]]
 else
@@ -118,7 +172,11 @@ printf 'op %s\\n' "$*" >> "$MOCK_COMMAND_LOG"
 if [[ "$1 $2" == "vault get" ]]; then
   printf '%s\\n' '{"id":"vault"}'
 elif [[ "$1 $2" == "item list" ]]; then
-  printf '%s\\n' '[]'
+  if [[ -n "\${MOCK_EXISTING_ITEM_TITLE:-}" ]]; then
+    printf '[{"id":"existing-item","title":"%s"}]\\n' "$MOCK_EXISTING_ITEM_TITLE"
+  else
+    printf '%s\\n' '[]'
+  fi
 elif [[ "$1 $2" == "item create" ]]; then
   printf '%s\\n' '{"id":"created-item"}'
 elif [[ "$1" == "read" ]]; then
@@ -155,7 +213,11 @@ if [[ "$1" == "test" ]]; then
 elif [[ "$1 $2" == "vault list" ]]; then
   printf '%s\\n' '- [vault-id]: SSH'
 elif [[ "$1 $2" == "item list" ]]; then
-  printf '%s\\n' '{"items":[]}'
+  if [[ -n "\${MOCK_EXISTING_ITEM_TITLE:-}" ]]; then
+    printf '{"items":[{"id":"existing-proton","title":"%s"}]}\\n' "$MOCK_EXISTING_ITEM_TITLE"
+  else
+    printf '%s\\n' '{"items":[]}'
+  fi
 elif [[ "$1 $2 $3 $4" == "item create ssh-key import" ]]; then
   while [[ $# -gt 0 ]]; do
     if [[ "$1" == "--from-private-key" ]]; then
@@ -177,6 +239,13 @@ fi
       `#!/bin/bash
 printf '%s\\n' "Hi leo-ksyos! You've successfully authenticated, but GitHub does not provide shell access."
 exit 1
+`,
+    );
+    writeExecutable(
+      signingProgram,
+      `#!/bin/bash
+printf 'signing-program %s\\n' "$*" >> "$MOCK_COMMAND_LOG"
+exec /usr/bin/ssh-keygen "$@"
 `,
     );
 
@@ -205,6 +274,8 @@ exit 1
       PATH: `${mockBin}:${process.env.PATH}`,
       MOCK_COMMAND_LOG: commandLog,
       MOCK_PRIVATE_KEY: generatedPrivateKey,
+      SSH_AUTH_SOCK: signingAgentSocket,
+      SSH_AGENT_PID: signingAgentPid,
     };
 
     try {
@@ -216,7 +287,7 @@ exit 1
 
       expect(result.exitCode).toBe(0);
       expect(result.stderr.toString()).toBe("");
-      expect(result.stdout.toString()).toContain("Done. The private key is stored in 1Password and Proton Pass");
+      expect(result.stdout.toString()).toContain("Done. The authentication private key is stored in 1Password and Proton Pass");
       expect(readFileSync(publicKey, "utf8")).toBe(readFileSync(`${generatedPrivateKey}.pub`, "utf8"));
 
       expect(lstatSync(config).isSymbolicLink()).toBeTrue();
@@ -264,15 +335,120 @@ exit 1
         stderr: "pipe",
       });
       expect(danglingResult.exitCode).toBe(1);
-      expect(danglingResult.stderr.toString()).toContain("SSH config is a dangling symbolic link");
+      expect(danglingResult.stderr.toString()).toContain("configuration is a dangling symbolic link");
       expect(readFileSync(commandLog, "utf8").match(/op item create/g)?.length ?? 0).toBe(itemCreatesBeforeLockTest);
+
+      const readOnlyScopeResult = Bun.spawnSync(applyArguments, {
+        env: { ...applyEnvironment, MOCK_GH_SCOPES: "read:public_key" },
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      expect(readOnlyScopeResult.exitCode).toBe(1);
+      expect(readOnlyScopeResult.stderr.toString()).toContain("lack the admin:public_key write scope");
+      expect(readFileSync(commandLog, "utf8").match(/op item create/g)?.length ?? 0).toBe(itemCreatesBeforeLockTest);
+
+      const fixturePublicKey = readFileSync(`${generatedPrivateKey}.pub`, "utf8").trim().split(/\s+/).slice(0, 2).join(" ");
+      const crossPurposeResult = Bun.spawnSync(
+        [
+          script,
+          "--apply",
+          "--resume",
+          "--type",
+          "signing",
+          "--title",
+          "Legacy signing key",
+          "--public-key",
+          signingPublicKey,
+          "--git-config",
+          gitConfig,
+          "--signing-program",
+          signingProgram,
+        ],
+        {
+          env: {
+            ...applyEnvironment,
+            MOCK_EXISTING_ITEM_TITLE: "Legacy signing key",
+            MOCK_AUTHENTICATION_KEYS: fixturePublicKey,
+          },
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      expect(crossPurposeResult.exitCode).toBe(1);
+      expect(crossPurposeResult.stderr.toString()).toContain("already registered for the opposite GitHub key purpose");
+
+      const signingResult = Bun.spawnSync(
+        [
+          script,
+          "--apply",
+          "--type",
+          "signing",
+          "--title",
+          "Fixture signing key",
+          "--public-key",
+          signingPublicKey,
+          "--git-config",
+          gitConfig,
+          "--signing-program",
+          signingProgram,
+        ],
+        {
+          env: applyEnvironment,
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      expect(signingResult.exitCode).toBe(0);
+      expect(signingResult.stderr.toString()).toBe("");
+      expect(signingResult.stdout.toString()).toContain("Verified a signed test commit");
+      expect(signingResult.stdout.toString()).toContain("Done. The signing private key is stored");
+      expect(readFileSync(signingPublicKey, "utf8")).toBe(readFileSync(`${generatedPrivateKey}.pub`, "utf8"));
+      expect(Bun.spawnSync(["/usr/bin/git", "config", "--file", gitConfig, "--get", "user.signingkey"]).stdout.toString().trim()).toBe(readFileSync(`${generatedPrivateKey}.pub`, "utf8").trim().split(/\s+/).slice(0, 2).join(" "));
+      expect(Bun.spawnSync(["/usr/bin/git", "config", "--file", gitConfig, "--get", "gpg.format"]).stdout.toString().trim()).toBe("ssh");
+      expect(Bun.spawnSync(["/usr/bin/git", "config", "--file", gitConfig, "--get", "gpg.ssh.program"]).stdout.toString().trim()).toBe(signingProgram);
+
+      const failingGitConfig = join(fixture, "repo", "git", "failing.gitconfig");
+      const originalFailingGitConfig = "[user]\n\tname = Unchanged User\n\tsigningkey = old-key\n";
+      writeFileSync(failingGitConfig, originalFailingGitConfig);
+      const failingSigningResult = Bun.spawnSync(
+        [
+          script,
+          "--apply",
+          "--type",
+          "signing",
+          "--title",
+          "Fixture signing failure",
+          "--public-key",
+          join(sshDirectory, "failing-signing-key.pub"),
+          "--git-config",
+          failingGitConfig,
+          "--signing-program",
+          "/usr/bin/false",
+        ],
+        {
+          env: applyEnvironment,
+          stdout: "pipe",
+          stderr: "pipe",
+        },
+      );
+      expect(failingSigningResult.exitCode).toBe(1);
+      expect(failingSigningResult.stderr.toString()).toContain("could not create a signed test commit");
+      expect(readFileSync(failingGitConfig, "utf8")).toBe(originalFailingGitConfig);
 
       const calls = readFileSync(commandLog, "utf8");
       expect(calls).toContain("op item create");
       expect(calls).toContain("pass-cli item create ssh-key import");
       expect(calls).toContain("gh ssh-key add");
+      expect(calls).toContain("--type signing");
+      expect(calls).toContain("signing-program -Y sign");
+      expect(calls).toContain("signing-program -Y verify");
     } finally {
       server.stop(true);
+      Bun.spawnSync(["/usr/bin/ssh-agent", "-k"], {
+        env: signingAgentEnvironment,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
     }
   });
 });
