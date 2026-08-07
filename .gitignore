@@ -9,5 +9,8 @@
 /.test-safety-*/
 /.test-stow-*/
 
+# Machine-local dependency state
+/.config/nvim/lazy-lock.json
+
 # Secrets (machine-specific, never committed)
 /secrets

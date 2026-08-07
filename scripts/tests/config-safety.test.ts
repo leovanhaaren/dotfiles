@@ -48,7 +48,9 @@ describe("security-sensitive configuration", () => {
     expect(read("scripts/brew.sh")).not.toContain("curl");
     expect(read(".config/nvim/lua/config/lazy.lua")).toContain("lazy_commit");
     expect(read(".config/nvim/lua/config/lazy.lua")).toContain('verifier, "verify", "--allow-missing"');
-    expect(read(".config/nvim/lazy-lock.json")).toContain('"commit"');
+    expect(read(".gitignore")).toContain("/.config/nvim/lazy-lock.json");
+    expect(read("scripts/lib/managed-links.sh")).not.toContain("nvim/lazy-lock.json");
+    expect(read("bin/nvim-plugins")).toContain('${XDG_CONFIG_HOME:-$HOME/.config}/nvim/lazy-lock.json');
     expect(read("bin/nvim-plugins")).toContain("--untracked-files=all");
     expect(read("bin/tmux-plugins")).toContain("--untracked-files=all");
     expect(read(".tmux.conf")).toContain("tmux-plugins verify");

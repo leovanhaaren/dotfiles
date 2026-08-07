@@ -31,7 +31,7 @@ Conflicting Stow targets fail safely by default.
 Use `--adopt` only as an explicit migration after reviewing the dry run; apply mode requires a clean Git tree and creates a repository bundle under `backups/`.
 TPM and tmux plugins are not downloaded automatically.
 Run `tmux-plugins sync` to preview the pinned plugin installation and `tmux-plugins sync --apply` to install the reviewed revisions.
-Neovim dependencies are likewise locked in `.config/nvim/lazy-lock.json`.
+Neovim dependencies use an untracked, machine-local lockfile at `~/.config/nvim/lazy-lock.json`.
 
 ### 3. Install Packages
 

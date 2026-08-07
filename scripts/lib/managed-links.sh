@@ -31,7 +31,6 @@ managed_manual_links() {
     fi
     printf '%s\t%s\t%s\n' \
         "ssh/config" "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" \
-        "nvim/lazy-lock.json" "$DOTFILES/.config/nvim/lazy-lock.json" "$HOME/.config/nvim/lazy-lock.json" \
         "vscode/settings.json" "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json" \
         "rtk/config.toml" "$DOTFILES/rtk/config.toml" "$HOME/Library/Application Support/rtk/config.toml"
 }
