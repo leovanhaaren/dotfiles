@@ -1,6 +1,5 @@
 # Productivity
 alias reload="exec zsh"
-alias cpi="clear && pi"
 alias upi="pi update && pi update --extensions"
 alias h="herdr"
 
