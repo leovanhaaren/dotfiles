@@ -265,3 +265,8 @@ run = ['move-node-to-workspace 4']
 [[on-window-detected]]
 if.app-id = 'com.nvidia.gfnpc.mall'
 run = ['move-node-to-workspace 5']
+
+[workspace-to-monitor-force-assignment]
+6 = "secondary"
+7 = "secondary"
+8 = "secondary"
