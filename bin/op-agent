@@ -1,0 +1,177 @@
+#!/bin/bash
+# Run 1Password CLI commands with a service-account token stored in the macOS
+# Keychain, so agent-driven invocations skip the per-session approval prompt
+# that the desktop-app integration shows for every new shell.
+
+set -euo pipefail
+
+KEYCHAIN_SERVICE="${OP_AGENT_KEYCHAIN_SERVICE:-op-agent}"
+KEYCHAIN_ACCOUNT="${OP_AGENT_KEYCHAIN_ACCOUNT:-$USER}"
+SETUP=false
+STATUS=false
+APPLY=false
+
+usage() {
+  cat <<'EOF'
+Usage: op-agent [--setup [--apply] | --status | --help] [--] <op arguments...>
+
+Runs `op` with OP_SERVICE_ACCOUNT_TOKEN loaded from the macOS Keychain.
+The service-account token bypasses the desktop-app integration, so no
+Touch ID or approval popup appears per invocation. Intended for AI-agent
+sessions; interactive `op` use keeps the normal app integration.
+
+Commands:
+  --setup            Plan storing a service-account token in the Keychain.
+  --setup --apply    Prompt for the token, verify it, and store it.
+  --status           Report whether a stored token exists and resolves.
+  <op arguments>     Any op command, e.g.: op-agent run --env-file=.env -- ./task
+
+One-time preparation:
+  1. In 1Password, create a vault (e.g. "Agents") holding only the secrets
+     that agent sessions need.
+  2. Create a service account with read-only access to that vault only:
+     https://developer.1password.com/docs/service-accounts/
+  3. Store the token: op-agent --setup --apply
+
+Environment:
+  OP_AGENT_KEYCHAIN_SERVICE   Keychain service name (default: op-agent).
+  OP_AGENT_KEYCHAIN_ACCOUNT   Keychain account name (default: $USER).
+
+Remove the stored token:
+  security delete-generic-password -s op-agent -a "$USER"
+
+Security note: any process running as your user can read the stored token
+with the `security` CLI. Protection comes from the service account's scope
+(one vault, read-only), not from the Keychain entry itself.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --setup)
+      SETUP=true
+      ;;
+    --status)
+      STATUS=true
+      ;;
+    --apply)
+      APPLY=true
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
+for command_name in op security; do
+  if ! command -v "$command_name" >/dev/null 2>&1; then
+    echo "Error: required command not found: $command_name" >&2
+    exit 1
+  fi
+done
+
+read_token() {
+  security find-generic-password -s "$KEYCHAIN_SERVICE" -a "$KEYCHAIN_ACCOUNT" -w 2>/dev/null
+}
+
+if [[ "$APPLY" == true && "$SETUP" != true ]]; then
+  echo "Error: --apply is only valid with --setup" >&2
+  exit 2
+fi
+
+if [[ "$SETUP" == true && "$STATUS" == true ]]; then
+  echo "Error: --setup and --status are mutually exclusive" >&2
+  exit 2
+fi
+
+if [[ "$SETUP" == true || "$STATUS" == true ]] && [[ $# -gt 0 ]]; then
+  echo "Error: --setup and --status do not take op arguments" >&2
+  exit 2
+fi
+
+if [[ "$STATUS" == true ]]; then
+  if ! TOKEN="$(read_token)"; then
+    echo "No token stored (service: $KEYCHAIN_SERVICE, account: $KEYCHAIN_ACCOUNT)."
+    echo "Store one with: op-agent --setup --apply"
+    exit 1
+  fi
+  echo "Token found in the Keychain (service: $KEYCHAIN_SERVICE, account: $KEYCHAIN_ACCOUNT)."
+  if WHOAMI="$(OP_SERVICE_ACCOUNT_TOKEN="$TOKEN" op whoami 2>&1)"; then
+    printf '%s\n' "$WHOAMI"
+  else
+    echo "Error: the stored token no longer resolves with 1Password:" >&2
+    printf '%s\n' "$WHOAMI" >&2
+    echo "Rotate it and store the new token with: op-agent --setup --apply" >&2
+    exit 1
+  fi
+  exit 0
+fi
+
+if [[ "$SETUP" == true ]]; then
+  if read_token >/dev/null; then
+    EXISTING_STATE="present (will be replaced)"
+  else
+    EXISTING_STATE="absent"
+  fi
+  cat <<EOF
+op-agent setup plan
+  Keychain service:  $KEYCHAIN_SERVICE
+  Keychain account:  $KEYCHAIN_ACCOUNT
+  Existing token:    $EXISTING_STATE
+  Steps:             prompt for token, verify with 'op whoami', store in Keychain
+EOF
+  if [[ "$APPLY" != true ]]; then
+    cat <<'EOF'
+
+DRY RUN: nothing was stored. Run again with --setup --apply to store the token.
+EOF
+    exit 0
+  fi
+
+  printf 'Paste the service-account token (input hidden): '
+  IFS= read -rs TOKEN
+  echo
+  if [[ -z "$TOKEN" ]]; then
+    echo "Error: no token entered; nothing was stored." >&2
+    exit 1
+  fi
+  if [[ "$TOKEN" != ops_* ]]; then
+    echo "Error: service-account tokens start with 'ops_'; nothing was stored." >&2
+    exit 1
+  fi
+  if ! WHOAMI="$(OP_SERVICE_ACCOUNT_TOKEN="$TOKEN" op whoami 2>&1)"; then
+    echo "Error: the token did not verify with 1Password; nothing was stored:" >&2
+    printf '%s\n' "$WHOAMI" >&2
+    exit 1
+  fi
+  security add-generic-password -U \
+    -s "$KEYCHAIN_SERVICE" \
+    -a "$KEYCHAIN_ACCOUNT" \
+    -j "1Password service-account token used by op-agent" \
+    -w "$TOKEN"
+  echo "Stored and verified the token:"
+  printf '%s\n' "$WHOAMI"
+  exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  usage >&2
+  exit 2
+fi
+
+if ! TOKEN="$(read_token)"; then
+  echo "Error: no service-account token in the Keychain (service: $KEYCHAIN_SERVICE)." >&2
+  echo "Store one with: op-agent --setup --apply" >&2
+  exit 1
+fi
+
+OP_SERVICE_ACCOUNT_TOKEN="$TOKEN" exec op "$@"
