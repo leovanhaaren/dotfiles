@@ -26,3 +26,16 @@ Host leo-mac-mini
   UseKeychain yes
   IdentitiesOnly yes
   IdentityFile ~/.ssh/id_leovanhaaren
+
+Host brabonas.local
+  HostName 192.168.1.219
+  User leo-admin
+  PreferredAuthentications publickey
+  PubkeyAuthentication yes
+
+#Host brabonas.local
+#  HostName 192.168.1.219
+#  User leo-admin
+#  PreferredAuthentications password
+#  PubkeyAuthentication no
+#  PasswordAuthentication yes

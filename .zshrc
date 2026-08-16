@@ -73,3 +73,4 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 
 [[ -d /opt/homebrew/opt/libpq/bin ]] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 [[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
