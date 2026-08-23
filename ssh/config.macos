@@ -20,7 +20,8 @@ Host github.com-ksyos
 Host 46.225.53.85
   IdentityFile ~/.ssh/id_hetzner
 
-Host leo-mac-mini
+Host mac-mini.local
+  HostName leo-mac-mini.stork-duck.ts.net
   User leo
   AddKeysToAgent yes
   UseKeychain yes
@@ -28,7 +29,7 @@ Host leo-mac-mini
   IdentityFile ~/.ssh/id_leovanhaaren
 
 Host brabonas.local
-  HostName 192.168.1.219
+  HostName brabonas.stork-duck.ts.net
   User leo-admin
   PreferredAuthentications publickey
   PubkeyAuthentication yes
