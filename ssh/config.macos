@@ -34,6 +34,12 @@ Host brabonas.local
   PreferredAuthentications publickey
   PubkeyAuthentication yes
 
+Host docker.local
+  HostName brabonas.stork-duck.ts.net
+  User docker
+  PreferredAuthentications publickey
+  PubkeyAuthentication yes
+
 #Host brabonas.local
 #  HostName 192.168.1.219
 #  User leo-admin

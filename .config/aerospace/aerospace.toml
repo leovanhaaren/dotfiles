@@ -121,10 +121,10 @@ outer.top = [
 alt-ctrl-shift-f = 'fullscreen'
 alt-ctrl-f = 'layout floating tiling'
 
-alt-left = 'move left'
-alt-down = 'move down'
-alt-up = 'move up'
-alt-right = 'move right'
+# alt-left = 'move left'
+# alt-down = 'move down'
+# alt-up = 'move up'
+# alt-right = 'move right'
 
 alt-shift-left = 'join-with left'
 alt-shift-down = 'join-with down'
