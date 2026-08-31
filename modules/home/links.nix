@@ -31,6 +31,7 @@ in
     ".functions"
     ".gitconfig"
     ".gitmux.conf"
+    ".npmrc"
     ".tmux.conf"
     ".zprofile"
     ".zshrc"
