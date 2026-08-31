@@ -15,22 +15,34 @@
     };
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager }: {
-    darwinConfigurations."MacBook-Pro-van-Leo" = nix-darwin.lib.darwinSystem {
-      system = "aarch64-darwin";
-      modules = [
-        ./hosts/macbook.nix
-        ./modules/darwin
-        home-manager.darwinModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          # On first activation, existing Stow symlinks at the same
-          # targets are renamed aside instead of failing the switch.
-          home-manager.backupFileExtension = "hm-backup";
-          home-manager.useUserPackages = true;
-          home-manager.users."l.vanhaaren" = import ./modules/home;
-        }
-      ];
+  outputs = { self, nixpkgs, nix-darwin, home-manager }:
+    let
+      # One entry per machine; the attribute name must match the
+      # host's LocalHostName so `darwin-rebuild switch --flake .`
+      # and install.sh resolve it automatically.
+      hosts = {
+        "MacBook-Pro-van-Leo" = ./hosts/macbook.nix;
+        "mac-mini" = ./hosts/mac-mini.nix;
+      };
+
+      mkHost = hostModule: nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        modules = [
+          hostModule
+          ./modules/darwin
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            # On first activation, existing Stow symlinks at the same
+            # targets are renamed aside instead of failing the switch.
+            home-manager.backupFileExtension = "hm-backup";
+            home-manager.useUserPackages = true;
+            home-manager.users."l.vanhaaren" = import ./modules/home;
+          }
+        ];
+      };
+    in
+    {
+      darwinConfigurations = builtins.mapAttrs (_: mkHost) hosts;
     };
-  };
 }
