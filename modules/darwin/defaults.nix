@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 
 {
   # macOS preferences ported from scripts/mac.sh (phase 3).
@@ -65,7 +65,9 @@
     trackpad.Clicking = true;
 
     screencapture = {
-      location = "~/Screenshots";
+      # Absolute path: the shell expands ~ in mac.sh, but macOS does
+      # not expand it when reading this preference.
+      location = "${config.users.users.${config.system.primaryUser}.home}/Screenshots";
       show-thumbnail = false;
     };
 
