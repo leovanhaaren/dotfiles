@@ -26,6 +26,7 @@
     mise
     mosh
     neovim
+    nvd # closure diffs in install.sh dry runs
     sesh
     shellcheck
     starship
