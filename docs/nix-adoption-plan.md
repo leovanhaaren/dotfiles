@@ -52,7 +52,7 @@ Recommended order:
 1. Verbatim links first: `.aliases`, `.functions`, `.tmux.conf`, `.gitmux.conf`, `.config/*` (starship, ghostty, wezterm, aerospace, sesh, ...). Use `mkOutOfStoreSymlink` pointing into the repo so edits stay live without a rebuild — this preserves the current edit-in-repo workflow.
 2. Git: `programs.git` with the 1Password SSH-signing config and the ksyos conditional include.
 3. Zsh: `programs.zsh`. Decide here whether to keep Oh My Zsh (home-manager supports it) or replace it with `programs.zsh.autosuggestion` + `syntaxHighlighting` natively — the current `.zshrc` only uses OMZ for those two plugins plus the git plugin, so dropping OMZ is a small, worthwhile simplification.
-4. SSH: `programs.ssh` last — host configs change often here (recent commits), and secrets/keys stay in 1Password (`op-agent` workflow unchanged; Nix manages config, never key material).
+4. SSH: done as verbatim links, not `programs.ssh` — `~/.ssh/config`, tracked `*.pub` files, and `known_hosts.base` link to the repo (identical to setup.sh's manual links, so both paths create the same symlinks). Private keys never go through Nix (the store is world-readable); they stay in the agent, loaded from Proton Pass (`ssh-load-keys.sh`) or the 1Password agent for work. `programs.ssh.matchBlocks` remains an option once the classic path retires, but host configs change often, so plain-file editing stays preferable.
 
 Exit criteria: `.stow-local-ignore` and Stow usage in `setup.sh` are empty; `setup.sh` reduced to "run darwin-rebuild".
 
