@@ -93,16 +93,16 @@ describe("lifecycle correctness", () => {
     expect(read("homebrew/Brewfile.base")).not.toMatch(/^go "\s/m);
   });
 
-  test("Homebrew Zsh plugins are installed and sourced outside Oh My Zsh", () => {
+  test("Zsh works without Oh My Zsh: own compinit, Homebrew plugins sourced", () => {
     const brewfile = read("homebrew/Brewfile.base");
     const zshrc = read(".zshrc");
 
     expect(brewfile).toContain('brew "zsh-autosuggestions"');
     expect(brewfile).toContain('brew "zsh-syntax-highlighting"');
-    expect(zshrc).toContain("plugins=(git)");
+    expect(zshrc).toContain("compinit");
+    expect(zshrc).not.toContain("oh-my-zsh.sh");
     expect(zshrc).toContain("share/zsh-autosuggestions/zsh-autosuggestions.zsh");
     expect(zshrc).toContain("share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh");
-    expect(zshrc).not.toContain("plugins=(git zsh-autosuggestions zsh-syntax-highlighting)");
   });
 
   test("managed application configuration is intentional and reachable", () => {
