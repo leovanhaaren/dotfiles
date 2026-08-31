@@ -68,11 +68,8 @@
       "bruno"
       "cmux"
       "codexbar"
-      "font-fira-code"
-      "font-fira-code-nerd-font"
-      "font-iosevka"
-      "font-jetbrains-mono-nerd-font"
-      "font-meslo-for-powerlevel10k"
+      # Fonts live in fonts.packages (modules/darwin/default.nix);
+      # cleanup = "none" leaves the brew-installed copies alone.
       "ghostty"
       "google-chrome"
       "home-assistant"

@@ -13,9 +13,11 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
   };
 
-  outputs = { self, nixpkgs, nix-darwin, home-manager }:
+  outputs = { self, nixpkgs, nix-darwin, home-manager, nix-homebrew }:
     let
       # One entry per machine; the attribute name must match one of
       # the host's names (LocalHostName, HostName, or ComputerName)
@@ -40,6 +42,17 @@
         modules = [
           module
           ./modules/darwin
+          nix-homebrew.darwinModules.nix-homebrew
+          {
+            # Install Homebrew itself declaratively; adopt an existing
+            # installation in place (Cellar and casks stay untouched).
+            # Taps stay mutable: brew bundle manages them as before.
+            nix-homebrew = {
+              enable = true;
+              inherit user;
+              autoMigrate = true;
+            };
+          }
           home-manager.darwinModules.home-manager
           {
             home-manager.useGlobalPkgs = true;
