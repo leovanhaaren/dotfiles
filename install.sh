@@ -108,9 +108,21 @@ run_nix() {
     fi
 
     if [ "$DRY_RUN" = true ]; then
+        if [ -e /run/current-system ] && command -v nvd >/dev/null 2>&1; then
+            log_info "Changes against the running system:"
+            nvd diff /run/current-system "$DOTFILES/result"
+        fi
         log_info "System closure built at ./result; nothing was activated."
         log_info "Inspect the pending change, then apply with: $0 --nix --apply"
     else
+        # An empty /opt/homebrew means an unmounted Homebrew volume;
+        # activating now would install a fresh Homebrew onto the
+        # internal disk, shadowed once the volume mounts.
+        if [ -d /opt/homebrew ] && [ -z "$(ls -A /opt/homebrew 2>/dev/null)" ]; then
+            log_error "/opt/homebrew exists but is empty - likely an unmounted volume."
+            log_error "Mount it first, or remove the empty directory for a fresh install."
+            exit 1
+        fi
         log_info "Activating (requires sudo)..."
         sudo "$DOTFILES/result/sw/bin/darwin-rebuild" switch --flake "$DOTFILES#$host"
         log_info "Activation complete. Roll back anytime with: darwin-rebuild --rollback"

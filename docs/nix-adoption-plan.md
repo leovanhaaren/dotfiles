@@ -91,6 +91,13 @@ Exit criteria: `.stow-local-ignore` and Stow usage in `setup.sh` are empty; `set
 | macOS update breaks Nix | Determinate installer handles this; worst case reinstall, config is all in git |
 | Brewfile.work drift | Port `Brewfile.work` into the work module in Phase 1 alongside base |
 
+## Maintenance
+
+- **Garbage collection is manual.** With `nix.enable = false` (Determinate manages the daemon), nix-darwin's `nix.gc.automatic` is unavailable, and every switch keeps a rollback generation forever. Periodically:
+  1. `darwin-rebuild --list-generations` to review what exists.
+  2. `sudo nix-collect-garbage --delete-older-than 30d` to drop old generations and reclaim store space.
+  Keep at least one known-good older generation around before collecting.
+
 ## Effort estimate
 
 - Phase 0-1: one evening.
