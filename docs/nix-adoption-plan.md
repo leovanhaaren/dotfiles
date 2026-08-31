@@ -64,6 +64,7 @@ Exit criteria: `.stow-local-ignore` and Stow usage in `setup.sh` are empty; `set
 ### Phase 4 - Multi-host rollout
 
 1. Add `hosts/mac-mini.nix`; bootstrap the second machine from the flake (`nix run nix-darwin -- switch --flake github:leovanhaaren/dotfiles`).
+   On a machine that keeps Homebrew on a separate SSD volume, provision the volume first so Homebrew never touches the internal disk: `sudo scripts/homebrew-ssd.sh --container <disk> --provision --apply`, then `./install.sh --nix --apply` (nix-homebrew installs onto the mounted volume).
 2. Move host-specific values (hostname, work module on/off) into host files.
 3. `flake.lock` becomes the cross-machine version pin, replacing ad-hoc brew versions.
 

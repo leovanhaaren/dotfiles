@@ -115,12 +115,16 @@ run_nix() {
         log_info "System closure built at ./result; nothing was activated."
         log_info "Inspect the pending change, then apply with: $0 --nix --apply"
     else
-        # An empty /opt/homebrew means an unmounted Homebrew volume;
-        # activating now would install a fresh Homebrew onto the
-        # internal disk, shadowed once the volume mounts.
-        if [ -d /opt/homebrew ] && [ -z "$(ls -A /opt/homebrew 2>/dev/null)" ]; then
-            log_error "/opt/homebrew exists but is empty - likely an unmounted volume."
-            log_error "Mount it first, or remove the empty directory for a fresh install."
+        # An empty, unmounted /opt/homebrew means the Homebrew volume
+        # is missing; activating now would install a fresh Homebrew
+        # onto the internal disk, shadowed once the volume mounts.
+        # A mounted volume is always fine, even when still empty
+        # (freshly provisioned via scripts/homebrew-ssd.sh --provision).
+        if [ -d /opt/homebrew ] \
+            && ! /sbin/mount | grep -q " on /opt/homebrew " \
+            && [ -z "$(ls -A /opt/homebrew 2>/dev/null)" ]; then
+            log_error "/opt/homebrew exists but is empty and not a mount point - likely an unmounted volume."
+            log_error "Mount it first, or remove the empty directory for a fresh internal-disk install."
             exit 1
         fi
         log_info "Activating (requires sudo)..."
