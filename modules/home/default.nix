@@ -7,6 +7,7 @@
   # The Brewfile keeps these entries until the Nix binaries are
   # verified on PATH; remove them there afterwards (Phase 1 exit).
   home.packages = with pkgs; [
+    air
     bat
     eza
     fd
@@ -18,10 +19,12 @@
     git-lfs
     glances
     go
+    go-migrate
+    go-tools # staticcheck
+    golangci-lint
     jq
     just
     lazygit
-    mas
     mise
     mosh
     neovim
