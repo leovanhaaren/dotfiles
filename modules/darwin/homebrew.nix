@@ -30,9 +30,16 @@
     ];
 
     brews = [
+      # brew bundle shells out to mas for the masApps below, so mas
+      # must come from Homebrew (nix-provided mas is not on the
+      # activation PATH).
+      "mas"
       # Tap formulae (not in nixpkgs)
       "felixkratz/formulae/borders"
       "alexsjones/llmfit/llmfit"
+      # First install on a fresh machine requires a one-time manual
+      # `brew trust --formula rjyo/moshi/moshi-hook` (scripts/brew.sh
+      # does this on the classic path; activation does not).
       "rjyo/moshi/moshi-hook"
       "agavra/tap/tuicr"
       "arimxyer/tap/models"
