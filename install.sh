@@ -77,12 +77,33 @@ run_nix() {
         fi
     fi
 
-    local host
-    host="$(scutil --get LocalHostName)"
+    # Match this machine against the flake's host entries. The names
+    # scutil reports (LocalHostName, HostName, ComputerName) can all
+    # differ, so try each until one is a darwinConfigurations attr.
+    local flake_hosts host candidate key
+    if ! flake_hosts="$("$nix_bin" eval --json "$DOTFILES#darwinConfigurations" --apply builtins.attrNames)"; then
+        log_error "Could not read darwinConfigurations from the flake."
+        exit 1
+    fi
+    host=""
+    for key in LocalHostName HostName ComputerName; do
+        candidate="$(scutil --get "$key" 2>/dev/null)" || continue
+        if [ -n "$candidate" ] && printf '%s' "$flake_hosts" | grep -qF "\"$candidate\""; then
+            host="$candidate"
+            break
+        fi
+    done
+    if [ -z "$host" ]; then
+        log_error "No darwinConfigurations entry matches this machine."
+        log_error "Machine names: LocalHostName=$(scutil --get LocalHostName 2>/dev/null), HostName=$(scutil --get HostName 2>/dev/null), ComputerName=$(scutil --get ComputerName 2>/dev/null)"
+        log_error "Flake hosts: $flake_hosts"
+        log_error "Add hosts/<name>.nix and a matching entry in flake.nix."
+        exit 1
+    fi
+
     log_info "Nix install: building darwinConfigurations.\"$host\""
     if ! "$nix_bin" build "$DOTFILES#darwinConfigurations.\"$host\".system" --out-link "$DOTFILES/result"; then
-        log_error "Build failed. If this host has no configuration yet, add hosts/<name>.nix"
-        log_error "and a matching darwinConfigurations entry in flake.nix."
+        log_error "Build failed; see the Nix error above."
         exit 1
     fi
 
@@ -91,7 +112,7 @@ run_nix() {
         log_info "Inspect the pending change, then apply with: $0 --nix --apply"
     else
         log_info "Activating (requires sudo)..."
-        sudo "$DOTFILES/result/sw/bin/darwin-rebuild" switch --flake "$DOTFILES"
+        sudo "$DOTFILES/result/sw/bin/darwin-rebuild" switch --flake "$DOTFILES#$host"
         log_info "Activation complete. Roll back anytime with: darwin-rebuild --rollback"
     fi
 }
