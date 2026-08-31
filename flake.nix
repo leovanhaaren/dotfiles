@@ -17,18 +17,28 @@
 
   outputs = { self, nixpkgs, nix-darwin, home-manager }:
     let
-      # One entry per machine; the attribute name must match the
-      # host's LocalHostName so `darwin-rebuild switch --flake .`
-      # and install.sh resolve it automatically.
+      # One entry per machine; the attribute name must match one of
+      # the host's names (LocalHostName, HostName, or ComputerName)
+      # so `darwin-rebuild switch --flake .` and install.sh resolve
+      # it automatically. User and home differ per machine.
       hosts = {
-        "MacBook-Pro-van-Leo" = ./hosts/macbook.nix;
-        "mac-mini" = ./hosts/mac-mini.nix;
+        "MacBook-Pro-van-Leo" = {
+          module = ./hosts/macbook.nix;
+          user = "l.vanhaaren";
+          home = "/Users/l.vanhaaren";
+        };
+        "leo-mac-mini" = {
+          module = ./hosts/mac-mini.nix;
+          user = "leo";
+          home = "/Volumes/SSD/leo";
+        };
       };
 
-      mkHost = hostModule: nix-darwin.lib.darwinSystem {
+      mkHost = { module, user, home }: nix-darwin.lib.darwinSystem {
         system = "aarch64-darwin";
+        specialArgs = { inherit user home; };
         modules = [
-          hostModule
+          module
           ./modules/darwin
           home-manager.darwinModules.home-manager
           {
@@ -37,7 +47,7 @@
             # targets are renamed aside instead of failing the switch.
             home-manager.backupFileExtension = "hm-backup";
             home-manager.useUserPackages = true;
-            home-manager.users."l.vanhaaren" = import ./modules/home;
+            home-manager.users.${user} = import ./modules/home;
           }
         ];
       };
