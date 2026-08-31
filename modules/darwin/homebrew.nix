@@ -66,7 +66,6 @@
 
     casks = [
       "bruno"
-      "cmux"
       "codexbar"
       # Fonts live in fonts.packages (modules/darwin/default.nix);
       # cleanup = "none" leaves the brew-installed copies alone.
