@@ -36,5 +36,18 @@ in
     ".zshrc"
   ]
   ++ filesUnder ../../bin "bin/"
-  ++ filesUnder ../../.config ".config/");
+  ++ filesUnder ../../.config ".config/")
+  # Convenience symlink, mirrors setup.sh's managed manual link;
+  # skipped when the checkout already lives at ~/dotfiles.
+  // lib.optionalAttrs (dotfilesDir != "${config.home.homeDirectory}/dotfiles") {
+    "dotfiles".source = config.lib.file.mkOutOfStoreSymlink dotfilesDir;
+  };
+
+  # Folders mac.sh creates imperatively on the classic path.
+  # ~/Screenshots is the screenshot location, which macOS does not
+  # create on its own.
+  home.activation.ensureDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    mkdir -p "${config.home.homeDirectory}/Workspaces/leovanhaaren"
+    mkdir -p "${config.home.homeDirectory}/Screenshots"
+  '';
 }
