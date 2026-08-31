@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
 {
+  imports = [ ./links.nix ];
+
   # CLI tools migrated from homebrew/Brewfile.base.
   # The Brewfile keeps these entries until the Nix binaries are
   # verified on PATH; remove them there afterwards (Phase 1 exit).
