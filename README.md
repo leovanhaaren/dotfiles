@@ -50,6 +50,9 @@ Neovim dependencies use an untracked, machine-local lockfile at `~/.config/nvim/
 ./scripts/mac.sh --apply --install-system-updates
 ```
 
+The base Brewfile installs `zsh-autosuggestions` and `zsh-syntax-highlighting`.
+The Zsh configuration sources both from Homebrew after Oh My Zsh loads, because these formulae are not installed in Oh My Zsh's `custom/plugins` directory.
+
 ### 4. Verify
 
 ```bash

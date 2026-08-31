@@ -8,7 +8,9 @@ export HOMEBREW_TEMP=/private/var/db/homebrew/tmp
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME=""
 DISABLE_AUTO_TITLE="true"
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+# Homebrew installs these plugins outside Oh My Zsh's custom/plugins directory;
+# source them explicitly below instead of asking Oh My Zsh to load them.
+plugins=(git)
 source "$ZSH/oh-my-zsh.sh"
 
 export DOTFILES_DIR="${${:-$HOME/.zshrc}:A:h}"
@@ -73,4 +75,15 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 
 [[ -d /opt/homebrew/opt/libpq/bin ]] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 [[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
+
+# Homebrew Zsh plugins
+# Syntax highlighting must be loaded after Oh My Zsh and other Zsh integrations.
+if command -v brew >/dev/null 2>&1; then
+  _BREW_PREFIX="${HOMEBREW_PREFIX:-$(brew --prefix)}"
+  [[ -r "$_BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
+    source "$_BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+  [[ -r "$_BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]] && \
+    source "$_BREW_PREFIX/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  unset _BREW_PREFIX
+fi
 
