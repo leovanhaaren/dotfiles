@@ -79,6 +79,7 @@ Exit criteria: `.stow-local-ignore` and Stow usage in `setup.sh` are empty; `set
 - **mise**: keep it for per-project tool versions initially; Nix devShells/direnv can replace it later per-project, not as part of this migration.
 - **Secrets**: stay in 1Password. No agenix/sops-nix needed since nothing secret lives in the repo today — keep it that way.
 - **VS Code settings**: keep the current manual symlink; `programs.vscode` fights Settings Sync.
+- **VS Code extensions**: the nix-darwin homebrew module has no `vscode` support, so the `vscode` entries stay in `Brewfile.base` (installed on the classic path only). On Nix machines install them manually with `code --install-extension`, or via Settings Sync.
 
 ## Risks and mitigations
 
