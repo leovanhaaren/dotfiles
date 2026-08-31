@@ -1,7 +1,7 @@
 { ... }:
 
 {
-  imports = [ ./homebrew.nix ];
+  imports = [ ./homebrew.nix ./defaults.nix ];
 
   # Determinate Nix manages the daemon and nix.conf itself.
   nix.enable = false;
