@@ -25,6 +25,7 @@
 \.swo$
 
 # Setup / management scripts
+^install\.sh$
 ^setup\.sh$
 ^uninstall\.sh$
 ^verify\.sh$

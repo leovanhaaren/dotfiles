@@ -4,13 +4,29 @@ Personal dotfiles for macOS development environments.
 
 ## Installation
 
+Two install paths are supported, with a single entry point:
+
+```bash
+./install.sh            # dry run; picks --nix if Nix is installed, --classic otherwise
+./install.sh --nix      # build the nix-darwin system closure, activate with --apply
+./install.sh --classic  # Stow + Homebrew scripts (no Nix required), apply with --apply
+```
+
+- **Nix (declarative)** - nix-darwin + home-manager via `flake.nix`.
+  Migration status and phases: `docs/nix-adoption-plan.md`.
+- **Classic (no Nix)** - the original GNU Stow + Homebrew setup below, unchanged.
+
+Both are dry-run by default and require `--apply` to change anything.
+The steps below describe the classic path in detail; they also still work standalone.
+
 ### Prerequisites
 
 - macOS
 - Git
 - Bash
-- GNU Stow
+- GNU Stow (classic path)
 - Homebrew for package installation
+- [Determinate Nix](https://install.determinate.systems) (nix path only)
 
 ### 1. Clone the Repository
 
