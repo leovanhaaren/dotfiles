@@ -21,7 +21,6 @@
       "jakehilborn/jakehilborn"
       "nguyenphutrong/tap"
       "nikitabobko/tap"
-      "oven-sh/bun"
       "ovh/tap"
       "protonpass/tap"
       "rjyo/moshi"
