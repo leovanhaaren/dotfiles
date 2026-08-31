@@ -44,6 +44,16 @@ describe("security-sensitive configuration", () => {
     expect(migration).toContain("Existing Homebrew volume is not empty");
   });
 
+  test("provision mode never copies or overwrites an existing Homebrew", () => {
+    const migration = read("scripts/homebrew-ssd.sh");
+    // Copy and backup only happen in migration mode.
+    expect(migration).toMatch(/if \[ "\$PROVISION" = false \]; then\n\s*log_info "Copying Homebrew/);
+    // Provisioning on top of an internal-disk install must abort.
+    expect(migration).toContain("migrate it by running without --provision");
+    // Validation is skipped when no brew binary exists yet.
+    expect(migration).toContain('[ "$DRY_RUN" = false ] && [ -x "$MOUNT_POINT/bin/brew" ]');
+  });
+
   test("bootstrap code is explicit and pinned", () => {
     expect(read("scripts/brew.sh")).not.toContain("curl");
     expect(read(".config/nvim/lua/config/lazy.lua")).toContain("lazy_commit");
