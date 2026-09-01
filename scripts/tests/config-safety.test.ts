@@ -99,7 +99,6 @@ describe("lifecycle correctness", () => {
       'brew "felixkratz/formulae/borders", trusted: true',
       'brew "rjyo/moshi/moshi-hook", trusted: true',
       'brew "agavra/tap/tuicr", trusted: true',
-      'brew "arimxyer/tap/models", trusted: true',
       'brew "gromgit/brewtils/taproom", trusted: true',
       'brew "modem-dev/tap/hunk", trusted: true',
       'brew "protonpass/tap/pass-cli", trusted: true',

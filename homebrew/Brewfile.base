@@ -1,7 +1,6 @@
 # Taps
 tap "alexsjones/llmfit"
 tap "anomalyco/tap"
-tap "arimxyer/tap"
 tap "charmbracelet/tap"
 tap "FelixKratz/formulae"
 tap "gromgit/brewtils"
@@ -39,6 +38,7 @@ brew "libheif"
 brew "llmfit"
 brew "mas"
 brew "mise"
+brew "models"
 brew "mole"
 brew "mosh"
 brew "rjyo/moshi/moshi-hook", trusted: true
@@ -60,7 +60,6 @@ brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 brew "agavra/tap/tuicr", trusted: true
-brew "arimxyer/tap/models", trusted: true
 brew "gromgit/brewtils/taproom", trusted: true
 brew "modem-dev/tap/hunk", trusted: true
 brew "protonpass/tap/pass-cli", trusted: true
