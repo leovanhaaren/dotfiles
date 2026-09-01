@@ -6,7 +6,7 @@ tap "homebrew/autoupdate"
 tap "jakehilborn/jakehilborn"
 tap "nguyenphutrong/tap"
 tap "nikitabobko/tap"
-tap "ovh/tap"
+# tap "ovh/tap"
 tap "protonpass/tap"
 tap "rjyo/moshi"
 tap "steipete/tap"
@@ -92,7 +92,7 @@ cask "zed"
 cask "zen"
 cask "nguyenphutrong/tap/quotio", trusted: true
 cask "nikitabobko/tap/aerospace", trusted: true
-cask "ovh/tap/ovhcloud-cli", trusted: true
+# cask "ovh/tap/ovhcloud-cli", trusted: true
 
 # Mac App Store Apps
 # mas "Irvue", id: 1039633667

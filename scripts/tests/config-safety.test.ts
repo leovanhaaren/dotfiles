@@ -102,7 +102,6 @@ describe("lifecycle correctness", () => {
       'cask "vishvavariya/notchy/notchy", trusted: true',
       'cask "nguyenphutrong/tap/quotio", trusted: true',
       'cask "nikitabobko/tap/aerospace", trusted: true',
-      'cask "ovh/tap/ovhcloud-cli", trusted: true',
     ];
 
     for (const packageEntry of trustedPackages) {
