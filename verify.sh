@@ -128,6 +128,16 @@ else
 fi
 echo ""
 
+echo "Checking SSH agent..."
+if ! command -v pass-cli >/dev/null 2>&1; then
+    log_warn "pass-cli is not installed; SSH keys cannot be loaded from Proton Pass"
+elif ssh-add -l >/dev/null 2>&1; then
+    log_ok "SSH agent has keys loaded"
+else
+    log_warn "SSH agent has no keys; load them with: scripts/ssh-load-keys.sh"
+fi
+echo ""
+
 echo "=== Verification Summary ==="
 if [ "$ERRORS" -eq 0 ] && [ "$WARNINGS" -eq 0 ]; then
     echo -e "${GREEN}All checks passed!${NC}"

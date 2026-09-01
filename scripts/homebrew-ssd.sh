@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Move Homebrew to an external SSD using an APFS volume and a LaunchDaemon.
+# With --provision, prepare an empty mounted volume on a fresh machine
+# instead (nix-homebrew or the Homebrew installer then installs into it).
 # The command is a dry run unless --apply is provided.
 
 set -euo pipefail
@@ -30,12 +32,14 @@ MOUNT_SCRIPT_NEW="${MOUNT_SCRIPT}.new.$$"
 LAUNCH_DAEMON_NEW="${LAUNCH_DAEMON}.new.$$"
 DISK_ID=""
 BREW_USER="${SUDO_USER:-${USER:-}}"
+PROVISION=false
 
 usage() {
     echo "Usage: sudo $0 --container <disk> [--apply]"
     echo ""
     echo "Options:"
     echo "  -c, --container   APFS container identifier (for example disk5)"
+    echo "  --provision       Prepare an empty volume on a fresh machine (no copy)"
     echo "  --apply           Apply the migration"
     echo "  -n, --dry-run     Show the migration plan without changes (default)"
     echo "  -h, --help        Show this help message"
@@ -150,6 +154,7 @@ while [[ $# -gt 0 ]]; do
             CONTAINER=$(normalize_disk "$2")
             shift 2
             ;;
+        --provision) PROVISION=true; shift ;;
         --apply) DRY_RUN=false; shift ;;
         -n|--dry-run) DRY_RUN=true; shift ;;
         -h|--help) usage ;;
@@ -177,12 +182,17 @@ if [ "$DRY_RUN" = false ] && [ "$(id -u)" -ne 0 ]; then
     log_error "Apply mode must be run with sudo"
     exit 1
 fi
-if [ ! -x "$MOUNT_POINT/bin/brew" ]; then
+CURRENT_NAME=$(disk_field "$MOUNT_POINT" "Volume Name" || true)
+if [ "$PROVISION" = false ] && [ ! -x "$MOUNT_POINT/bin/brew" ]; then
     log_error "Homebrew not found at $MOUNT_POINT/bin/brew"
+    log_error "On a fresh machine, prepare an empty volume with --provision"
+    exit 1
+fi
+if [ "$PROVISION" = true ] && [ -x "$MOUNT_POINT/bin/brew" ] && [ "$CURRENT_NAME" != "$VOLUME_NAME" ]; then
+    log_error "Homebrew is already installed at $MOUNT_POINT; migrate it by running without --provision"
     exit 1
 fi
 
-CURRENT_NAME=$(disk_field "$MOUNT_POINT" "Volume Name" || true)
 CURRENT_CONTAINER=$(normalize_disk "$(disk_field "$MOUNT_POINT" "APFS Container" || true)")
 if [ "$CURRENT_NAME" = "$VOLUME_NAME" ]; then
     if [ "$CURRENT_CONTAINER" != "$CONTAINER" ]; then
@@ -227,6 +237,8 @@ fi
 echo ""
 if [ "$DRY_RUN" = true ]; then
     echo "=== Homebrew SSD migration dry run ==="
+elif [ "$PROVISION" = true ]; then
+    echo "=== Provisioning empty Homebrew volume on external SSD ==="
 else
     echo "=== Moving Homebrew to external SSD ==="
 fi
@@ -235,7 +247,11 @@ if [ "$VOLUME_EXISTS" = false ]; then
     run diskutil apfs addVolume "$CONTAINER" APFS "$VOLUME_NAME"
     if [ "$DRY_RUN" = true ]; then
         log_info "[DRY-RUN] The new volume UUID and device identifier will be resolved after creation"
-        log_info "[DRY-RUN] Homebrew will be copied, validated as $BREW_USER, mounted, and verified with rollback enabled"
+        if [ "$PROVISION" = true ]; then
+            log_info "[DRY-RUN] The empty volume will be mounted at $MOUNT_POINT with automount installed; nothing is copied"
+        else
+            log_info "[DRY-RUN] Homebrew will be copied, validated as $BREW_USER, mounted, and verified with rollback enabled"
+        fi
         exit 0
     fi
 fi
@@ -252,15 +268,17 @@ if [ -z "$VOLUME_UUID" ] || [ -z "$DISK_ID" ]; then
     exit 1
 fi
 
-log_info "Copying Homebrew to $VOLUME_PATH..."
-run /usr/bin/ditto "$MOUNT_POINT" "$VOLUME_PATH"
-if [ "$DRY_RUN" = false ]; then
-    validate_brew "$VOLUME_PATH/bin/brew"
-fi
+if [ "$PROVISION" = false ]; then
+    log_info "Copying Homebrew to $VOLUME_PATH..."
+    run /usr/bin/ditto "$MOUNT_POINT" "$VOLUME_PATH"
+    if [ "$DRY_RUN" = false ]; then
+        validate_brew "$VOLUME_PATH/bin/brew"
+    fi
 
-log_info "Backing up the original Homebrew tree..."
-run mv "$MOUNT_POINT" "${MOUNT_POINT}.bak"
-[ "$DRY_RUN" = false ] && BACKUP_CREATED=true
+    log_info "Backing up the original Homebrew tree..."
+    run mv "$MOUNT_POINT" "${MOUNT_POINT}.bak"
+    [ "$DRY_RUN" = false ] && BACKUP_CREATED=true
+fi
 
 log_info "Mounting $DISK_ID at $MOUNT_POINT..."
 run mkdir -p "$MOUNT_POINT"
@@ -288,7 +306,9 @@ if [ "$DRY_RUN" = false ]; then
 fi
 run /usr/bin/install -d -o root -g wheel -m 755 "$TEMP_ROOT"
 run /usr/bin/install -d -o "$BREW_UID" -g "$BREW_GID" -m 700 "$TEMP_DIR"
-if [ "$DRY_RUN" = false ]; then
+# In provision mode there is no brew binary yet; nix-homebrew (or the
+# Homebrew installer) puts it on the mounted volume afterwards.
+if [ "$DRY_RUN" = false ] && [ -x "$MOUNT_POINT/bin/brew" ]; then
     validate_brew "$MOUNT_POINT/bin/brew"
 fi
 
@@ -363,6 +383,9 @@ if [ "$DRY_RUN" = true ]; then
     echo "=== Dry run complete. Re-run with --apply under sudo ==="
 elif [ "$ALREADY_MIGRATED" = true ]; then
     echo "=== Homebrew automount files repaired ==="
+elif [ "$PROVISION" = true ]; then
+    echo "=== Empty Homebrew volume provisioned at $MOUNT_POINT ==="
+    echo "Next: ./install.sh --nix --apply installs Homebrew onto the volume."
 else
     echo "=== Homebrew moved to external SSD ==="
     echo "Backup retained at ${MOUNT_POINT}.bak until reboot verification succeeds."

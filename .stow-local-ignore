@@ -38,6 +38,7 @@
 ^homebrew$
 ^vscode$
 ^ssh$
+^raycast$
 ^rtk$
 ^tmux$
 

@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+resolve_script_path() {
+    local source="$1"
+    local directory target
+    while [ -L "$source" ]; do
+        directory=$(cd -P "$(dirname "$source")" && pwd)
+        target=$(readlink "$source")
+        case "$target" in
+            /*) source="$target" ;;
+            *) source="$directory/$target" ;;
+        esac
+    done
+    directory=$(cd -P "$(dirname "$source")" && pwd)
+    printf '%s/%s\n' "$directory" "$(basename "$source")"
+}
+
+SCRIPT_PATH=$(resolve_script_path "${BASH_SOURCE[0]}")
+DOTFILES="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd -P)"
+OUTPUT="$DOTFILES/raycast/extensions.list"
+EXTENSIONS_DIR="$HOME/.config/raycast/extensions"
+APPLY=false
+INSTALL=false
+
+usage() {
+    echo "Usage: save-raycast-extensions [--apply|--install]"
+    echo ""
+    echo "Without flags, report whether the tracked extension list is current."
+    echo "  --apply    Update the tracked list from the installed extensions"
+    echo "  --install  Open the Raycast store for tracked extensions not installed"
+    echo "             (Raycast asks for confirmation per extension)"
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --apply) APPLY=true; shift ;;
+        --install) INSTALL=true; shift ;;
+        -n|--dry-run) APPLY=false; shift ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+    esac
+done
+
+command -v jq >/dev/null 2>&1 || { echo "jq is not installed" >&2; exit 1; }
+[ -d "$EXTENSIONS_DIR" ] || { echo "Raycast extensions directory not found: $EXTENSIONS_DIR" >&2; exit 1; }
+
+installed_extensions() {
+    local manifest
+    for manifest in "$EXTENSIONS_DIR"/*/package.json; do
+        [ -f "$manifest" ] || continue
+        jq -r '"\(.owner // .author)/\(.name)"' "$manifest"
+    done | LC_ALL=C sort -u
+}
+
+if [ "$INSTALL" = true ]; then
+    [ -f "$OUTPUT" ] || { echo "No tracked list at $OUTPUT; run with --apply first" >&2; exit 1; }
+    MISSING=$(comm -23 <(LC_ALL=C sort -u "$OUTPUT") <(installed_extensions))
+    if [ -z "$MISSING" ]; then
+        echo "All tracked Raycast extensions are installed."
+        exit 0
+    fi
+    while IFS= read -r extension; do
+        echo "Opening Raycast store: $extension"
+        open "raycast://extensions/$extension"
+    done <<< "$MISSING"
+    exit 0
+fi
+
+if [ "$APPLY" = false ]; then
+    if installed_extensions | diff -u "$OUTPUT" - >/dev/null 2>&1; then
+        echo "Raycast extension list is current."
+    else
+        echo "[DRY-RUN] Raycast extension list would be updated: $OUTPUT"
+    fi
+    exit 0
+fi
+
+mkdir -p "$(dirname "$OUTPUT")"
+TEMP_FILE=$(mktemp "$DOTFILES/.raycast-extensions.XXXXXX")
+trap 'rm -f "$TEMP_FILE"' EXIT
+installed_extensions > "$TEMP_FILE"
+if cmp -s "$TEMP_FILE" "$OUTPUT" 2>/dev/null; then
+    echo "Raycast extension list is current."
+else
+    mv "$TEMP_FILE" "$OUTPUT"
+    echo "Updated $OUTPUT"
+fi

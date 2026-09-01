@@ -23,6 +23,9 @@ Apply package changes explicitly:
 
 Pass `--cleanup` with `--apply` only when Homebrew cleanup is also intended.
 
+Non-official formulae and casks in the Brewfiles use Homebrew's `trusted: true` option.
+`brew bundle` trusts those exact package entries before installation without trusting an entire tap.
+
 ### Install directly with brew bundle
 
 ```bash
