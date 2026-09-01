@@ -11,11 +11,9 @@
     onActivation.cleanup = "none";
 
     taps = [
-      "alexsjones/llmfit"
       "anomalyco/tap"
       "charmbracelet/tap"
       "FelixKratz/formulae"
-      "gromgit/brewtils"
       "homebrew/autoupdate"
       "jakehilborn/jakehilborn"
       "nguyenphutrong/tap"
@@ -36,13 +34,13 @@
       # for fully-qualified entries by default, matching the per-entry
       # trust the classic Brewfiles declare explicitly.
       "felixkratz/formulae/borders"
-      "alexsjones/llmfit/llmfit"
       "rjyo/moshi/moshi-hook"
-      "agavra/tap/tuicr"
-      "gromgit/brewtils/taproom"
-      "modem-dev/tap/hunk"
       "protonpass/tap/pass-cli"
       "worktrunk"
+      "hunk"
+      "llmfit"
+      "taproom"
+      "tuicr"
       "models"
       "mole"
       "railway"

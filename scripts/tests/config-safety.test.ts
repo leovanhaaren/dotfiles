@@ -98,11 +98,7 @@ describe("lifecycle correctness", () => {
     const trustedPackages = [
       'brew "felixkratz/formulae/borders", trusted: true',
       'brew "rjyo/moshi/moshi-hook", trusted: true',
-      'brew "agavra/tap/tuicr", trusted: true',
-      'brew "gromgit/brewtils/taproom", trusted: true',
-      'brew "modem-dev/tap/hunk", trusted: true',
       'brew "protonpass/tap/pass-cli", trusted: true',
-      'brew "datadog-labs/pack/pup", trusted: true',
       'cask "vishvavariya/notchy/notchy", trusted: true',
       'cask "nguyenphutrong/tap/quotio", trusted: true',
       'cask "nikitabobko/tap/aerospace", trusted: true',
