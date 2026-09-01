@@ -26,10 +26,10 @@
     ];
 
     brews = [
-      # brew bundle shells out to mas for the masApps below, so mas
-      # must come from Homebrew (nix-provided mas is not on the
-      # activation PATH).
-      "mas"
+      # Mac App Store apps disabled for now; re-enable mas and the
+      # masApps block below together (brew bundle shells out to mas,
+      # so mas must come from Homebrew, not nix).
+      # "mas"
       # Tap formulae (not in nixpkgs). nix-darwin emits `trusted: true`
       # for fully-qualified entries by default, matching the per-entry
       # trust the classic Brewfiles declare explicitly.
@@ -85,10 +85,10 @@
       "zen"
     ];
 
-    masApps = {
-      "Irvue" = 1039633667;
-      "Tailscale" = 1475387142;
-      "WireGuard" = 1451685025;
-    };
+    # masApps = {
+    #   "Irvue" = 1039633667;
+    #   "Tailscale" = 1475387142;
+    #   "WireGuard" = 1451685025;
+    # };
   };
 }

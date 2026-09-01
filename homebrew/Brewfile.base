@@ -35,7 +35,7 @@ brew "jq"
 brew "lazygit"
 brew "libheif"
 brew "llmfit"
-brew "mas"
+# brew "mas"
 brew "mise"
 brew "models"
 brew "mole"
@@ -95,9 +95,9 @@ cask "nikitabobko/tap/aerospace", trusted: true
 cask "ovh/tap/ovhcloud-cli", trusted: true
 
 # Mac App Store Apps
-mas "Irvue", id: 1039633667
-mas "Tailscale", id: 1475387142
-mas "WireGuard", id: 1451685025
+# mas "Irvue", id: 1039633667
+# mas "Tailscale", id: 1475387142
+# mas "WireGuard", id: 1451685025
 
 # VS Code Extensions
 vscode "catppuccin.catppuccin-vsc-icons"
