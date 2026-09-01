@@ -57,10 +57,6 @@ fi
 echo "Updating Homebrew..."
 brew update
 
-if grep -q 'brew "moshi-hook"' "$BREWFILE_PATH"; then
-    brew trust --formula rjyo/moshi/moshi-hook
-fi
-
 brew bundle install --file="$BREWFILE_PATH"
 
 if [ "$CLEANUP" = true ]; then

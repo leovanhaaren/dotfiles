@@ -44,6 +44,16 @@ describe("security-sensitive configuration", () => {
     expect(migration).toContain("Existing Homebrew volume is not empty");
   });
 
+  test("provision mode never copies or overwrites an existing Homebrew", () => {
+    const migration = read("scripts/homebrew-ssd.sh");
+    // Copy and backup only happen in migration mode.
+    expect(migration).toMatch(/if \[ "\$PROVISION" = false \]; then\n\s*log_info "Copying Homebrew/);
+    // Provisioning on top of an internal-disk install must abort.
+    expect(migration).toContain("migrate it by running without --provision");
+    // Validation is skipped when no brew binary exists yet.
+    expect(migration).toContain('[ "$DRY_RUN" = false ] && [ -x "$MOUNT_POINT/bin/brew" ]');
+  });
+
   test("bootstrap code is explicit and pinned", () => {
     expect(read("scripts/brew.sh")).not.toContain("curl");
     expect(read(".config/nvim/lua/config/lazy.lua")).toContain("lazy_commit");
@@ -83,16 +93,39 @@ describe("lifecycle correctness", () => {
     expect(read("homebrew/Brewfile.base")).not.toMatch(/^go "\s/m);
   });
 
-  test("Homebrew Zsh plugins are installed and sourced outside Oh My Zsh", () => {
+  test("Brewfile trusts only explicitly selected third-party packages", () => {
+    const brewfiles = `${read("homebrew/Brewfile.base")}\n${read("homebrew/Brewfile.work")}`;
+    const trustedPackages = [
+      'brew "felixkratz/formulae/borders", trusted: true',
+      'brew "rjyo/moshi/moshi-hook", trusted: true',
+      'brew "agavra/tap/tuicr", trusted: true',
+      'brew "arimxyer/tap/models", trusted: true',
+      'brew "gromgit/brewtils/taproom", trusted: true',
+      'brew "modem-dev/tap/hunk", trusted: true',
+      'brew "protonpass/tap/pass-cli", trusted: true',
+      'brew "datadog-labs/pack/pup", trusted: true',
+      'cask "vishvavariya/notchy/notchy", trusted: true',
+      'cask "nguyenphutrong/tap/quotio", trusted: true',
+      'cask "nikitabobko/tap/aerospace", trusted: true',
+      'cask "ovh/tap/ovhcloud-cli", trusted: true',
+    ];
+
+    for (const packageEntry of trustedPackages) {
+      expect(brewfiles).toContain(packageEntry);
+    }
+    expect(brewfiles).not.toMatch(/^tap .*trusted: true/m);
+  });
+
+  test("Zsh works without Oh My Zsh: own compinit, Homebrew plugins sourced", () => {
     const brewfile = read("homebrew/Brewfile.base");
     const zshrc = read(".zshrc");
 
     expect(brewfile).toContain('brew "zsh-autosuggestions"');
     expect(brewfile).toContain('brew "zsh-syntax-highlighting"');
-    expect(zshrc).toContain("plugins=(git)");
+    expect(zshrc).toContain("compinit");
+    expect(zshrc).not.toContain("oh-my-zsh.sh");
     expect(zshrc).toContain("share/zsh-autosuggestions/zsh-autosuggestions.zsh");
     expect(zshrc).toContain("share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh");
-    expect(zshrc).not.toContain("plugins=(git zsh-autosuggestions zsh-syntax-highlighting)");
   });
 
   test("managed application configuration is intentional and reachable", () => {
