@@ -86,6 +86,7 @@ cask "proton-pass"
 cask "protonvpn"
 cask "raycast"
 cask "session-manager-plugin"
+cask "sloth"
 cask "tableplus"
 cask "visual-studio-code"
 cask "vishvavariya/notchy/notchy", trusted: true

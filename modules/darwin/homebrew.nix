@@ -79,6 +79,7 @@
       "proton-pass"
       "protonvpn"
       "raycast"
+      "sloth"
       "tableplus"
       "vishvavariya/notchy/notchy"
       "visual-studio-code"

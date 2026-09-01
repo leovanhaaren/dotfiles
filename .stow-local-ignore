@@ -39,7 +39,6 @@
 ^vscode$
 ^ssh$
 ^raycast$
-^rtk$
 ^tmux$
 
 # Nix flake (managed via darwin-rebuild, not stowed)

@@ -31,8 +31,7 @@ managed_manual_links() {
     fi
     printf '%s\t%s\t%s\n' \
         "ssh/config" "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" \
-        "vscode/settings.json" "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json" \
-        "rtk/config.toml" "$DOTFILES/rtk/config.toml" "$HOME/Library/Application Support/rtk/config.toml"
+        "vscode/settings.json" "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
     # Tracked public keys and pinned host keys (private keys stay in
     # the agent, loaded from Proton Pass by scripts/ssh-load-keys.sh).
     local ssh_file
