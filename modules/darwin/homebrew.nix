@@ -14,7 +14,7 @@
       "anomalyco/tap"
       "charmbracelet/tap"
       "FelixKratz/formulae"
-      "homebrew/autoupdate"
+      # "homebrew/autoupdate"
       "jakehilborn/jakehilborn"
       "nguyenphutrong/tap"
       "nikitabobko/tap"

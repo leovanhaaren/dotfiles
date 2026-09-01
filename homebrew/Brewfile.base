@@ -2,7 +2,7 @@
 tap "anomalyco/tap"
 tap "charmbracelet/tap"
 tap "FelixKratz/formulae"
-tap "homebrew/autoupdate"
+# tap "homebrew/autoupdate"
 tap "jakehilborn/jakehilborn"
 tap "nguyenphutrong/tap"
 tap "nikitabobko/tap"
