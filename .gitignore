@@ -9,6 +9,9 @@
 /.test-safety-*/
 /.test-stow-*/
 
+# Nix build output
+/result
+
 # Machine-local dependency state
 /.config/nvim/lazy-lock.json
 

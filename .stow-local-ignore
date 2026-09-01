@@ -25,6 +25,7 @@
 \.swo$
 
 # Setup / management scripts
+^install\.sh$
 ^setup\.sh$
 ^uninstall\.sh$
 ^verify\.sh$
@@ -40,6 +41,14 @@
 ^raycast$
 ^rtk$
 ^tmux$
+
+# Nix flake (managed via darwin-rebuild, not stowed)
+^flake\.nix$
+^flake\.lock$
+^hosts$
+^modules$
+^docs$
+^result$
 
 # Repo-specific directories not meant for ~
 ^ai-providers$
