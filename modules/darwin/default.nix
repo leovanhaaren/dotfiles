@@ -1,4 +1,5 @@
-{ pkgs, ... }:
+# user and home come from the host entry in flake.nix (specialArgs).
+{ pkgs, user, home, ... }:
 
 {
   imports = [ ./homebrew.nix ./defaults.nix ];
@@ -7,11 +8,11 @@
   nix.enable = false;
 
   # User owning user-scoped options (Homebrew, defaults).
-  system.primaryUser = "l.vanhaaren";
+  system.primaryUser = user;
 
-  users.users."l.vanhaaren" = {
-    name = "l.vanhaaren";
-    home = "/Users/l.vanhaaren";
+  users.users.${user} = {
+    name = user;
+    inherit home;
   };
 
   programs.zsh.enable = true;
