@@ -93,6 +93,29 @@ describe("lifecycle correctness", () => {
     expect(read("homebrew/Brewfile.base")).not.toMatch(/^go "\s/m);
   });
 
+  test("Brewfile trusts only explicitly selected third-party packages", () => {
+    const brewfiles = `${read("homebrew/Brewfile.base")}\n${read("homebrew/Brewfile.work")}`;
+    const trustedPackages = [
+      'brew "felixkratz/formulae/borders", trusted: true',
+      'brew "rjyo/moshi/moshi-hook", trusted: true',
+      'brew "agavra/tap/tuicr", trusted: true',
+      'brew "arimxyer/tap/models", trusted: true',
+      'brew "gromgit/brewtils/taproom", trusted: true',
+      'brew "modem-dev/tap/hunk", trusted: true',
+      'brew "protonpass/tap/pass-cli", trusted: true',
+      'brew "datadog-labs/pack/pup", trusted: true',
+      'cask "vishvavariya/notchy/notchy", trusted: true',
+      'cask "nguyenphutrong/tap/quotio", trusted: true',
+      'cask "nikitabobko/tap/aerospace", trusted: true',
+      'cask "ovh/tap/ovhcloud-cli", trusted: true',
+    ];
+
+    for (const packageEntry of trustedPackages) {
+      expect(brewfiles).toContain(packageEntry);
+    }
+    expect(brewfiles).not.toMatch(/^tap .*trusted: true/m);
+  });
+
   test("Zsh works without Oh My Zsh: own compinit, Homebrew plugins sourced", () => {
     const brewfile = read("homebrew/Brewfile.base");
     const zshrc = read(".zshrc");
