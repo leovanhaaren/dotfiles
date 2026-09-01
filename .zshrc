@@ -4,14 +4,8 @@
 # Homebrew
 export HOMEBREW_TEMP=/private/var/db/homebrew/tmp
 
-# Oh My Zsh
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME=""
-DISABLE_AUTO_TITLE="true"
-# Homebrew installs these plugins outside Oh My Zsh's custom/plugins directory;
-# source them explicitly below instead of asking Oh My Zsh to load them.
-plugins=(git)
-source "$ZSH/oh-my-zsh.sh"
+# Completion (previously initialized by Oh My Zsh)
+autoload -Uz compinit && compinit
 
 export DOTFILES_DIR="${${:-$HOME/.zshrc}:A:h}"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
@@ -77,7 +71,7 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 [[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
 
 # Homebrew Zsh plugins
-# Syntax highlighting must be loaded after Oh My Zsh and other Zsh integrations.
+# Syntax highlighting must be loaded after the other Zsh integrations.
 if command -v brew >/dev/null 2>&1; then
   _BREW_PREFIX="${HOMEBREW_PREFIX:-$(brew --prefix)}"
   [[ -r "$_BREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] && \
