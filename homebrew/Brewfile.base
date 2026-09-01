@@ -9,7 +9,6 @@ tap "homebrew/autoupdate"
 tap "jakehilborn/jakehilborn"
 tap "nguyenphutrong/tap"
 tap "nikitabobko/tap"
-tap "oven-sh/bun"
 tap "ovh/tap"
 tap "protonpass/tap"
 tap "rjyo/moshi"
@@ -19,7 +18,7 @@ tap "vishvavariya/notchy"
 # CLI Tools
 brew "aom"
 brew "bat"
-brew "borders"
+brew "felixkratz/formulae/borders", trusted: true
 brew "bruno-cli"
 brew "eza"
 brew "fd"
@@ -42,7 +41,7 @@ brew "mas"
 brew "mise"
 brew "mole"
 brew "mosh"
-brew "moshi-hook"
+brew "rjyo/moshi/moshi-hook", trusted: true
 brew "neovim"
 brew "sesh"
 brew "shellcheck"
@@ -60,11 +59,11 @@ brew "zoxide"
 brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
-brew "agavra/tap/tuicr"
-brew "arimxyer/tap/models"
-brew "gromgit/brewtils/taproom"
-brew "modem-dev/tap/hunk"
-brew "protonpass/tap/pass-cli"
+brew "agavra/tap/tuicr", trusted: true
+brew "arimxyer/tap/models", trusted: true
+brew "gromgit/brewtils/taproom", trusted: true
+brew "modem-dev/tap/hunk", trusted: true
+brew "protonpass/tap/pass-cli", trusted: true
 brew "railway"
 # GH Extensions (install manually: gh extension install <repo>)
 # gh extension install dlvhdr/gh-dash
@@ -89,14 +88,13 @@ cask "raycast"
 cask "session-manager-plugin"
 cask "tableplus"
 cask "visual-studio-code"
-cask "vishvavariya/notchy/notchy"
+cask "vishvavariya/notchy/notchy", trusted: true
 cask "wezterm"
 cask "zed"
 cask "zen"
-cask "cmux"
-cask "nguyenphutrong/tap/quotio"
-cask "nikitabobko/tap/aerospace"
-cask "ovh/tap/ovhcloud-cli"
+cask "nguyenphutrong/tap/quotio", trusted: true
+cask "nikitabobko/tap/aerospace", trusted: true
+cask "ovh/tap/ovhcloud-cli", trusted: true
 
 # Mac App Store Apps
 mas "Irvue", id: 1039633667

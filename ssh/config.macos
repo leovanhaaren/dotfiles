@@ -3,12 +3,14 @@
 # This won't be added again if you remove it.
 Include ~/.orbstack/ssh/config
 
+# Private keys live in the agent (Proton Pass via ssh-load-keys.sh);
+# only tracked public keys select the identity, so a fresh machine
+# needs no key files, just a logged-in pass-cli.
 Host github.com
   HostName github.com
   User git
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_leovanhaaren
+  IdentityFile ~/.ssh/id_leovanhaaren.pub
+  IdentitiesOnly yes
 
 Host github.com-ksyos
   HostName github.com
@@ -23,10 +25,8 @@ Host 46.225.53.85
 Host mac-mini.local
   HostName leo-mac-mini.stork-duck.ts.net
   User leo
-  AddKeysToAgent yes
-  UseKeychain yes
   IdentitiesOnly yes
-  IdentityFile ~/.ssh/id_leovanhaaren
+  IdentityFile ~/.ssh/id_leovanhaaren.pub
 
 Host brabonas.local
   HostName brabonas.stork-duck.ts.net
@@ -46,3 +46,9 @@ Host docker.local
 #  PreferredAuthentications password
 #  PubkeyAuthentication no
 #  PasswordAuthentication yes
+
+# Applies to all hosts; per-host blocks above take precedence.
+# known_hosts.base is tracked in the repo so fresh machines get the
+# host keys without trust-on-first-use prompts.
+Host *
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/known_hosts.base

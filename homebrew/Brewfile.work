@@ -8,7 +8,7 @@ brew "aws-vault"
 brew "awscli"
 brew "git-lfs"
 brew "jira-cli"
-brew "datadog-labs/pack/pup"
+brew "datadog-labs/pack/pup", trusted: true
 
 # Desktop Applications (Casks)
 cask "1password"
