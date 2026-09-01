@@ -37,6 +37,9 @@
         home-manager.darwinModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
+          # On first activation, existing Stow symlinks at the same
+          # targets are renamed aside instead of failing the switch.
+          home-manager.backupFileExtension = "hm-backup";
           home-manager.useUserPackages = true;
           home-manager.users."l.vanhaaren" = import ./modules/home;
         }
