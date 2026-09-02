@@ -73,6 +73,7 @@
       "obsidian"
       "orbstack"
       # "ovh/tap/ovhcloud-cli"
+      "proton-drive"
       "proton-pass"
       "protonvpn"
       "raycast"
