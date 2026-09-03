@@ -6,6 +6,21 @@ export HOMEBREW_TEMP=/private/var/db/homebrew/tmp
 
 # Completion (previously initialized by Oh My Zsh)
 autoload -Uz compinit && compinit
+zmodload zsh/complist
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "$HOME/.cache/zsh/zcompcache"
+zstyle ':completion:*:descriptions' format '%F{yellow}-- %d --%f'
+setopt ALWAYS_TO_END COMPLETE_IN_WORD AUTO_MENU
+
+# History (previously configured by Oh My Zsh)
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=10000
+setopt EXTENDED_HISTORY HIST_EXPIRE_DUPS_FIRST HIST_IGNORE_DUPS HIST_IGNORE_SPACE
+setopt HIST_VERIFY INC_APPEND_HISTORY SHARE_HISTORY
 
 export DOTFILES_DIR="${${:-$HOME/.zshrc}:A:h}"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
