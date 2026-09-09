@@ -32,6 +32,7 @@ export OBSIDIAN_VAULT="$HOME/Obsidian/Personal"
 [[ -f ~/.functions ]] && source ~/.functions
 
 # SSH keys
+export SSH_AUTH_SOCK=/Users/l.vanhaaren/.ssh/proton-pass-ssh-agent.sock
 if [[ -x "$DOTFILES_DIR/scripts/ssh-load-keys.sh" ]] && \
   command -v pass-cli >/dev/null 2>&1 && \
   command -v ssh-add >/dev/null 2>&1; then

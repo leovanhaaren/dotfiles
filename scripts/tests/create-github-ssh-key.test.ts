@@ -208,7 +208,7 @@ fi
       `#!/bin/bash
 set -e
 printf 'pass-cli %s\\n' "$*" >> "$MOCK_COMMAND_LOG"
-if [[ "$1" == "test" ]]; then
+if [[ "$1" == "info" ]]; then
   exit 0
 elif [[ "$1 $2" == "vault list" ]]; then
   printf '%s\\n' '- [vault-id]: SSH'

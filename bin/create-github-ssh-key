@@ -322,7 +322,9 @@ else
 fi
 
 op vault get "$ONEPASSWORD_VAULT" --format json >/dev/null
-pass-cli test >/dev/null
+# `pass-cli test` was removed from Proton Pass CLI; `info` is the supported
+# authenticated-session check.
+pass-cli info >/dev/null
 if ! pass-cli vault list | sed -n 's/^- \[[^]]*\]: //p' | grep -Fxq "$PROTON_VAULT"; then
   echo "Error: Proton Pass vault not found or unavailable: $PROTON_VAULT" >&2
   exit 1
