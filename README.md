@@ -48,6 +48,8 @@ Use `--adopt` only as an explicit migration after reviewing the dry run; apply m
 TPM and tmux plugins are not downloaded automatically.
 Run `tmux-plugins sync` to preview the pinned plugin installation and `tmux-plugins sync --apply` to install the reviewed revisions.
 Neovim dependencies use an untracked, machine-local lockfile at `~/.config/nvim/lazy-lock.json`.
+Existing `~/.npmrc` and `~/.config/codexbar/config.json` files are treated as machine-local state and are never overwritten by Stow or Nix; their repository snapshots remain available for reference.
+Claude Code runtime state under `.claude/` is repository-local and is also excluded from Stow.
 
 ### 3. Install Packages
 
@@ -306,6 +308,10 @@ Files ending in `.local` are sourced but not tracked in git:
 - `~/.aliases.local` - Local alias overrides
 - `~/.zshrc.local` - Local zsh configuration
 - `~/.tmux.conf.local` - Local tmux configuration
+
+Machine-local credentials and application state are preserved separately:
+- `~/.npmrc` - Local npm registries and authentication settings
+- `~/.config/codexbar/config.json` - CodexBar runtime configuration and token state
 
 ## Homebrew
 

@@ -50,6 +50,8 @@
 ^result$
 
 # Repo-specific directories not meant for ~
+# Claude Code runtime state and active worktrees
+^\.claude$
 ^ai-providers$
 ^backups$
 ^secrets$
@@ -58,6 +60,10 @@
 ^\.test-safety-.*$
 ^\.test-stow-.*$
 ^\.worktrees$
+
+# Machine-local credentials and application state
+^\.npmrc$
+^codexbar$
 
 # Brewfile symlinks (belong in repo, not ~)
 ^Brewfile$

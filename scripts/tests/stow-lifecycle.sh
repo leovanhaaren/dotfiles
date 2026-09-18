@@ -22,6 +22,23 @@ HOME="$SANDBOX/home" "$ROOT/setup.sh" --apply > "$SANDBOX/setup.log"
 [ -L "$SANDBOX/home/bin/agent-sessions" ] || { echo "expected a leaf agent-sessions Stow link" >&2; exit 1; }
 HOME="$SANDBOX/home" "$ROOT/verify.sh" > "$SANDBOX/verify.log"
 
+LOCAL_HOME="$SANDBOX/local-home"
+mkdir -p "$LOCAL_HOME/.config/codexbar"
+printf 'local npm configuration\n' > "$LOCAL_HOME/.npmrc"
+printf '{"local":true}\n' > "$LOCAL_HOME/.config/codexbar/config.json"
+HOME="$LOCAL_HOME" "$ROOT/setup.sh" --apply > "$SANDBOX/setup-local-state.log"
+[ ! -L "$LOCAL_HOME/.npmrc" ] || { echo "setup replaced local ~/.npmrc" >&2; exit 1; }
+[ ! -L "$LOCAL_HOME/.config/codexbar/config.json" ] || { echo "setup replaced local CodexBar config" >&2; exit 1; }
+grep -q '^local npm configuration$' "$LOCAL_HOME/.npmrc"
+grep -q '"local":true' "$LOCAL_HOME/.config/codexbar/config.json"
+HOME="$LOCAL_HOME" "$ROOT/verify.sh" > "$SANDBOX/verify-local-state.log"
+HOME="$LOCAL_HOME" "$ROOT/uninstall.sh" --apply > "$SANDBOX/uninstall-local-state.log"
+[ -f "$LOCAL_HOME/.npmrc" ] || { echo "uninstall removed local ~/.npmrc" >&2; exit 1; }
+[ -f "$LOCAL_HOME/.config/codexbar/config.json" ] || { echo "uninstall removed local CodexBar config" >&2; exit 1; }
+
+after=$(find "$LOCAL_HOME" -type l -print)
+[ -z "$after" ] || { echo "uninstall left repository-owned symlinks in local-state sandbox" >&2; exit 1; }
+
 rm "$SANDBOX/home/.config/fish/functions/acp.fish"
 if HOME="$SANDBOX/home" "$ROOT/verify.sh" > "$SANDBOX/verify-missing.log" 2>&1; then
     echo "verification accepted a missing Stow-managed link" >&2

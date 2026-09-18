@@ -25,6 +25,18 @@ let
 
   linkAll = paths: lib.genAttrs paths link;
 
+  # These files contain machine-local credentials or application state.
+  # Keep their repository snapshots available without allowing activation to
+  # replace the live files in the home directory.
+  machineLocalFiles = [
+    ".npmrc"
+    ".config/codexbar/config.json"
+  ];
+
+  configFiles = lib.filter
+    (path: !(lib.elem path machineLocalFiles))
+    (filesUnder ../../.config ".config/");
+
   # SSH: config and tracked public keys / pinned host keys link
   # verbatim (same source as setup.sh's manual links). Private keys
   # never go through Nix - the store is world-readable - and stay in
@@ -43,13 +55,12 @@ in
     ".functions"
     ".gitconfig"
     ".gitmux.conf"
-    ".npmrc"
     ".tmux.conf"
     ".zprofile"
     ".zshrc"
   ]
   ++ filesUnder ../../bin "bin/"
-  ++ filesUnder ../../.config ".config/")
+  ++ configFiles)
   # Convenience symlink, mirrors setup.sh's managed manual link;
   # skipped when the checkout already lives at ~/dotfiles.
   // lib.optionalAttrs (dotfilesDir != "${config.home.homeDirectory}/dotfiles") {
