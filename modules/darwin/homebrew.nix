@@ -60,10 +60,12 @@
     ];
 
     casks = [
+      "blender"
       "bruno"
       "codexbar"
       # Fonts live in fonts.packages (modules/darwin/default.nix);
       # cleanup = "none" leaves the brew-installed copies alone.
+      "godot"
       "ghostty"
       "google-chrome"
       "home-assistant"
