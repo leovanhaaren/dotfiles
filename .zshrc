@@ -80,6 +80,7 @@ export HASS_TOKEN=pass://Development/hass-cli/HASS_TOKEN
 command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
+[[ -f "$DOTFILES_DIR/scripts/mise-pnpm-auth.zsh" ]] && source "$DOTFILES_DIR/scripts/mise-pnpm-auth.zsh"
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
