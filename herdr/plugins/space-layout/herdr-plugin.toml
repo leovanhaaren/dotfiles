@@ -2,7 +2,7 @@ id = "dotfiles.space-layout"
 name = "Space layout"
 version = "0.1.0"
 min_herdr_version = "0.9.0"
-description = "Report tab and pane counts per workspace as the $layout sidebar token"
+description = "List what runs in each workspace's panes as $run1..$run8 sidebar rows"
 platforms = ["macos", "linux"]
 
 # Token metadata is not restored after a server restart, so seed it on startup.
@@ -26,6 +26,10 @@ on = "tab.moved"
 command = ["scripts/report-layout.sh"]
 
 [[events]]
+on = "tab.renamed"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
 on = "pane.created"
 command = ["scripts/report-layout.sh"]
 
@@ -35,4 +39,29 @@ command = ["scripts/report-layout.sh"]
 
 [[events]]
 on = "pane.moved"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.exited"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["scripts/report-layout.sh"]
+
+# No hook fires when a shell starts or stops a command; focus changes pick it up.
+[[events]]
+on = "pane.focused"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "tab.focused"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "workspace.focused"
 command = ["scripts/report-layout.sh"]

@@ -22,7 +22,7 @@ rows = [["state_icon", "workspace", "tab", "agent"]]
 
 [ui.sidebar.spaces]
 row_gap = 0
-rows = [["state_icon", "workspace", "branch", "git_status"], ["$layout"]]
+rows = [["state_icon", "workspace", "branch", "git_status"], ["$run1"], ["$run2"], ["$run3"], ["$run4"], ["$run5"], ["$run6"], ["$run7"], ["$run8"]]
 
 [experimental]
 switch_ascii_input_source_in_prefix = true
