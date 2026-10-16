@@ -10,7 +10,10 @@
 # A pane shows its detected agent marked with a Nerd Font robot (nf-md-robot),
 # otherwise its name, otherwise the leader of its foreground process group.
 # Agents come first because integrations such as pi's recap rename panes with
-# long session titles.
+# long session titles. When a workspace's panes sit in more than one Git
+# worktree, each Git pane also shows its branch:
+#   ├ zsh  main
+#   └ 󰚩  claude  feature-x
 # Herdr has no hook for a shell starting a command, so every run refreshes all
 # workspaces and focus changes catch up on them. The millisecond seq makes herdr
 # drop reports from older snapshots.
@@ -31,14 +34,20 @@ pane_name() {
     | .name // "?" | ltrimstr("-")' 2>/dev/null || echo "?"
 }
 
+# Print "<worktree root>\t<branch>", or nothing outside a Git checkout.
+pane_worktree() {
+  git -C "$1" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/null | paste -sd '\t' - || true
+}
+
 for ws in $workspace_ids; do
   # The workspace may close between the event and these reads.
   tabs="$("$herdr" tab list --workspace "$ws" 2>/dev/null | jq -c '.result.tabs | sort_by(.number)')" || continue
   panes="$("$herdr" pane list --workspace "$ws" 2>/dev/null)" || continue
   rows=""
-  while IFS=$'\t' read -r pane_id tab_id agent name; do
-    rows+="$tab_id"$'\t'"$agent"$'\t'"${name:-$(pane_name "$pane_id")}"$'\n'
-  done < <(jq -r '.result.panes[] | [.pane_id, .tab_id, (.agent != null), .agent // .label // ""] | @tsv' <<<"$panes")
+  # Name stays last: read collapses empty tab-separated fields.
+  while IFS=$'\t' read -r pane_id tab_id agent cwd name; do
+    rows+="$tab_id"$'\t'"$agent"$'\t'"${name:-$(pane_name "$pane_id")}"$'\t'"$(pane_worktree "$cwd")"$'\n'
+  done < <(jq -r '.result.panes[] | [.pane_id, .tab_id, (.agent != null), .foreground_cwd // .cwd // "/", .agent // .label // ""] | @tsv' <<<"$panes")
   [[ -n "$rows" ]] || continue
 
   args=()
@@ -50,7 +59,10 @@ for ws in $workspace_ids; do
     def branch($items): ($items | length) as $n | $items | to_entries[]
       | {last: (.key == $n - 1), value};
     # The zero-width space keeps herdr from trimming the indent under the last tab.
-    split("\n") | map(select(. != "") | split("\t") | {tab: .[0], name: (if .[1] == "true" then "\uDB81\uDEA9  " else "" end) + .[2]}) as $panes
+    split("\n") | map(select(. != "") | split("\t")
+      | {tab: .[0], name: ((if .[1] == "true" then "\uDB81\uDEA9  " else "" end) + .[2]), root: (.[3] // ""), branch: (.[4] // "")})
+    | ([.[].root | select(. != "")] | unique | length > 1) as $mixed
+    | map(.name += (if $mixed and .root != "" then "  \(.branch)" else "" end)) as $panes
     | if ($tabs | length) > 1 then
         [branch($tabs) as $t
          | (if $t.last then "└ " else "├ " end)
