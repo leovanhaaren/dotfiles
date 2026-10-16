@@ -1,0 +1,38 @@
+id = "dotfiles.space-layout"
+name = "Space layout"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Report tab and pane counts per workspace as the $layout sidebar token"
+platforms = ["macos", "linux"]
+
+# Token metadata is not restored after a server restart, so seed it on startup.
+[[startup]]
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "workspace.created"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "tab.created"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "tab.closed"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "tab.moved"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.created"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.closed"
+command = ["scripts/report-layout.sh"]
+
+[[events]]
+on = "pane.moved"
+command = ["scripts/report-layout.sh"]
