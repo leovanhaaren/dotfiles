@@ -17,6 +17,7 @@ brew "aom"
 brew "bat"
 brew "felixkratz/formulae/borders", trusted: true
 brew "bruno-cli"
+brew "coreutils"
 brew "eza"
 brew "fd"
 brew "fish"
