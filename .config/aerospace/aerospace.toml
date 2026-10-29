@@ -239,6 +239,10 @@ if.app-name-regex-substring = 'godot'
 run = 'layout floating'
 
 [[on-window-detected]]
+if.app-id = 'nl.leovanhaaren.knockknock.mac'
+run = 'layout floating'
+
+[[on-window-detected]]
 if.app-id = 'app.zen-browser.zen'
 run = ['move-node-to-workspace 1']
 
