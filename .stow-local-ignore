@@ -41,6 +41,7 @@
 ^raycast$
 ^tmux$
 ^herdr$
+^launchd$
 
 # Nix flake (managed via darwin-rebuild, not stowed)
 ^flake\.nix$

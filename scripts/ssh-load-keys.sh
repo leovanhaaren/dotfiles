@@ -3,8 +3,11 @@
 # Load SSH private keys from Proton Pass into the macOS Keychain-backed SSH
 # agent.
 #
-# Fetches private keys via the Proton Pass CLI (pass-cli) and loads them into
-# the macOS Keychain-backed agent.
+# Fallback only: normally the Proton Pass app serves the keys itself at
+# ~/.ssh/proton-pass-ssh-agent.sock, which ~/.ssh/config and the
+# nl.leovanhaaren.ssh-auth-sock LaunchAgent point at, and --if-empty then
+# skips loading. Fetches private keys via the Proton Pass CLI (pass-cli) and
+# loads them into the agent at SSH_AUTH_SOCK.
 #
 # Prerequisites:
 #   - Proton Pass CLI (pass-cli) installed and logged in

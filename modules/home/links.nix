@@ -40,7 +40,7 @@ let
   # SSH: config and tracked public keys / pinned host keys link
   # verbatim (same source as setup.sh's manual links). Private keys
   # never go through Nix - the store is world-readable - and stay in
-  # the agent, loaded from Proton Pass by scripts/ssh-load-keys.sh.
+  # the Proton Pass SSH agent.
   sshLinks = { ".ssh/config" = link "ssh/config.macos"; }
     // lib.mapAttrs'
       (name: _: lib.nameValuePair ".ssh/${name}" (link "ssh/${name}"))

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Points SSH_AUTH_SOCK at the Proton Pass SSH agent for everything launchd
+  starts after login, such as services and GUI apps that never read .zshrc.
+  Git's SSH commit signing reads only SSH_AUTH_SOCK, not ~/.ssh/config.
+  Installed by scripts/mac.sh and by modules/home/ssh-agent.nix.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>nl.leovanhaaren.ssh-auth-sock</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>/bin/launchctl setenv SSH_AUTH_SOCK "$HOME/.ssh/proton-pass-ssh-agent.sock"</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+</dict>
+</plist>

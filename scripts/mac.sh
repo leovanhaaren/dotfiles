@@ -300,6 +300,20 @@ if ! launchctl unload -w /System/Library/LaunchAgents/com.apple.rcd.plist 2>/dev
     echo "# Could not unload com.apple.rcd; leaving media-key behavior unchanged" >&2
 fi
 
+###########
+### SSH ###
+###########
+
+# Point SSH_AUTH_SOCK at the Proton Pass SSH agent for launchd services and
+# GUI apps. Copied rather than linked, as home-manager does for launchd agents.
+echo "# Installing the SSH_AUTH_SOCK LaunchAgent"
+SSH_AUTH_SOCK_AGENT="$HOME/Library/LaunchAgents/nl.leovanhaaren.ssh-auth-sock.plist"
+mkdir -p "$HOME/Library/LaunchAgents"
+cp "$(dirname "${BASH_SOURCE[0]}")/../launchd/nl.leovanhaaren.ssh-auth-sock.plist" "$SSH_AUTH_SOCK_AGENT"
+# bootout fails when the agent is not loaded yet, which is expected on first install.
+launchctl bootout "gui/$(id -u)" "$SSH_AUTH_SOCK_AGENT" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$SSH_AUTH_SOCK_AGENT"
+
 ################
 ### Security ###
 ################

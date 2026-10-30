@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./links.nix ];
+  imports = [ ./links.nix ./ssh-agent.nix ];
 
   # CLI tools migrated from homebrew/Brewfile.base.
   # The Brewfile keeps these entries until the Nix binaries are

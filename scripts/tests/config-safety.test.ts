@@ -126,4 +126,19 @@ describe("lifecycle correctness", () => {
     expect(existsSync(join(root, ".config/cmux/cmux.json"))).toBeFalse();
     expect(read(".config/aerospace/aerospace.toml")).toContain("alt-a = 'workspace a'");
   });
+
+  test("processes that never read .zshrc reach the Proton Pass SSH agent", () => {
+    const socket = "/.ssh/proton-pass-ssh-agent.sock";
+    const setenv = `/bin/launchctl setenv SSH_AUTH_SOCK "$HOME${socket}"`;
+
+    const hostAll = read("ssh/config.macos").split(/^Host \*$/m)[1] ?? "";
+    expect(hostAll).toContain(`IdentityAgent ~${socket}`);
+
+    // Classic and Nix paths install the same LaunchAgent command.
+    expect(read("launchd/nl.leovanhaaren.ssh-auth-sock.plist")).toContain(`<string>${setenv}</string>`);
+    expect(read("modules/home/ssh-agent.nix")).toContain(`''${setenv}''`);
+    expect(read("modules/home/default.nix")).toContain("./ssh-agent.nix");
+    expect(read("scripts/mac.sh")).toContain("launchd/nl.leovanhaaren.ssh-auth-sock.plist");
+    expect(read(".stow-local-ignore")).toMatch(/^\^launchd\$$/m);
+  });
 });

@@ -33,7 +33,7 @@ managed_manual_links() {
         "ssh/config" "$DOTFILES/ssh/config.macos" "$HOME/.ssh/config" \
         "vscode/settings.json" "$DOTFILES/vscode/settings.json" "$HOME/Library/Application Support/Code/User/settings.json"
     # Tracked public keys and pinned host keys (private keys stay in
-    # the agent, loaded from Proton Pass by scripts/ssh-load-keys.sh).
+    # the Proton Pass SSH agent).
     local ssh_file
     for ssh_file in "$DOTFILES"/ssh/*.pub "$DOTFILES/ssh/known_hosts.base"; do
         [ -f "$ssh_file" ] || continue

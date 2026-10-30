@@ -3,9 +3,9 @@
 # This won't be added again if you remove it.
 Include ~/.orbstack/ssh/config
 
-# Private keys live in the agent (Proton Pass via ssh-load-keys.sh);
+# Private keys live in the Proton Pass app's SSH agent (see Host *);
 # only tracked public keys select the identity, so a fresh machine
-# needs no key files, just a logged-in pass-cli.
+# needs no key files, just an unlocked Proton Pass.
 Host github.com
   HostName github.com
   User git
@@ -49,5 +49,8 @@ Host docker.local
 # Applies to all hosts; per-host blocks above take precedence.
 # known_hosts.base is tracked in the repo so fresh machines get the
 # host keys without trust-on-first-use prompts.
+# IdentityAgent overrides SSH_AUTH_SOCK, so processes that never read
+# .zshrc, such as launchd services and GUI apps, reach the same agent.
 Host *
   UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/known_hosts.base
+  IdentityAgent ~/.ssh/proton-pass-ssh-agent.sock
