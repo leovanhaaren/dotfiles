@@ -8,6 +8,7 @@ brew "awscli"
 brew "git-lfs"
 brew "jira-cli"
 brew "pup"
+brew "rclone"
 
 # Desktop Applications (Casks)
 cask "1password"
