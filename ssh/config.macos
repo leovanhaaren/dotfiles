@@ -21,6 +21,11 @@ Host github.com-ksyos
 Host 46.225.53.85
   IdentityFile ~/.ssh/id_hetzner
 
+Host 100.75.4.75
+  User l.vanhaaren
+  IdentityFile ~/.ssh/id_leovanhaaren.pub
+  IdentitiesOnly yes
+
 Host mac-mini.local
   HostName leo-mac-mini.stork-duck.ts.net
   User leo
