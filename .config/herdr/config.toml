@@ -64,7 +64,7 @@ width = "80%"
 height = "80%"
 
 [[keys.command]]
-key = "prefix+k"
-type = "plugin_action"
-command = "herdr-bar.open"
-description = "command bar"
+key = "prefix+shift+s"
+type = "shell"
+command = 'exec "$("${HERDR_BIN_PATH:-herdr}" plugin list --plugin dotfiles.space-layout --json | jq -r .result.plugins[0].plugin_root)/scripts/toggle.sh"'
+description = "toggle space layout rows"
