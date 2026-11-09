@@ -19,6 +19,7 @@
 #   PROTON_PASS_AGENT_NAME             agent name for the isolated session dir (default: herdr)
 #   PROTON_PASS_AGENT_REASON           audit reason recorded by Proton Pass (default below)
 #   PROTON_PASS_SESSION_DIR            override the isolated agent session directory
+#   PASS_RUN_NO_MASKING                when set, disable secret masking (for helpers that must print a secret)
 set -euo pipefail
 
 usage() {
@@ -78,4 +79,4 @@ elif ! pass-cli info >/dev/null 2>&1; then
   exit 1
 fi
 
-exec pass-cli run -- "$@"
+exec pass-cli run ${PASS_RUN_NO_MASKING:+--no-masking} -- "$@"
