@@ -16,9 +16,10 @@ pane_scrollbars = false
 hide_tab_bar_when_single_tab = true
 sidebar_width = 22
 
+status_indicators = "symbols"
 [ui.sidebar.agents]
 row_gap = 0
-rows = [["state_icon", "workspace", "tab", "agent"]]
+rows = [["state_icon", "workspace", "tab", "agent"], ["$activity"]]
 
 [ui.sidebar.spaces]
 row_gap = 0

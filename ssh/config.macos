@@ -26,7 +26,7 @@ Host 100.75.4.75
   IdentityFile ~/.ssh/id_leovanhaaren.pub
   IdentitiesOnly yes
 
-Host mac-mini.local
+Host mac-mini.local leo-mac-mini.stork-duck.ts.net
   HostName leo-mac-mini.stork-duck.ts.net
   User leo
   IdentitiesOnly yes
