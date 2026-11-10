@@ -204,6 +204,7 @@ dotfiles/
 │   ├── brew.sh                # Homebrew bundle workflow
 │   ├── mac.sh                 # macOS preferences
 │   ├── homebrew-ssd.sh        # Transactional external-SSD migration
+│   ├── keychain-unlock.sh     # Unlock the login keychain at shell start (SKIP_KEYCHAIN_UNLOCK=1 skips)
 │   └── ssh-load-keys.sh       # Load SSH keys from Proton Pass
 │
 └── .gitignore            # Git ignore rules (git only, not stowed)

@@ -4,6 +4,7 @@ alias upi="pi update && pi update --extensions"
 alias h="herdr"
 
 alias ssh-load-keys="$DOTFILES_DIR/scripts/ssh-load-keys.sh"
+alias keychain-unlock="$DOTFILES_DIR/scripts/keychain-unlock.sh"
 
 # Air (installed via go install)
 air() { "$(go env GOPATH)/bin/air" "$@"; }

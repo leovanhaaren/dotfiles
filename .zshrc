@@ -31,6 +31,15 @@ export OBSIDIAN_VAULT="$HOME/Obsidian/Personal"
 [[ -f ~/.aliases ]] && source ~/.aliases
 [[ -f ~/.functions ]] && source ~/.functions
 
+# Login keychain: after a restart, shells under a background server (herdr)
+# see it locked, so ask for the password once in the first terminal.
+# Set SKIP_KEYCHAIN_UNLOCK=1 to skip, e.g. for scripted terminals.
+if [[ $OSTYPE == darwin* && -o interactive && -t 0 && -t 1 && -z ${SKIP_KEYCHAIN_UNLOCK:-} ]] && \
+  [[ -x "$DOTFILES_DIR/scripts/keychain-unlock.sh" ]]; then
+  # Trap Ctrl-C so a cancelled prompt does not abort the rest of this file.
+  () { setopt localoptions localtraps; trap ':' INT; "$DOTFILES_DIR/scripts/keychain-unlock.sh" } || true
+fi
+
 # SSH keys
 export SSH_AUTH_SOCK="$HOME/.ssh/proton-pass-ssh-agent.sock"
 if [[ -x "$DOTFILES_DIR/scripts/ssh-load-keys.sh" ]] && \
