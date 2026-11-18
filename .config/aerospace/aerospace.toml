@@ -274,15 +274,19 @@ run = ['move-node-to-workspace 4']
 if.app-id = 'com.nvidia.gfnpc.mall'
 run = ['move-node-to-workspace 5']
 
-# Pin workspaces to explicit monitors. AeroSpace cannot ignore a monitor, and
-# "secondary" or an unpinned workspace can land on a HDMI adapter that shows up
-# as an extra display (UGREEN). Never use "secondary"; always end with "main".
+# AeroSpace tries these case-insensitive name regexes in order; ties go to the
+# first screen left to right, then top to bottom. Use a real external first,
+# except for 6–8 (built-in first). Never use "main": UGREEN can be macOS main.
+# No match leaves the workspace unpinned. Unlisted workspaces (including the
+# placeholder AeroSpace creates for each otherwise unused screen) are not protected.
 [workspace-to-monitor-force-assignment]
-1 = "main"
-2 = "main"
-3 = "main"
-4 = "main"
-5 = "main"
-6 = ["^built-in retina display$", "main"]
-7 = ["^built-in retina display$", "main"]
-8 = ["^built-in retina display$", "main"]
+1 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+2 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+3 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+4 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+5 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+6 = ['^(?!.*ugreen)built-in', '^(?!.*ugreen).+']
+7 = ['^(?!.*ugreen)built-in', '^(?!.*ugreen).+']
+8 = ['^(?!.*ugreen)built-in', '^(?!.*ugreen).+']
+9 = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
+a = ['^(?!.*ugreen|built-in).+', '^(?!.*ugreen).+']
