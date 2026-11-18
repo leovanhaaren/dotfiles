@@ -102,6 +102,7 @@ The Zsh configuration sources both from Homebrew after Oh My Zsh loads, because 
 - **.gitmux.conf** - Git status in tmux status bar (stowed to `~/`)
 - **.config/wezterm/wezterm.lua** - Wezterm configuration (stowed to `~/.config/wezterm/`)
 - **.config/ghostty/config** - Ghostty terminal configuration (stowed to `~/.config/ghostty/`)
+- **.config/rex/init.lua** - Rex key bindings migrated from tmux, Herdr and WezTerm (stowed to `~/.config/rex/`)
 
 ### Window Management
 - **.config/aerospace/aerospace.toml** - AeroSpace window manager configuration (stowed to `~/.config/aerospace/`)
