@@ -4,7 +4,7 @@ idiomatic_version_file_enable_tools = ["node"]
 
 [tools]
 bun = "latest"
-node = "lts"
+node = "24"
 pnpm = "latest"
 
 [tools.trivy]

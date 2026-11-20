@@ -25,6 +25,7 @@ setopt HIST_VERIFY INC_APPEND_HISTORY SHARE_HISTORY
 export DOTFILES_DIR="${${:-$HOME/.zshrc}:A:h}"
 export DOT_AI_ROOT="$HOME/Workspaces/leovanhaaren/dot-ai"
 export OBSIDIAN_VAULT="$HOME/Obsidian/Personal"
+export PI_BACKGROUND_JOBS=1
 
 # Local config
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

@@ -32,6 +32,12 @@ Host mac-mini.local leo-mac-mini.stork-duck.ts.net
   IdentitiesOnly yes
   IdentityFile ~/.ssh/id_leovanhaaren.pub
 
+Host macbook.local
+  HostName macbook-pro-van-leo-1.stork-duck.ts.net
+  User l.vanhaaren
+  IdentitiesOnly yes
+  IdentityFile ~/.ssh/id_leovanhaaren.pub
+
 Host brabonas.local
   HostName brabonas.stork-duck.ts.net
   User leo-admin
@@ -59,3 +65,8 @@ Host docker.local
 Host *
   UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/known_hosts.base
   IdentityAgent ~/.ssh/proton-pass-ssh-agent.sock
+
+Host 192.168.1.134 homeassistant.local
+  User root
+  IdentityFile ~/.ssh/id_hass_ssh_ed25519.pub
+  IdentitiesOnly yes
