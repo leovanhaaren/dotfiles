@@ -1,5 +1,6 @@
 # Taps
 tap "anomalyco/tap"
+tap "ardia-browser/tap"
 tap "charmbracelet/tap"
 tap "FelixKratz/formulae"
 # tap "homebrew/autoupdate"
@@ -69,6 +70,7 @@ brew "railway"
 # gh extension install dlvhdr/gh-dash
 
 # Desktop Applications (Casks)
+cask "ardia-browser/tap/ardia"
 cask "blender"
 cask "bruno"
 cask "font-fira-code"
@@ -91,6 +93,7 @@ cask "raycast"
 cask "session-manager-plugin"
 cask "sloth"
 cask "tableplus"
+cask "tinycast"
 cask "visual-studio-code"
 cask "wezterm"
 cask "zed"

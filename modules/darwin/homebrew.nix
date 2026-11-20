@@ -12,6 +12,7 @@
 
     taps = [
       "anomalyco/tap"
+      "ardia-browser/tap"
       "charmbracelet/tap"
       "FelixKratz/formulae"
       # "homebrew/autoupdate"
@@ -60,6 +61,7 @@
     ];
 
     casks = [
+      "ardia-browser/tap/ardia"
       "blender"
       "bruno"
       "codexbar"
@@ -81,6 +83,7 @@
       "raycast"
       "sloth"
       "tableplus"
+      "tinycast"
       "vishvavariya/notchy/notchy"
       "visual-studio-code"
       "wezterm"
